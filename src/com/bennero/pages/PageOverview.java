@@ -1,0 +1,279 @@
+/*
+ * ============================================ GNU GENERAL PUBLIC LICENSE =============================================
+ * Hardware Monitor for the remote monitoring of a systems hardware information
+ * Copyright (C) 2021  Christian Benner
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * An additional term included with this license is the requirement to preserve legal notices and author attributions
+ * such as this one. Do not remove the original author license notices from the program unless given permission from
+ * the original author: christianbenner35@gmail.com
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program. If not, see
+ * <https://www.gnu.org/licenses/>.
+ * =====================================================================================================================
+ */
+
+package com.bennero.pages;
+
+import com.bennero.common.PageData;
+import com.bennero.config.SaveData;
+import com.bennero.config.SaveManager;
+import com.bennero.core.ApplicationCore;
+import com.bennero.states.PageEditorStateData;
+import com.bennero.states.PageOverviewStateData;
+import com.bennero.ui.ClientOptions;
+import com.bennero.ui.NewPageButton;
+import com.bennero.ui.PageInfo;
+import com.bennero.util.PageGenerator;
+import javafx.event.EventHandler;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Cursor;
+import javafx.scene.Group;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextInputDialog;
+import javafx.scene.image.Image;
+import javafx.scene.layout.*;
+
+import java.util.ArrayList;
+import java.util.Optional;
+
+/**
+ * PageOverview is a page that shows all of the user created sensor pages. This provides an easy way for them to locate
+ * and select a specific page for editing.
+ *
+ * @author      Christian Benner
+ * @version     %I%, %G%
+ * @since       1.0
+ */
+public class PageOverview extends StackPane
+{
+    private static final Insets PADDING = new Insets(10, 10, 10, 10);
+    private static final double H_GAP = 10.0;
+    private static final double V_GAP = 10.0;
+    private static final int NUM_ELEMENTS_ROW = 4;
+    private static final int NUM_SPACES_PER_ROW = NUM_ELEMENTS_ROW - 1;
+    private static final int ELEMENT_WIDTH = (int) ((ApplicationCore.WINDOW_WIDTH_PX - (NUM_SPACES_PER_ROW * PageOverview.H_GAP) -
+            PADDING.getLeft() - PADDING.getRight()) / NUM_ELEMENTS_ROW);
+    private static final int ELEMENT_HEIGHT = (int) (ELEMENT_WIDTH / 1.6);
+    private static final float ELEMENT_WIDTH_HEIGHT_RATIO = 1.6f;
+
+    private FlowPane pageOverviewList;
+    private NewPageButton newPageButton;
+    private ScrollPane scrollPane;
+
+    private ArrayList<PageInfo> pageInfoList;
+
+    private int elementWidth;
+
+    private SaveManager saveManager;
+
+    public PageOverview()
+    {
+        super.setId("standard-pane");
+        super.setPadding(PADDING);
+
+        saveManager = SaveManager.getInstance();
+
+        BorderPane contentsPane = new BorderPane();
+
+        Label title = new Label("Pages");
+        BorderPane.setAlignment(title, Pos.TOP_CENTER);
+
+        newPageButton = new NewPageButton(ELEMENT_WIDTH, ELEMENT_HEIGHT);
+
+        loadPageIcons();
+
+        scrollPane = new ScrollPane();
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setContent(pageOverviewList);
+
+        // Set CSS styling
+        contentsPane.setId("standard-pane");
+        title.setId("pane-title");
+        scrollPane.setId("overview-pane-scroll-pane");
+        newPageButton.setId("add-button");
+
+        contentsPane.setTop(title);
+        contentsPane.setCenter(scrollPane);
+
+        Group topLeftGroup = new Group();
+        StackPane.setAlignment(topLeftGroup, Pos.TOP_LEFT);
+
+        HBox topLeftButtonBox = new HBox();
+        topLeftButtonBox.setSpacing(5.0);
+
+        Image openSaveIcon = new Image(getClass().getClassLoader().getResourceAsStream("open_save_icon.png"));
+        Image openSaveIconHover = new Image(getClass().getClassLoader().getResourceAsStream("open_save_icon_hover.png"));
+        Image newSaveIcon = new Image(getClass().getClassLoader().getResourceAsStream("new_save_icon.png"));
+        Image newSaveIconHover = new Image(getClass().getClassLoader().getResourceAsStream("new_save_icon_hover.png"));
+        Image settingsIcon = new Image(getClass().getClassLoader().getResourceAsStream("settings_icon.png"));
+        Image settingsIconHover = new Image(getClass().getClassLoader().getResourceAsStream("settings_icon_hover.png"));
+
+        Button openSaveButton = new Button();
+        openSaveButton.setCursor(Cursor.HAND);
+        openSaveButton.setPrefSize(32, 32);
+        openSaveButton.setBackground(new Background(new BackgroundImage(openSaveIcon, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT)));
+        openSaveButton.setOnMouseEntered(mouseEvent -> openSaveButton.setBackground(new Background(new BackgroundImage(openSaveIconHover, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT))));
+        openSaveButton.setOnMouseExited(mouseEvent -> openSaveButton.setBackground(new Background(new BackgroundImage(openSaveIcon, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT))));
+
+        //openSaveButton.setId("hw-default-button");
+        openSaveButton.setOnAction(actionEvent ->
+        {
+            if (SaveManager.displayOpenSaveUI())
+            {
+                ApplicationCore.changeApplicationState(new PageOverviewStateData());
+            }
+        });
+        topLeftButtonBox.getChildren().add(openSaveButton);
+
+        Button newButton = new Button();
+        newButton.setCursor(Cursor.HAND);
+        newButton.setPrefSize(32, 32);
+        newButton.setBackground(new Background(new BackgroundImage(newSaveIcon, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT)));
+        newButton.setOnMouseEntered(mouseEvent -> newButton.setBackground(new Background(new BackgroundImage(newSaveIconHover, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT))));
+        newButton.setOnMouseExited(mouseEvent -> newButton.setBackground(new Background(new BackgroundImage(newSaveIcon, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT))));
+        topLeftButtonBox.getChildren().add(newButton);
+
+        newButton.setOnAction(actionEvent ->
+        {
+            if (SaveManager.displayNewSaveUI())
+            {
+                ApplicationCore.changeApplicationState(new PageOverviewStateData());
+            }
+        });
+
+        Button optionsButton = new Button();
+        optionsButton.setCursor(Cursor.HAND);
+        optionsButton.setPrefSize(32, 32);
+        optionsButton.setBackground(new Background(new BackgroundImage(settingsIcon, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT)));
+        optionsButton.setOnMouseEntered(mouseEvent -> optionsButton.setBackground(new Background(new BackgroundImage(settingsIconHover, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT))));
+        optionsButton.setOnMouseExited(mouseEvent -> optionsButton.setBackground(new Background(new BackgroundImage(settingsIcon, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT))));
+        optionsButton.setOnAction(actionEvent ->
+        {
+            SaveData saveData = saveManager.getSaveData();
+
+            // Display the options pane
+            ClientOptions clientOptions = new ClientOptions(saveData.getSensorUpdateTime(),
+                    saveData.getSensorAnimationDuration(),
+                    (observableValue, integer, t1) ->
+                    {
+                        saveManager.getSaveData().setSensorUpdateTime(t1);
+                    }, (observableValue, integer, t1) ->
+            {
+                saveManager.getSaveData().setSensorAnimationDuration(t1);
+            }, event ->
+            {
+                // Save config
+                saveManager.getSaveData().save();
+            });
+            clientOptions.show();
+        });
+
+        StackPane.setAlignment(optionsButton, Pos.TOP_RIGHT);
+        topLeftButtonBox.getChildren().add(optionsButton);
+        topLeftGroup.getChildren().add(topLeftButtonBox);
+
+        Group topRightGroup = new Group();
+        StackPane.setAlignment(topRightGroup, Pos.TOP_RIGHT);
+
+        HBox topRightButtonBox = new HBox();
+        topRightButtonBox.setSpacing(5.0);
+
+        Button donateButton = new Button("Donate");
+        donateButton.setId("hw-donate-button");
+        donateButton.setOnAction(actionEvent -> ApplicationCore.openBrowser("https://www.paypal.com/donate?hosted_button_id=R7QL6UW899UJU"));
+        StackPane.setAlignment(donateButton, Pos.TOP_RIGHT);
+        topRightButtonBox.getChildren().add(donateButton);
+        topRightGroup.getChildren().add(topRightButtonBox);
+
+        setNewPageListener(event ->
+        {
+            String pageTitle = "None";
+            boolean success = false;
+            while (!success)
+            {
+                TextInputDialog textInputDialog = new TextInputDialog();
+                textInputDialog.setTitle("Enter Page Name");
+                textInputDialog.setHeaderText("Enter Page Name");
+                textInputDialog.setContentText("Enter a name for your page:");
+                Optional<String> result = textInputDialog.showAndWait();
+                if (result.isPresent())
+                {
+                    if (!result.get().isEmpty() && !result.get().replaceAll(" ", "").isEmpty())
+                    {
+                        pageTitle = result.get();
+                        success = true;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if (success)
+            {
+                PageData pageData = PageGenerator.generatePage(pageTitle);
+                saveManager.getSaveData().addPageData(pageData);
+                addPageInfoUI(pageData);
+            }
+        });
+
+        super.getChildren().addAll(contentsPane, topLeftGroup, topRightGroup);
+    }
+
+    public void loadPageIcons()
+    {
+        pageOverviewList = new FlowPane();
+        pageOverviewList.setId("overview-pane-list-pane");
+        pageOverviewList.setHgap(H_GAP);
+        pageOverviewList.setVgap(V_GAP);
+        pageOverviewList.widthProperty().addListener((observableValue, number, t1) ->
+        {
+            // Re-calculate the widths of the page overview buttons
+            elementWidth = (int) ((pageOverviewList.getWidth() - (NUM_SPACES_PER_ROW * PageOverview.H_GAP)) /
+                    NUM_ELEMENTS_ROW);
+            for (PageInfo pageInfo : pageInfoList)
+            {
+                pageInfo.setMinSize(elementWidth, elementWidth / ELEMENT_WIDTH_HEIGHT_RATIO);
+            }
+            newPageButton.setMinSize(elementWidth, elementWidth / ELEMENT_WIDTH_HEIGHT_RATIO);
+        });
+
+        pageInfoList = new ArrayList<>();
+
+        for (int i = 0; i < saveManager.getSaveData().getPageDataList().size(); i++)
+        {
+            PageData pageData = saveManager.getSaveData().getPageDataList().get(i);
+            PageInfo pageInfo = new PageInfo(pageData, elementWidth, ELEMENT_HEIGHT);
+            pageInfo.setOnMouseClicked(mouseEvent -> ApplicationCore.changeApplicationState(new PageEditorStateData(pageData)));
+            pageInfo.setCursor(Cursor.HAND);
+            pageInfoList.add(pageInfo);
+            pageOverviewList.getChildren().add(pageInfo);
+        }
+
+        pageOverviewList.getChildren().add(newPageButton);
+    }
+
+    public void setNewPageListener(EventHandler eventHandler)
+    {
+        newPageButton.setOnAction(eventHandler);
+    }
+
+    public void addPageInfoUI(PageData page)
+    {
+        ApplicationCore.changeApplicationState(new PageEditorStateData(page));
+    }
+}
