@@ -14,6 +14,10 @@ The Hardware Monitor Client (often referred to as 'Hardware Monitor Editor') is 
 - **Extensive Hardware Monitoring**: The usage of [OpenHardwareMonitor](https://github.com/openhardwaremonitor/openhardwaremonitor) library means that many of the users hardware sensors can be monitored such as CPU, GPU, memory and storage devices.
 
 # Building and Launching
-This software is designed to be launched using the [HardwareMonitorClientBootstrapper](https://github.com/ChristianBenner/HardwareMonitorClientBootstrapper). The bootstrapper, and therefor this software, is only currently supported to run on Windows. The monitor however should be compatible with multiple operating systems such as Windows, Raspberry Pi, Ubuntu and MacOS.
+This software is designed to be launched using the [HardwareMonitorClientBootstrapper](https://github.com/ChristianBenner/HardwareMonitorClientBootstrapper). The bootstrapper, and therefor this software, is only currently supported to run on Windows. If you are debugging the application, you can launch it without the bootstrapper however you will not be able to receive real hardware sensor data. If you wish to do this please set:
+```java
+BOOTSTRAPPER_LAUNCH_REQUIRED = false
+```
+in 'Version.java'. The monitor however should be compatible with multiple operating systems such as Windows, Raspberry Pi, Ubuntu and MacOS.
 
 The software depends on [Medusa](https://github.com/HanSolo/Medusa) and JavaFX libraries and jmods. Some .bat files have been included that create a JRE environement (required by the bootstrapper).
