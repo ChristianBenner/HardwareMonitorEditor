@@ -15,3 +15,5 @@ The Hardware Monitor Client (often referred to as 'Hardware Monitor Editor') is 
 
 # Building and Launching
 This software is designed to be launched using the [HardwareMonitorClientBootstrapper](https://github.com/ChristianBenner/HardwareMonitorClientBootstrapper). The bootstrapper, and therefor this software, is only currently supported to run on Windows. The monitor however should be compatible with multiple operating systems such as Windows, Raspberry Pi, Ubuntu and MacOS.
+
+The software depends on [Medusa](https://github.com/HanSolo/Medusa) and JavaFX libraries and jmods. Some .bat files have been included that create a JRE environement (required by the bootstrapper).
