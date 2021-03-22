@@ -19,24 +19,31 @@
  * =====================================================================================================================
  */
 
-package com.bennero;
+package com.bennero.ui;
 
-/**
- * Specifies the version of the hardware monitor editor software. Comprised of major, minor and patch versions.
- * Major: A major release marks a milestone according to design and requirements
- * Minor: Addition of one or more design components/requirements. A minor version change should also be done if any
- * network messages have been altered as this effects compatibility with hardware monitors.
- * Patch: Small changes such as bug fixes or minor feature implementations. Implies network compatibility with other
- * patch versions.
- *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
- */
-public class Version
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
+import javafx.scene.text.TextAlignment;
+
+public class NoSensor extends VBox
 {
-    public static final byte VERSION_MAJOR = 0;
-    public static final byte VERSION_MINOR = 8;
-    public static final byte VERSION_PATCH = 1;
-    public static final boolean BOOTSTRAPPER_LAUNCH_REQUIRED = false;
+    public NoSensor(String sensorName)
+    {
+        super.setAlignment(Pos.CENTER);
+
+        Image noSensorImage = new Image(getClass().getClassLoader().getResourceAsStream("no_sensor.png"));
+        ImageView imageView = new ImageView(noSensorImage);
+
+        // Warning image
+        super.getChildren().add(imageView);
+
+        // Text
+        Label errorText = new Label("Could not find '" + sensorName + "'");
+        errorText.setId("no-sensor-label");
+        errorText.setTextAlignment(TextAlignment.CENTER);
+        super.getChildren().add(errorText);
+    }
 }

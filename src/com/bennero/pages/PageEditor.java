@@ -30,8 +30,10 @@ import com.bennero.states.PageOverviewStateData;
 import com.bennero.states.SensorEditorStateData;
 import com.bennero.states.SensorSelectionStateData;
 import com.bennero.ui.ColouredTextField;
+import com.bennero.ui.NoSensor;
 import com.bennero.ui.PageOptions;
 import com.bennero.ui.TextFieldEditPane;
+import com.bennero.util.SensorManager;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.HPos;
@@ -255,14 +257,23 @@ public class PageEditor extends StackPane
         Image editIcon = new Image(getClass().getClassLoader().getResourceAsStream("edit_icon.png"));
         Image removeIcon = new Image(getClass().getClassLoader().getResourceAsStream("remove_icon.png"));
 
-
         // Add sensors to page
         for (Sensor sensor : pageData.getSensorList())
         {
             if (!isSpaceTaken(sensor))
             {
                 StackPane stackPane = new StackPane();
-                stackPane.getChildren().add(sensor);
+
+                // Check if the sensor manager has the sensor we are trying to add
+                if(SensorManager.getInstance().isAvailable(sensor))
+                {
+                    stackPane.getChildren().add(sensor);
+                }
+                else
+                {
+                    // Put a warning sign because the sensor was not found in the list provided by bootstrapper
+                    stackPane.getChildren().add(new NoSensor(sensor.getOriginalName()));
+                }
 
                 Group hoverButtonGroup = new Group();
                 hoverButtonGroup.setVisible(false);
