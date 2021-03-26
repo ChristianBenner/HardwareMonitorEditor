@@ -107,7 +107,7 @@ public class PageEditor extends StackPane
 
 
         Button backButton = new Button("Back");
-        backButton.setOnAction(actionEvent -> ApplicationCore.changeApplicationState(new PageOverviewStateData()));
+        backButton.setOnAction(actionEvent -> ApplicationCore.s_setApplicationState(new PageOverviewStateData()));
         backButton.setId("hw-page-editor-back-button");
 
         Button optionsButton = new Button("Options");
@@ -194,7 +194,7 @@ public class PageEditor extends StackPane
                     (EventHandler<Event>) event ->
                     {
                         saveManager.getSaveData().removePageData(pageData);
-                        ApplicationCore.changeApplicationState(new PageOverviewStateData());
+                        ApplicationCore.s_setApplicationState(new PageOverviewStateData());
                     },
                     event -> saveManager.getSaveData().save());
             pageOptions.show();
@@ -296,7 +296,8 @@ public class PageEditor extends StackPane
                 edit.setPrefSize(32, 32);
                 edit.setBackground(new Background(new BackgroundImage(editIcon, BackgroundRepeat.NO_REPEAT,
                         BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, BackgroundSize.DEFAULT)));
-                edit.setOnAction(event -> ApplicationCore.changeApplicationState(new SensorEditorStateData(pageData, sensor)));
+                edit.setOnAction(event -> ApplicationCore.s_setApplicationState(
+                        new SensorEditorStateData(pageData, sensor)));
 
                 hBox.getChildren().add(edit);
                 Button delete = new Button();
@@ -421,9 +422,9 @@ public class PageEditor extends StackPane
                     addSensorButton.setBackground(new Background(new BackgroundFill(pageData.getColour().invert(),
                             new CornerRadii(10), Insets.EMPTY)));
                     // addSensorButton.setMinSize(150.0, 150.0);
-                    addSensorButton.setOnMouseClicked(mouseEvent -> ApplicationCore.changeApplicationState(
-                            new SensorSelectionStateData(pageData, GridPane.getRowIndex(addSensorButton),
-                                    GridPane.getColumnIndex(addSensorButton))));
+                    addSensorButton.setOnMouseClicked(mouseEvent -> ApplicationCore.s_setApplicationState(
+                            new SensorSelectionStateData(pageData, GridPane.getRowIndex(
+                                    addSensorButton), GridPane.getColumnIndex(addSensorButton))));
                     sensorPane.add(addSensorButton, column, row);
 
                     GridPane.setHalignment(addSensorButton, HPos.CENTER);

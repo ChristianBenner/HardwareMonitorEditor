@@ -71,14 +71,14 @@ public class WelcomePage extends StackPane
 
         Image image = new Image(getClass().getClassLoader().getResourceAsStream("hardware_monitor_cover.png"));
         ImageView imageView = new ImageView(image);
-        ApplicationCore.getWidthProperty().addListener((observableValue, number, t1) ->
+        ApplicationCore.getInstance().getWidthProperty().addListener((observableValue, number, t1) ->
         {
             imageView.setFitWidth((double) t1 * 0.7);
         });
 
         imageView.setPreserveRatio(true);
         imageView.setSmooth(true);
-        imageView.setFitWidth(ApplicationCore.getWidthProperty().getValue() * 0.7);
+        imageView.setFitWidth(ApplicationCore.getInstance().getWidthProperty().getValue() * 0.7);
         welcomeSlide.getChildren().add(imageView);
 
         welcomeSlide.getChildren().add(welcomeSlideContinueButton);
@@ -119,7 +119,7 @@ public class WelcomePage extends StackPane
         fileAreaSelectSlide.getChildren().add(buttonBox);
         setLocationButton.setOnAction(actionEvent ->
         {
-            File selectedDirectory = ApplicationCore.showDirectorySelector();
+            File selectedDirectory = ApplicationCore.getInstance().showDirectorySelector();
 
             if (selectedDirectory != null)
             {

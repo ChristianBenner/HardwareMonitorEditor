@@ -65,7 +65,7 @@ public class SaveManager
 
     public static boolean displayOpenSaveUI()
     {
-        File selectedFile = ApplicationCore.showFileSelector();
+        File selectedFile = ApplicationCore.getInstance().showFileSelector();
 
         if (selectedFile != null)
         {
@@ -182,7 +182,7 @@ public class SaveManager
             }
 
             ProgramConfigManager.getInstance().setLastLoadedFilePath(file.getAbsolutePath());
-            ApplicationCore.setTitleSaveString(file.getName());
+            ApplicationCore.getInstance().updateWindowTitle(file.getName());
             return true;
         }
 

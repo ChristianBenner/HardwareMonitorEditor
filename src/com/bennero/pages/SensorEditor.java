@@ -140,7 +140,8 @@ public class SensorEditor extends BorderPane
 
         BorderPane footerPane = new BorderPane();
         Button backButton = new Button("Back");
-        backButton.setOnAction(actionEvent -> ApplicationCore.changeApplicationState(new SensorSelectionStateData(pageData, sensor.getRow(), sensor.getColumn())));
+        backButton.setOnAction(actionEvent -> ApplicationCore.s_setApplicationState(
+                new SensorSelectionStateData(pageData, sensor.getRow(), sensor.getColumn())));
         backButton.setId("hw-default-button");
         footerPane.setLeft(backButton);
 
@@ -156,7 +157,7 @@ public class SensorEditor extends BorderPane
                 {
                     pageData.addSensor(sensor);
                     saveManager.getSaveData().save();
-                    ApplicationCore.changeApplicationState(new PageEditorStateData(pageData));
+                    ApplicationCore.s_setApplicationState(new PageEditorStateData(pageData));
                 }
                 else
                 {
@@ -170,7 +171,7 @@ public class SensorEditor extends BorderPane
             {
                 // This is just a sensor edit, save and display page editor
                 saveManager.getSaveData().save();
-                ApplicationCore.changeApplicationState(new PageEditorStateData(pageData));
+                ApplicationCore.s_setApplicationState(new PageEditorStateData(pageData));
             }
         });
 

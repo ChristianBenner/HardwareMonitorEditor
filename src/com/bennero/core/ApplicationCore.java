@@ -80,7 +80,7 @@ public class ApplicationCore extends Application
             VERSION_PATCH;
 
     public static ApplicationCore applicationCore = null;
-    private static StateData currentStateData;
+    private static StateData currentStateData = null;
 
     private StackPane basePane;
     private Node currentPage;
@@ -89,15 +89,35 @@ public class ApplicationCore extends Application
     private TrayIcon trayIcon;
     private String titleSaveString;
 
+    /**
+     * Construct the application and initialise core components such as the programs configuration
+     *
+     * @since   1.0
+     */
     public ApplicationCore()
     {
-        titleSaveString = "";
-        System.out.println("***** APP INIT ******");
         applicationCore = this;
+        titleSaveString = "";
         programConfigManager = ProgramConfigManager.getInstance();
     }
 
-    public static void launchApplication()
+    public static ApplicationCore getInstance()
+    {
+        return applicationCore;
+    }
+
+    public static void s_setApplicationState(StateData stateData)
+    {
+        getInstance().setApplicationState(stateData);
+    }
+
+    /**
+     * Method designed to launch the application natively using JavaFX base class methods. This provides a way for the
+     * native C# bootstrapper to request to start the program.
+     *
+     * @since   1.0
+     */
+    public void launchApplication()
     {
         System.out.println("Received native launch request");
 
@@ -111,13 +131,19 @@ public class ApplicationCore extends Application
         }
     }
 
-    public static void setTitleSaveString(String saveString)
+    /**
+     * Method designed to launch the application natively using JavaFX base class methods. This provides a way for the
+     * native C# bootstrapper to request to start the program.
+     *
+     * @since   1.0
+     */
+    public void updateWindowTitle(String saveString)
     {
-        applicationCore.titleSaveString = saveString;
-        applicationCore.stage.setTitle(WINDOW_TITLE + ": " + saveString);
+        titleSaveString = saveString;
+        stage.setTitle(WINDOW_TITLE + ": " + saveString);
     }
 
-    public static void changeApplicationState(StateData stateData)
+    public void setApplicationState(StateData stateData)
     {
         if (currentStateData == null)
         {
@@ -129,24 +155,24 @@ public class ApplicationCore extends Application
         }
 
         currentStateData = stateData;
-        if (applicationCore.stage.isShowing())
+        if (stage.isShowing())
         {
-            applicationCore.changeGuiState(currentStateData);
+            changeGuiState(currentStateData);
         }
     }
 
-    public static void show()
+    public void show()
     {
         Platform.runLater(() ->
         {
             if (currentStateData != null)
             {
-                applicationCore.initGui();
+                initGui();
 
                 // Load GUI that is associated to the current application state
-                applicationCore.basePane.getChildren().clear();
-                applicationCore.basePane.getChildren().add(currentStateData.createGUI());
-                applicationCore.stage.show();
+                basePane.getChildren().clear();
+                basePane.getChildren().add(currentStateData.createGUI());
+                stage.show();
             }
             else
             {
@@ -155,23 +181,23 @@ public class ApplicationCore extends Application
         });
     }
 
-    public static ReadOnlyDoubleProperty getWidthProperty()
+    public ReadOnlyDoubleProperty getWidthProperty()
     {
-        return applicationCore.stage.widthProperty();
+        return stage.widthProperty();
     }
 
-    public static void openBrowser(String url)
+    public void openBrowser(String url)
     {
-        applicationCore.getHostServices().showDocument(url);
+        getHostServices().showDocument(url);
     }
 
-    public static File showDirectorySelector()
+    public File showDirectorySelector()
     {
         DirectoryChooser directoryChooser = new DirectoryChooser();
-        return directoryChooser.showDialog(applicationCore.stage);
+        return directoryChooser.showDialog(stage);
     }
 
-    public static File showFileSelector()
+    public File showFileSelector()
     {
         ProgramConfigManager programConfigManager = ProgramConfigManager.getInstance();
         FileChooser fileChooser = new FileChooser();
@@ -189,15 +215,15 @@ public class ApplicationCore extends Application
         FileChooser.ExtensionFilter extensionFilter = new FileChooser.ExtensionFilter("Benner Hardware Monitor Save (*.bhwms)", "*.bhwms");
         fileChooser.getExtensionFilters().add(extensionFilter);
 
-        return fileChooser.showOpenDialog(applicationCore.stage);
+        return fileChooser.showOpenDialog(stage);
     }
 
-    public static void onConnected()
+    public void onConnected()
     {
         // Load save
         if (!SaveManager.getInstance().loadPreviousSave())
         {
-            ApplicationCore.changeApplicationState(new LoadingStateData("Save Error", "Failed to load previous save"));
+            setApplicationState(new LoadingStateData("Save Error", "Failed to load previous save"));
 
             System.err.println("Failed to load previous save");
 
@@ -228,24 +254,24 @@ public class ApplicationCore extends Application
         // If the save contains no pages, we should open the page editor so that the user can add some
         if (SaveManager.getInstance().getSaveData().getPageDataList().isEmpty())
         {
-            ApplicationCore.show();
+            show();
         }
 
-        ApplicationCore.changeApplicationState(new PageOverviewStateData());
+        setApplicationState(new PageOverviewStateData());
     }
 
-    public static void onConnecting(ConnectedEvent connectedEvent)
+    public void onConnecting(ConnectedEvent connectedEvent)
     {
         // Display connecting text
-        ApplicationCore.changeApplicationState(new LoadingStateData("Connecting...", connectedEvent.
+        setApplicationState(new LoadingStateData("Connecting...", connectedEvent.
                 getConnectionInformation().getHostname() + " (" + ip4AddressToString(connectedEvent.
                 getConnectionInformation().getIp4Address()) + ")"));
     }
 
-    public static void onVersionMismatch(ConnectedEvent connectedEvent,
+    public void onVersionMismatch(ConnectedEvent connectedEvent,
                                          List<ConnectionInformation> availableConnections)
     {
-        ApplicationCore.changeApplicationState(new InformationStateData(
+        setApplicationState(new InformationStateData(
                 "Connection Refused", "Could not connect to " + connectedEvent.
                 getConnectionInformation().getHostname() + " because the client version (v" +
                 VERSION_MAJOR + "." + VERSION_MINOR + "." + VERSION_PATCH +
@@ -253,7 +279,7 @@ public class ApplicationCore extends Application
                 connectedEvent.getMajorServerVersion() + "." +
                 connectedEvent.getMinorServerVersion() + "." +
                 connectedEvent.getPatchServerVersion() + ")", "Device List",
-                event -> changeApplicationState(new ConnectionListStateData(availableConnections))));
+                event -> setApplicationState(new ConnectionListStateData(availableConnections))));
     }
 
     public void initGui()
@@ -334,7 +360,7 @@ public class ApplicationCore extends Application
         Platform.setImplicitExit(false);
         this.stage = stage;
         this.stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("icon.png")));
-        changeApplicationState(new LoadingStateData("Launching Editor"));
+        setApplicationState(new LoadingStateData("Launching Editor"));
 
         try
         {
@@ -357,7 +383,7 @@ public class ApplicationCore extends Application
             // application has been launched on the device
             System.out.println("Program Configuration does not required save location information, displaying " +
                     "welcome page");
-            changeApplicationState(new WelcomePageStateData());
+            setApplicationState(new WelcomePageStateData());
             show();
         }
         else if (programConfigManager.doesFileExist() && !programConfigManager.containsCompleteConnectionInfo())
@@ -518,32 +544,32 @@ public class ApplicationCore extends Application
                     alert.showAndWait();
 
                     // Display everything in the broadcast reply data list on the connection page
-                    changeApplicationState(new ConnectionListStateData(availableConnections));
+                    setApplicationState(new ConnectionListStateData(availableConnections));
                     break;
                 case VERSION_MISMATCH:
                     onVersionMismatch(connectedEvent, availableConnections);
                     break;
                 case IN_USE:
-                    ApplicationCore.changeApplicationState(new InformationStateData(
+                    setApplicationState(new InformationStateData(
                             "Connection Refused", "Could not connect to " + connectedEvent.
                             getConnectionInformation().getHostname() +
                             " because it is in use by another device (" + connectedEvent.
                             getCurrentlyConnectedHostname() + ")", "Device List",
-                            event -> changeApplicationState(new ConnectionListStateData(availableConnections))));
+                            event -> setApplicationState(new ConnectionListStateData(availableConnections))));
                     break;
                 case CONNECTION_REFUSED:
-                    ApplicationCore.changeApplicationState(new InformationStateData(
+                    setApplicationState(new InformationStateData(
                             "Connection Refused", "Could not connect to " + connectedEvent.
                             getConnectionInformation().getHostname(), "Device List",
-                            event -> changeApplicationState(new ConnectionListStateData(availableConnections))));
+                            event -> setApplicationState(new ConnectionListStateData(availableConnections))));
                     break;
                 case HEARTBEAT_TIMEOUT:
-                    ApplicationCore.changeApplicationState(new LoadingStateData("Lost Communication",
+                    setApplicationState(new LoadingStateData("Lost Communication",
                             "No heartbeat message was received from " + connectedEvent.
                                     getConnectionInformation().getHostname() + " for " +
                                     HEARTBEAT_TIMEOUT_MS + "ms. Attempting to reconnect",
                             "Device List",
-                            event -> changeApplicationState(new ConnectionListStateData(availableConnections))));
+                            event -> setApplicationState(new ConnectionListStateData(availableConnections))));
                     System.out.println("NO HEARTBEAT RECEIVED");
 
                     // Attempt to reconnect to the device
@@ -551,11 +577,11 @@ public class ApplicationCore extends Application
                     break;
                 case UNEXPECTED_DISCONNECT:
                     System.out.println("LOST CONNECTION TO HARDWARE MONITOR");
-                    ApplicationCore.changeApplicationState(new LoadingStateData("Lost Communication",
+                    setApplicationState(new LoadingStateData("Lost Communication",
                             connectedEvent.getConnectionInformation().getHostname() +
                                     " Disconnected unexpectedly. Attempting to reconnect",
                             "Device List",
-                            event -> changeApplicationState(new ConnectionListStateData(availableConnections))));
+                            event -> setApplicationState(new ConnectionListStateData(availableConnections))));
 
                     // Attempt to reconnect to the device
                     startNetworkClient(false);
@@ -580,7 +606,7 @@ public class ApplicationCore extends Application
 
         if (displayScannedDevices)
         {
-            ApplicationCore.changeApplicationState(networkScanStateData);
+            setApplicationState(networkScanStateData);
         }
 
         networkScanner.scan(0, scanReplyMessage ->
@@ -620,7 +646,7 @@ public class ApplicationCore extends Application
             // connect to via the connection list which will be displayed instead
             if (!networkScanStateData.shouldConnectToLast())
             {
-                ApplicationCore.changeApplicationState(new ConnectionListStateData(availableConnections));
+                setApplicationState(new ConnectionListStateData(availableConnections));
             }
             else
             {
@@ -656,7 +682,7 @@ public class ApplicationCore extends Application
                     alert.showAndWait();
 
                     // Display everything in the broadcast reply data list on the connection page
-                    changeApplicationState(new ConnectionListStateData(availableConnections));
+                    setApplicationState(new ConnectionListStateData(availableConnections));
                     show();
                 }
             }

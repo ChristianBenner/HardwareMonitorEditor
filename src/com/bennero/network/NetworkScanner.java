@@ -79,7 +79,7 @@ public class NetworkScanner
         // Scan network for device with that MAC address
         NetworkScanner networkScanner = new NetworkScanner();
 
-        ApplicationCore.changeApplicationState(new LoadingStateData("Scanning network", "For hardware monitor devices"));
+        ApplicationCore.s_setApplicationState(new LoadingStateData("Scanning network", "For hardware monitor devices"));
         networkScanner.scan(5, scanReplyMessage ->
         {
             // Before adding to available connections, check if a connection in the list with the same
@@ -112,7 +112,7 @@ public class NetworkScanner
 
             if (!NetworkClient.getInstance().isConnected())
             {
-                ApplicationCore.changeApplicationState(new ConnectionListStateData(availableConnections));
+                ApplicationCore.s_setApplicationState(new ConnectionListStateData(availableConnections));
 
                 if (availableConnections.isEmpty())
                 {

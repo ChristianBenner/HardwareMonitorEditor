@@ -111,11 +111,11 @@ public class ConnectionListPage extends StackPane
                         switch (connectedEvent.getConnectionStatus())
                         {
                             case CONNECTED:
-                                ApplicationCore.onConnected();
+                                ApplicationCore.getInstance().onConnected();
                                 break;
                             case CONNECTING:
                                 // Display connecting text
-                                ApplicationCore.changeApplicationState(new LoadingStateData("Connecting...",
+                                ApplicationCore.s_setApplicationState(new LoadingStateData("Connecting...",
                                         connectedEvent.getConnectionInformation().getHostname() + " (" +
                                                 ip4AddressToString(connectedEvent.getConnectionInformation().
                                                         getIp4Address()) + ")"));
@@ -135,11 +135,11 @@ public class ConnectionListPage extends StackPane
 
                                 // Re-display the connection list page so the user can select another hardware monitor
                                 // to connect to
-                                ApplicationCore.changeApplicationState(new ConnectionListStateData(
+                                ApplicationCore.s_setApplicationState(new ConnectionListStateData(
                                         availableConnections));
                                 break;
                             case VERSION_MISMATCH:
-                                ApplicationCore.changeApplicationState(new InformationStateData(
+                                ApplicationCore.s_setApplicationState(new InformationStateData(
                                         "Connection Refused", "Could not connect to " + connectedEvent.
                                         getConnectionInformation().getHostname() + " because the client version (v" +
                                         VERSION_MAJOR + "." + VERSION_MINOR + "." + VERSION_PATCH +
@@ -147,46 +147,47 @@ public class ConnectionListPage extends StackPane
                                         connectedEvent.getMajorServerVersion() + "." +
                                         connectedEvent.getMinorServerVersion() + "." +
                                         connectedEvent.getPatchServerVersion() + ")", "Device List",
-                                        event -> ApplicationCore.changeApplicationState(new ConnectionListStateData(
-                                                availableConnections))));
+                                        event -> ApplicationCore.s_setApplicationState(new
+                                                ConnectionListStateData(availableConnections))));
                                 break;
                             case IN_USE:
-                                ApplicationCore.changeApplicationState(new InformationStateData(
+                                ApplicationCore.s_setApplicationState(new InformationStateData(
                                         "Connection Refused", "Could not connect to " + connectedEvent.
                                         getConnectionInformation().getHostname() +
                                         " because it is in use by another device (" + connectedEvent.
                                         getCurrentlyConnectedHostname() + ")", "Device List",
-                                        event -> ApplicationCore.changeApplicationState(new ConnectionListStateData(
-                                                availableConnections))));
+                                        event -> ApplicationCore.s_setApplicationState(new
+                                                ConnectionListStateData(availableConnections))));
                                 break;
                             case CONNECTION_REFUSED:
-                                ApplicationCore.changeApplicationState(new InformationStateData(
+                                ApplicationCore.s_setApplicationState(new InformationStateData(
                                         "Connection Refused", "Could not connect to " + connectedEvent.
                                         getConnectionInformation().getHostname(), "Device List",
-                                        event -> ApplicationCore.changeApplicationState(new ConnectionListStateData(
-                                                availableConnections))));
+                                        event -> ApplicationCore.s_setApplicationState(
+                                                new ConnectionListStateData(availableConnections))));
                                 break;
                             case HEARTBEAT_TIMEOUT:
-                                ApplicationCore.changeApplicationState(new LoadingStateData("Lost Communication",
-                                        "No heartbeat message was received from " + connectedEvent.
-                                                getConnectionInformation().getHostname() + " for " +
+                                ApplicationCore.s_setApplicationState(new LoadingStateData(
+                                        "Lost Communication", "No heartbeat message was received from " +
+                                        connectedEvent.getConnectionInformation().getHostname() + " for " +
                                                 HEARTBEAT_TIMEOUT_MS + "ms. Attempting to reconnect",
                                         "Device List",
-                                        event -> ApplicationCore.changeApplicationState(new ConnectionListStateData(
+                                        event -> ApplicationCore.s_setApplicationState(new ConnectionListStateData(
                                                 availableConnections))));
 
                                 // Re-display the connection list page so the user can select another hardware monitor
                                 // to connect to
-                                ApplicationCore.changeApplicationState(new ConnectionListStateData(
+                                ApplicationCore.s_setApplicationState(new ConnectionListStateData(
                                         availableConnections));
                                 break;
                             case UNEXPECTED_DISCONNECT:
                                 System.out.println("LOST CONNECTION TO HARDWARE MONITOR");
-                                ApplicationCore.changeApplicationState(new LoadingStateData("Lost Communication",
+                                ApplicationCore.s_setApplicationState(new LoadingStateData(
+                                        "Lost Communication",
                                         connectedEvent.getConnectionInformation().getHostname() +
                                                 " Disconnected unexpectedly. Attempting to reconnect",
                                         "Device List",
-                                        event -> ApplicationCore.changeApplicationState(new ConnectionListStateData(
+                                        event -> ApplicationCore.s_setApplicationState(new ConnectionListStateData(
                                                 availableConnections))));
                                 break;
                         }

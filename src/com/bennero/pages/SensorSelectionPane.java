@@ -102,7 +102,7 @@ public class SensorSelectionPane extends BorderPane
 
         BorderPane footerPane = new BorderPane();
         Button backButton = new Button("Back");
-        backButton.setOnAction(actionEvent -> ApplicationCore.changeApplicationState(new PageEditorStateData(pageData)));
+        backButton.setOnAction(actionEvent -> ApplicationCore.s_setApplicationState(new PageEditorStateData(pageData)));
         backButton.setId("hw-default-button");
         footerPane.setLeft(backButton);
 
@@ -117,7 +117,7 @@ public class SensorSelectionPane extends BorderPane
                 Sensor theSensor = sensorListView.getSelectionModel().getSelectedItem().sensor;
                 theSensor.setPosition(row, column);
 
-                ApplicationCore.changeApplicationState(new SensorEditorStateData(pageData, theSensor));
+                ApplicationCore.s_setApplicationState(new SensorEditorStateData(pageData, theSensor));
             }
         });
 

@@ -133,7 +133,7 @@ public class PageOverview extends StackPane
         {
             if (SaveManager.displayOpenSaveUI())
             {
-                ApplicationCore.changeApplicationState(new PageOverviewStateData());
+                ApplicationCore.s_setApplicationState(new PageOverviewStateData());
             }
         });
         topLeftButtonBox.getChildren().add(openSaveButton);
@@ -150,7 +150,7 @@ public class PageOverview extends StackPane
         {
             if (SaveManager.displayNewSaveUI())
             {
-                ApplicationCore.changeApplicationState(new PageOverviewStateData());
+                ApplicationCore.s_setApplicationState(new PageOverviewStateData());
             }
         });
 
@@ -193,7 +193,7 @@ public class PageOverview extends StackPane
 
         Button donateButton = new Button("Donate");
         donateButton.setId("hw-donate-button");
-        donateButton.setOnAction(actionEvent -> ApplicationCore.openBrowser("https://www.paypal.com/donate?hosted_button_id=R7QL6UW899UJU"));
+        donateButton.setOnAction(actionEvent -> ApplicationCore.getInstance().openBrowser("https://www.paypal.com/donate?hosted_button_id=R7QL6UW899UJU"));
         StackPane.setAlignment(donateButton, Pos.TOP_RIGHT);
         topRightButtonBox.getChildren().add(donateButton);
         topRightGroup.getChildren().add(topRightButtonBox);
@@ -258,7 +258,7 @@ public class PageOverview extends StackPane
         {
             PageData pageData = saveManager.getSaveData().getPageDataList().get(i);
             PageInfo pageInfo = new PageInfo(pageData, elementWidth, ELEMENT_HEIGHT);
-            pageInfo.setOnMouseClicked(mouseEvent -> ApplicationCore.changeApplicationState(new PageEditorStateData(pageData)));
+            pageInfo.setOnMouseClicked(mouseEvent -> ApplicationCore.s_setApplicationState(new PageEditorStateData(pageData)));
             pageInfo.setCursor(Cursor.HAND);
             pageInfoList.add(pageInfo);
             pageOverviewList.getChildren().add(pageInfo);
@@ -274,6 +274,6 @@ public class PageOverview extends StackPane
 
     public void addPageInfoUI(PageData page)
     {
-        ApplicationCore.changeApplicationState(new PageEditorStateData(page));
+        ApplicationCore.s_setApplicationState(new PageEditorStateData(page));
     }
 }
