@@ -90,6 +90,30 @@ public class ApplicationCore extends Application
     private String titleSaveString;
 
     /**
+     * Get singleton instance of the application core
+     *
+     * @return  The instance of application core
+     * @since   1.0
+     */
+    public static ApplicationCore getInstance()
+    {
+        return applicationCore;
+    }
+
+    /**
+     * Set the application state. This feature was implemented to allow for user interface to be created on demand,
+     * meaning that the application does not need to initialise graphical components that are not in use. This reduces
+     * hardware usage such as CPU and memory load.
+     *
+     * @param stateData The new state for the application
+     * @since           1.0
+     */
+    public static void s_setApplicationState(StateData stateData)
+    {
+        getInstance().setApplicationState(stateData);
+    }
+
+    /**
      * Construct the application and initialise core components such as the programs configuration
      *
      * @since   1.0
@@ -99,16 +123,6 @@ public class ApplicationCore extends Application
         applicationCore = this;
         titleSaveString = "";
         programConfigManager = ProgramConfigManager.getInstance();
-    }
-
-    public static ApplicationCore getInstance()
-    {
-        return applicationCore;
-    }
-
-    public static void s_setApplicationState(StateData stateData)
-    {
-        getInstance().setApplicationState(stateData);
     }
 
     /**
@@ -186,36 +200,9 @@ public class ApplicationCore extends Application
         return stage.widthProperty();
     }
 
-    public void openBrowser(String url)
+    public Stage getStage()
     {
-        getHostServices().showDocument(url);
-    }
-
-    public File showDirectorySelector()
-    {
-        DirectoryChooser directoryChooser = new DirectoryChooser();
-        return directoryChooser.showDialog(stage);
-    }
-
-    public File showFileSelector()
-    {
-        ProgramConfigManager programConfigManager = ProgramConfigManager.getInstance();
-        FileChooser fileChooser = new FileChooser();
-
-        // If the program config manager contains a file area path, open the file chooser window there
-        if (programConfigManager.isFileAreaPathAvailable())
-        {
-            File saveAreaFile = new File(programConfigManager.getFileAreaPath());
-            if (saveAreaFile.exists() && saveAreaFile.isDirectory())
-            {
-                fileChooser.setInitialDirectory(saveAreaFile);
-            }
-        }
-
-        FileChooser.ExtensionFilter extensionFilter = new FileChooser.ExtensionFilter("Benner Hardware Monitor Save (*.bhwms)", "*.bhwms");
-        fileChooser.getExtensionFilters().add(extensionFilter);
-
-        return fileChooser.showOpenDialog(stage);
+        return stage;
     }
 
     public void onConnected()

@@ -25,6 +25,7 @@ import com.bennero.common.PageData;
 import com.bennero.config.SaveData;
 import com.bennero.config.SaveManager;
 import com.bennero.core.ApplicationCore;
+import com.bennero.core.CoreUtils;
 import com.bennero.states.PageEditorStateData;
 import com.bennero.states.PageOverviewStateData;
 import com.bennero.ui.ClientOptions;
@@ -193,7 +194,7 @@ public class PageOverview extends StackPane
 
         Button donateButton = new Button("Donate");
         donateButton.setId("hw-donate-button");
-        donateButton.setOnAction(actionEvent -> ApplicationCore.getInstance().openBrowser("https://www.paypal.com/donate?hosted_button_id=R7QL6UW899UJU"));
+        donateButton.setOnAction(actionEvent -> CoreUtils.openBrowser("https://www.paypal.com/donate?hosted_button_id=R7QL6UW899UJU"));
         StackPane.setAlignment(donateButton, Pos.TOP_RIGHT);
         topRightButtonBox.getChildren().add(donateButton);
         topRightGroup.getChildren().add(topRightButtonBox);

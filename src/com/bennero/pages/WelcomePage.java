@@ -25,6 +25,7 @@ import com.bennero.common.TransitionType;
 import com.bennero.config.ProgramConfigManager;
 import com.bennero.config.SaveManager;
 import com.bennero.core.ApplicationCore;
+import com.bennero.core.CoreUtils;
 import com.bennero.network.NetworkScanner;
 import javafx.animation.Transition;
 import javafx.geometry.Pos;
@@ -119,7 +120,7 @@ public class WelcomePage extends StackPane
         fileAreaSelectSlide.getChildren().add(buttonBox);
         setLocationButton.setOnAction(actionEvent ->
         {
-            File selectedDirectory = ApplicationCore.getInstance().showDirectorySelector();
+            File selectedDirectory = CoreUtils.showDirectorySelector();
 
             if (selectedDirectory != null)
             {

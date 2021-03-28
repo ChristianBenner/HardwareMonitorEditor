@@ -24,6 +24,7 @@ package com.bennero.config;
 import com.bennero.common.PageData;
 import com.bennero.common.Sensor;
 import com.bennero.core.ApplicationCore;
+import com.bennero.core.CoreUtils;
 import com.bennero.network.NetworkClient;
 import com.bennero.util.PageGenerator;
 import javafx.scene.control.Alert;
@@ -65,7 +66,7 @@ public class SaveManager
 
     public static boolean displayOpenSaveUI()
     {
-        File selectedFile = ApplicationCore.getInstance().showFileSelector();
+        File selectedFile = CoreUtils.showFileSelector();
 
         if (selectedFile != null)
         {
