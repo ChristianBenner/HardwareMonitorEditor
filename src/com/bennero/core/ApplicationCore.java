@@ -7,9 +7,11 @@
  * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
  * version.
  *
- * An additional term included with this license is the requirement to preserve legal notices and author attributions
- * such as this one. Do not remove the original author license notices from the program unless given permission from
- * the original author: christianbenner35@gmail.com
+ * Additional terms included with this license are to:
+ * - Preserve legal notices and author attributions such as this one. Do not remove the original author license notices
+ *   from the program
+ * - Preserve the donation button and its link to the original authors donation page (christianbenner35@gmail.com)
+ * - Only break the terms if given permission from the original author christianbenner35@gmail.com
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -24,34 +26,25 @@ package com.bennero.core;
 import com.bennero.Version;
 import com.bennero.bootstrapper.Native;
 import com.bennero.bootstrapper.SensorRequest;
-import com.bennero.networking.ConnectionInformation;
-import com.bennero.networking.NetworkUtils;
 import com.bennero.common.SensorType;
-import com.bennero.common.TransitionType;
 import com.bennero.config.ProgramConfigManager;
 import com.bennero.config.SaveManager;
 import com.bennero.network.ConnectedEvent;
 import com.bennero.network.NetworkClient;
 import com.bennero.network.NetworkScanner;
+import com.bennero.networking.ConnectionInformation;
+import com.bennero.networking.NetworkUtils;
 import com.bennero.states.*;
 import com.bennero.util.SystemTrayUtils;
-import javafx.animation.Transition;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.image.Image;
-import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
-import javafx.stage.DirectoryChooser;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.awt.*;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -127,7 +120,7 @@ public class ApplicationCore extends Application
      *
      * @since   1.0
      */
-    public void launchApplication()
+    public static void launchApplication()
     {
         System.out.println("Received native launch request");
 
