@@ -27,9 +27,11 @@ import com.bennero.common.SkinHelper;
 import com.bennero.config.SaveManager;
 import com.bennero.core.ApplicationCore;
 import com.bennero.states.PageEditorStateData;
-import com.bennero.states.SensorSelectionStateData;
+import com.bennero.states.StateData;
 import com.bennero.ui.coloureditor.ColourEditor;
 import com.bennero.ui.UIHelper;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -58,7 +60,7 @@ public class SensorEditor extends BorderPane
 
     private SaveManager saveManager;
 
-    public SensorEditor(PageData pageData, Sensor sensor)
+    public SensorEditor(PageData pageData, Sensor sensor, StateData backButtonState)
     {
         this.saveManager = SaveManager.getInstance();
 
@@ -140,8 +142,8 @@ public class SensorEditor extends BorderPane
 
         BorderPane footerPane = new BorderPane();
         Button backButton = new Button("Back");
-        backButton.setOnAction(actionEvent -> ApplicationCore.s_setApplicationState(
-                new SensorSelectionStateData(pageData, sensor.getRow(), sensor.getColumn())));
+        backButton.setOnAction(actionEvent -> ApplicationCore.s_setApplicationState(backButtonState));
+
         backButton.setId("hw-default-button");
         footerPane.setLeft(backButton);
 

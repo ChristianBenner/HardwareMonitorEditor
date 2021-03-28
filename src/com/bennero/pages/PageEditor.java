@@ -26,6 +26,7 @@ import com.bennero.common.Sensor;
 import com.bennero.config.SaveManager;
 import com.bennero.core.ApplicationCore;
 import com.bennero.network.NetworkClient;
+import com.bennero.states.PageEditorStateData;
 import com.bennero.states.PageOverviewStateData;
 import com.bennero.states.SensorEditorStateData;
 import com.bennero.states.SensorSelectionStateData;
@@ -297,7 +298,7 @@ public class PageEditor extends StackPane
                 edit.setBackground(new Background(new BackgroundImage(editIcon, BackgroundRepeat.NO_REPEAT,
                         BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, BackgroundSize.DEFAULT)));
                 edit.setOnAction(event -> ApplicationCore.s_setApplicationState(
-                        new SensorEditorStateData(pageData, sensor)));
+                        new SensorEditorStateData(pageData, sensor, new PageEditorStateData(pageData))));
 
                 hBox.getChildren().add(edit);
                 Button delete = new Button();

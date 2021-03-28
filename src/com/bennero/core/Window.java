@@ -33,6 +33,14 @@ import javafx.stage.Stage;
 
 import static com.bennero.Version.*;
 
+/**
+ * Window handles the GUI components of the application. It is responsible for displaying the correct GUI for the
+ * applications current state when the window is visible.
+ *
+ * @author      Christian Benner
+ * @version     %I%, %G%
+ * @since       1.0
+ */
 public class Window
 {
     public static final int WINDOW_WIDTH_PX = 800;

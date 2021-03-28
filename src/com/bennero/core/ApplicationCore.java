@@ -247,7 +247,6 @@ public class ApplicationCore extends Application
     {
         Font.loadFont(getClass().getClassLoader().getResourceAsStream("Michroma.ttf"), 48);
 
-        System.out.println("***** START ******");
         // Process parameters
         List<String> parameterList = super.getParameters().getRaw();
         System.out.println("Parameter List Size: " + parameterList.size());

@@ -25,8 +25,11 @@ import com.bennero.common.PageData;
 import com.bennero.common.Sensor;
 import com.bennero.core.ApplicationCore;
 import com.bennero.states.PageEditorStateData;
+import com.bennero.states.PageOverviewStateData;
 import com.bennero.states.SensorEditorStateData;
+import com.bennero.states.SensorSelectionStateData;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -117,7 +120,8 @@ public class SensorSelectionPane extends BorderPane
                 Sensor theSensor = sensorListView.getSelectionModel().getSelectedItem().sensor;
                 theSensor.setPosition(row, column);
 
-                ApplicationCore.s_setApplicationState(new SensorEditorStateData(pageData, theSensor));
+                ApplicationCore.s_setApplicationState(new SensorEditorStateData(pageData, theSensor,
+                        new SensorSelectionStateData(pageData, theSensor.getRow(), theSensor.getColumn())));
             }
         });
 
