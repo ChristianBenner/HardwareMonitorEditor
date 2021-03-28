@@ -72,22 +72,14 @@ import static com.bennero.networking.NetworkUtils.ip4AddressToString;
  */
 public class ApplicationCore extends Application
 {
-    public static final int WINDOW_WIDTH_PX = 800;
-    public static final int WINDOW_HEIGHT_PX = 480;
-
     private static final String RES_PATH_PARAMETER = "-respath=";
-    private static final String WINDOW_TITLE = "Hardware Monitor Editor v" + VERSION_MAJOR + "." + VERSION_MINOR + "." +
-            VERSION_PATCH;
 
     public static ApplicationCore applicationCore = null;
     private static StateData currentStateData = null;
 
-    private StackPane basePane;
-    private Node currentPage;
-    private Stage stage;
     private ProgramConfigManager programConfigManager;
     private TrayIcon trayIcon;
-    private String titleSaveString;
+    private Window window;
 
     /**
      * Get singleton instance of the application core
@@ -98,6 +90,11 @@ public class ApplicationCore extends Application
     public static ApplicationCore getInstance()
     {
         return applicationCore;
+    }
+
+    public static StateData s_getApplicationState()
+    {
+        return getInstance().getApplicationState();
     }
 
     /**
@@ -121,7 +118,6 @@ public class ApplicationCore extends Application
     public ApplicationCore()
     {
         applicationCore = this;
-        titleSaveString = "";
         programConfigManager = ProgramConfigManager.getInstance();
     }
 
@@ -145,16 +141,9 @@ public class ApplicationCore extends Application
         }
     }
 
-    /**
-     * Method designed to launch the application natively using JavaFX base class methods. This provides a way for the
-     * native C# bootstrapper to request to start the program.
-     *
-     * @since   1.0
-     */
-    public void updateWindowTitle(String saveString)
+    public StateData getApplicationState()
     {
-        titleSaveString = saveString;
-        stage.setTitle(WINDOW_TITLE + ": " + saveString);
+        return this.currentStateData;
     }
 
     public void setApplicationState(StateData stateData)
@@ -169,40 +158,15 @@ public class ApplicationCore extends Application
         }
 
         currentStateData = stateData;
-        if (stage.isShowing())
+        if (window.isShowing())
         {
-            changeGuiState(currentStateData);
+            window.changeGuiState(currentStateData);
         }
     }
 
-    public void show()
+    public Window getWindow()
     {
-        Platform.runLater(() ->
-        {
-            if (currentStateData != null)
-            {
-                initGui();
-
-                // Load GUI that is associated to the current application state
-                basePane.getChildren().clear();
-                basePane.getChildren().add(currentStateData.createGUI());
-                stage.show();
-            }
-            else
-            {
-                System.err.println("ERROR: No current state data available, cannot show display");
-            }
-        });
-    }
-
-    public ReadOnlyDoubleProperty getWidthProperty()
-    {
-        return stage.widthProperty();
-    }
-
-    public Stage getStage()
-    {
-        return stage;
+        return window;
     }
 
     public void onConnected()
@@ -241,7 +205,7 @@ public class ApplicationCore extends Application
         // If the save contains no pages, we should open the page editor so that the user can add some
         if (SaveManager.getInstance().getSaveData().getPageDataList().isEmpty())
         {
-            show();
+            window.show();
         }
 
         setApplicationState(new PageOverviewStateData());
@@ -267,53 +231,6 @@ public class ApplicationCore extends Application
                 connectedEvent.getMinorServerVersion() + "." +
                 connectedEvent.getPatchServerVersion() + ")", "Device List",
                 event -> setApplicationState(new ConnectionListStateData(availableConnections))));
-    }
-
-    public void initGui()
-    {
-        if (basePane == null)
-        {
-            basePane = new StackPane();
-            Scene uiScene = new Scene(basePane, WINDOW_WIDTH_PX, WINDOW_HEIGHT_PX);
-            uiScene.getStylesheets().add("stylesheet.css");
-            basePane.setId("standard-pane");
-
-            if (!titleSaveString.isEmpty())
-            {
-                stage.setTitle(WINDOW_TITLE + ": " + titleSaveString);
-            }
-            else
-            {
-                stage.setTitle(WINDOW_TITLE);
-            }
-
-            stage.setScene(uiScene);
-            stage.setOnCloseRequest(windowEvent -> destroyGui());
-        }
-    }
-
-    public void destroyGui()
-    {
-        stage.hide();
-        currentPage = null;
-        basePane = null;
-    }
-
-    public void changeGuiState(StateData newStateData)
-    {
-        initGui();
-
-        Node newPage = newStateData.createGUI();
-        basePane.getChildren().add(newPage);
-
-        Transition transition = TransitionType.getTransition(newStateData.getTransitionType(), 1000,
-                basePane, newPage);
-        transition.setOnFinished(actionEvent1 ->
-        {
-            basePane.getChildren().remove(currentPage);
-            currentPage = newPage;
-        });
-        transition.play();
     }
 
     @Override
@@ -345,8 +262,8 @@ public class ApplicationCore extends Application
         }
 
         Platform.setImplicitExit(false);
-        this.stage = stage;
-        this.stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("icon.png")));
+        this.window = new Window(stage);
+        stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("icon.png")));
         setApplicationState(new LoadingStateData("Launching Editor"));
 
         try
@@ -371,7 +288,7 @@ public class ApplicationCore extends Application
             System.out.println("Program Configuration does not required save location information, displaying " +
                     "welcome page");
             setApplicationState(new WelcomePageStateData());
-            show();
+            window.show();
         }
         else if (programConfigManager.doesFileExist() && !programConfigManager.containsCompleteConnectionInfo())
         {
@@ -381,7 +298,7 @@ public class ApplicationCore extends Application
             System.out.println("Program Configuration does not contain all of the required connection information, " +
                     "starting network scan");
             NetworkScanner.handleScan();
-            show();
+            window.show();
         }
         else
         {
@@ -670,7 +587,7 @@ public class ApplicationCore extends Application
 
                     // Display everything in the broadcast reply data list on the connection page
                     setApplicationState(new ConnectionListStateData(availableConnections));
-                    show();
+                    window.show();
                 }
             }
         });

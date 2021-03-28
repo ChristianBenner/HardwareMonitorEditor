@@ -21,6 +21,128 @@
 
 package com.bennero.core;
 
+import com.bennero.common.TransitionType;
+import com.bennero.states.StateData;
+import javafx.animation.Transition;
+import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyDoubleProperty;
+import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
+
+import static com.bennero.Version.*;
+
 public class Window
 {
+    public static final int WINDOW_WIDTH_PX = 800;
+    public static final int WINDOW_HEIGHT_PX = 480;
+    private static final String WINDOW_TITLE = "Hardware Monitor Editor v" + VERSION_MAJOR + "." + VERSION_MINOR + "." +
+            VERSION_PATCH;
+
+    private Stage stage;
+    private StackPane basePane;
+    private Node currentPage;
+    private String titleSaveString;
+
+    public Window(Stage stage)
+    {
+        this.stage = stage;
+        titleSaveString = "";
+    }
+
+    /**
+     * Method designed to launch the application natively using JavaFX base class methods. This provides a way for the
+     * native C# bootstrapper to request to start the program.
+     *
+     * @since   1.0
+     */
+    public void updateWindowTitle(String saveString)
+    {
+        titleSaveString = saveString;
+        stage.setTitle(WINDOW_TITLE + ": " + saveString);
+    }
+
+    public void initGui()
+    {
+        if (basePane == null)
+        {
+            basePane = new StackPane();
+            Scene uiScene = new Scene(basePane, WINDOW_WIDTH_PX, WINDOW_HEIGHT_PX);
+            uiScene.getStylesheets().add("stylesheet.css");
+            basePane.setId("standard-pane");
+
+            if (!titleSaveString.isEmpty())
+            {
+                stage.setTitle(WINDOW_TITLE + ": " + titleSaveString);
+            }
+            else
+            {
+                stage.setTitle(WINDOW_TITLE);
+            }
+
+            stage.setScene(uiScene);
+            stage.setOnCloseRequest(windowEvent -> destroyGui());
+        }
+    }
+
+    public void destroyGui()
+    {
+        stage.hide();
+        currentPage = null;
+        basePane = null;
+    }
+
+    public void changeGuiState(StateData newStateData)
+    {
+        initGui();
+
+        Node newPage = newStateData.createGUI();
+        basePane.getChildren().add(newPage);
+
+        Transition transition = TransitionType.getTransition(newStateData.getTransitionType(), 1000,
+                basePane, newPage);
+        transition.setOnFinished(actionEvent1 ->
+        {
+            basePane.getChildren().remove(currentPage);
+            currentPage = newPage;
+        });
+        transition.play();
+    }
+
+    public void show()
+    {
+        Platform.runLater(() ->
+        {
+            StateData currentState = ApplicationCore.s_getApplicationState();
+            if (currentState != null)
+            {
+                initGui();
+
+                // Load GUI that is associated to the current application state
+                basePane.getChildren().clear();
+                basePane.getChildren().add(currentState.createGUI());
+                stage.show();
+            }
+            else
+            {
+                System.err.println("ERROR: No current state data available, cannot show display");
+            }
+        });
+    }
+
+    public ReadOnlyDoubleProperty getWidthProperty()
+    {
+        return stage.widthProperty();
+    }
+
+    public Stage getStage()
+    {
+        return this.stage;
+    }
+
+    public boolean isShowing()
+    {
+        return stage.isShowing();
+    }
 }

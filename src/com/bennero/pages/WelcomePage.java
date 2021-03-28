@@ -72,14 +72,14 @@ public class WelcomePage extends StackPane
 
         Image image = new Image(getClass().getClassLoader().getResourceAsStream("hardware_monitor_cover.png"));
         ImageView imageView = new ImageView(image);
-        ApplicationCore.getInstance().getWidthProperty().addListener((observableValue, number, t1) ->
+        ApplicationCore.getInstance().getWindow().getWidthProperty().addListener((observableValue, number, t1) ->
         {
             imageView.setFitWidth((double) t1 * 0.7);
         });
 
         imageView.setPreserveRatio(true);
         imageView.setSmooth(true);
-        imageView.setFitWidth(ApplicationCore.getInstance().getWidthProperty().getValue() * 0.7);
+        imageView.setFitWidth(ApplicationCore.getInstance().getWindow().getWidthProperty().getValue() * 0.7);
         welcomeSlide.getChildren().add(imageView);
 
         welcomeSlide.getChildren().add(welcomeSlideContinueButton);

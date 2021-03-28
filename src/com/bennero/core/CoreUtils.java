@@ -40,7 +40,7 @@ public class CoreUtils
     public static File showDirectorySelector()
     {
         DirectoryChooser directoryChooser = new DirectoryChooser();
-        return directoryChooser.showDialog(ApplicationCore.getInstance().getStage());
+        return directoryChooser.showDialog(ApplicationCore.getInstance().getWindow().getStage());
     }
 
     public static File showFileSelector()
@@ -62,7 +62,7 @@ public class CoreUtils
                 "Benner Hardware Monitor Save (*.bhwms)", "*.bhwms");
         fileChooser.getExtensionFilters().add(extensionFilter);
 
-        return fileChooser.showOpenDialog(ApplicationCore.getInstance().getStage());
+        return fileChooser.showOpenDialog(ApplicationCore.getInstance().getWindow().getStage());
     }
 
     public static void openBrowser(String url)

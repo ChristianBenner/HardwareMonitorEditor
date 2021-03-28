@@ -26,6 +26,7 @@ import com.bennero.config.SaveData;
 import com.bennero.config.SaveManager;
 import com.bennero.core.ApplicationCore;
 import com.bennero.core.CoreUtils;
+import com.bennero.core.Window;
 import com.bennero.states.PageEditorStateData;
 import com.bennero.states.PageOverviewStateData;
 import com.bennero.ui.ClientOptions;
@@ -62,7 +63,7 @@ public class PageOverview extends StackPane
     private static final double V_GAP = 10.0;
     private static final int NUM_ELEMENTS_ROW = 4;
     private static final int NUM_SPACES_PER_ROW = NUM_ELEMENTS_ROW - 1;
-    private static final int ELEMENT_WIDTH = (int) ((ApplicationCore.WINDOW_WIDTH_PX - (NUM_SPACES_PER_ROW * PageOverview.H_GAP) -
+    private static final int ELEMENT_WIDTH = (int) ((Window.WINDOW_WIDTH_PX - (NUM_SPACES_PER_ROW * PageOverview.H_GAP) -
             PADDING.getLeft() - PADDING.getRight()) / NUM_ELEMENTS_ROW);
     private static final int ELEMENT_HEIGHT = (int) (ELEMENT_WIDTH / 1.6);
     private static final float ELEMENT_WIDTH_HEIGHT_RATIO = 1.6f;

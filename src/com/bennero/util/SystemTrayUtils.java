@@ -52,7 +52,7 @@ public class SystemTrayUtils
 
         // 'Open' menu item
         MenuItem openMenuItem = new MenuItem("Open");
-        openMenuItem.addActionListener(e -> ApplicationCore.getInstance().show());
+        openMenuItem.addActionListener(e -> ApplicationCore.getInstance().getWindow().show());
 
         // 'Exit' menu item
         MenuItem exitMenuItem = new MenuItem("Exit");
@@ -75,7 +75,7 @@ public class SystemTrayUtils
             @Override
             public void mouseClicked(MouseEvent e)
             {
-                ApplicationCore.getInstance().show();
+                ApplicationCore.getInstance().getWindow().show();
             }
         });
 

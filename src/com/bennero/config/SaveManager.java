@@ -183,7 +183,7 @@ public class SaveManager
             }
 
             ProgramConfigManager.getInstance().setLastLoadedFilePath(file.getAbsolutePath());
-            ApplicationCore.getInstance().updateWindowTitle(file.getName());
+            ApplicationCore.getInstance().getWindow().updateWindowTitle(file.getName());
             return true;
         }
 
