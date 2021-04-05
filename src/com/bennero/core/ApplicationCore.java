@@ -26,6 +26,7 @@ package com.bennero.core;
 import com.bennero.Version;
 import com.bennero.bootstrapper.Native;
 import com.bennero.bootstrapper.SensorRequest;
+import com.bennero.common.Sensor;
 import com.bennero.common.SensorType;
 import com.bennero.config.ProgramConfigManager;
 import com.bennero.config.SaveManager;
@@ -35,7 +36,6 @@ import com.bennero.network.NetworkScanner;
 import com.bennero.networking.ConnectionInformation;
 import com.bennero.networking.NetworkUtils;
 import com.bennero.states.*;
-import com.bennero.util.SystemTrayUtils;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
@@ -44,7 +44,6 @@ import javafx.scene.image.Image;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,8 +70,8 @@ public class ApplicationCore extends Application
     private static StateData currentStateData = null;
 
     private ProgramConfigManager programConfigManager;
-    private TrayIcon trayIcon;
     private Window window;
+    private SystemTrayManager systemTrayManager;
 
     /**
      * Get singleton instance of the application core
@@ -83,6 +82,26 @@ public class ApplicationCore extends Application
     public static ApplicationCore getInstance()
     {
         return applicationCore;
+    }
+
+    /**
+     * Method designed to launch the application natively using JavaFX base class methods. This provides a way for the
+     * native C# bootstrapper to request to start the program.
+     *
+     * @since   1.0
+     */
+    public static void launchApplication()
+    {
+        System.out.println("Received native launch request");
+
+        try
+        {
+            ApplicationCore.launch();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
     }
 
     public static StateData s_getApplicationState()
@@ -114,24 +133,65 @@ public class ApplicationCore extends Application
         programConfigManager = ProgramConfigManager.getInstance();
     }
 
-    /**
-     * Method designed to launch the application natively using JavaFX base class methods. This provides a way for the
-     * native C# bootstrapper to request to start the program.
-     *
-     * @since   1.0
-     */
-    public static void launchApplication()
+    @Override
+    public void start(Stage stage)
     {
-        System.out.println("Received native launch request");
+        // Process parameters
+        processParameters();
 
-        try
+        systemTrayManager = SystemTrayManager.getInstance();
+        systemTrayManager.addToSystemTray();
+
+        Font.loadFont(getClass().getClassLoader().getResourceAsStream("Michroma.ttf"), 48);
+
+        this.window = new Window(stage);
+        stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("icon.png")));
+        setApplicationState(new LoadingStateData("Launching Editor"));
+
+        // Check if the program has been launched before
+        if (!programConfigManager.doesFileExist() || !programConfigManager.isLastLoadedFilePathAvailable() ||
+                !programConfigManager.isFileAreaPathAvailable())
         {
-            ApplicationCore.launch();
+            // Check the program configuration to see if the application has been launched before
+            // There is no program config, or there is no file paths set-up. This means this could be the first time the
+            // application has been launched on the device
+            System.out.println("Program Configuration does not required save location information, displaying " +
+                    "welcome page");
+            setApplicationState(new WelcomePageStateData());
+            window.show();
         }
-        catch (Exception e)
+        else if (programConfigManager.doesFileExist() && !programConfigManager.containsCompleteConnectionInfo())
         {
-            e.printStackTrace();
+            // If the program configuration exists but there is no previously connected device, the user has configured
+            // there file area (its not the first time launching), but they never connected to a device. In this
+            // scenario we need to show the GUI and start a scan
+            System.out.println("Program Configuration does not contain all of the required connection information, " +
+                    "starting network scan");
+            NetworkScanner.handleScan();
+            window.show();
         }
+        else
+        {
+            // If the program has been set-up/launched before and has previously connected to a device, run in system
+            // tray and attempt to connect to the device
+            System.out.println("Program Configuration contains all necessary data, attempting to connect to " +
+                    "previously used Hardware Monitor");
+            startNetworkClient(true);
+        }
+
+        // Add the sensors to the application and start the thread that updates them
+        SensorManager sensorManager = SensorManager.getInstance();
+        sensorManager.addNativeSensors();
+        sensorManager.startSensorUpdateThread();
+    }
+
+    @Override
+    public void stop() throws Exception
+    {
+        System.out.println("Stopping application");
+        systemTrayManager.removeFromSystemTray();
+        super.stop();
+        System.exit(0);
     }
 
     public StateData getApplicationState()
@@ -162,7 +222,22 @@ public class ApplicationCore extends Application
         return window;
     }
 
-    public void onConnected()
+    private void processParameters()
+    {
+        List<String> parameterList = super.getParameters().getRaw();
+        System.out.println("Parameter List Size: " + parameterList.size());
+        for (int i = 0; i < parameterList.size(); i++)
+        {
+            String parameter = parameterList.get(i);
+            if (parameter.startsWith(RES_PATH_PARAMETER))
+            {
+                String fileArea = parameter.substring(RES_PATH_PARAMETER.length());
+                System.out.println("Set resource path from parameter to: " + fileArea);
+            }
+        }
+    }
+
+    private void onConnected()
     {
         // Load save
         if (!SaveManager.getInstance().loadPreviousSave())
@@ -204,7 +279,7 @@ public class ApplicationCore extends Application
         setApplicationState(new PageOverviewStateData());
     }
 
-    public void onConnecting(ConnectedEvent connectedEvent)
+    private void onConnecting(ConnectedEvent connectedEvent)
     {
         // Display connecting text
         setApplicationState(new LoadingStateData("Connecting...", connectedEvent.
@@ -212,8 +287,8 @@ public class ApplicationCore extends Application
                 getConnectionInformation().getIp4Address()) + ")"));
     }
 
-    public void onVersionMismatch(ConnectedEvent connectedEvent,
-                                         List<ConnectionInformation> availableConnections)
+    private void onVersionMismatch(ConnectedEvent connectedEvent,
+                                  List<ConnectionInformation> availableConnections)
     {
         setApplicationState(new InformationStateData(
                 "Connection Refused", "Could not connect to " + connectedEvent.
@@ -224,190 +299,6 @@ public class ApplicationCore extends Application
                 connectedEvent.getMinorServerVersion() + "." +
                 connectedEvent.getPatchServerVersion() + ")", "Device List",
                 event -> setApplicationState(new ConnectionListStateData(availableConnections))));
-    }
-
-    @Override
-    public void stop() throws Exception
-    {
-        System.out.println("Stop called");
-        SystemTrayUtils.removeFromSystemTray(trayIcon);
-        super.stop();
-        System.exit(0);
-    }
-
-    @Override
-    public void start(Stage stage)
-    {
-        Font.loadFont(getClass().getClassLoader().getResourceAsStream("Michroma.ttf"), 48);
-
-        // Process parameters
-        List<String> parameterList = super.getParameters().getRaw();
-        System.out.println("Parameter List Size: " + parameterList.size());
-        for (int i = 0; i < parameterList.size(); i++)
-        {
-            String parameter = parameterList.get(i);
-            if (parameter.startsWith(RES_PATH_PARAMETER))
-            {
-                String fileArea = parameter.substring(RES_PATH_PARAMETER.length());
-                System.out.println("Set resource path from parameter to: " + fileArea);
-            }
-        }
-
-        Platform.setImplicitExit(false);
-        this.window = new Window(stage);
-        stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("icon.png")));
-        setApplicationState(new LoadingStateData("Launching Editor"));
-
-        try
-        {
-            trayIcon = SystemTrayUtils.addToSystemTray();
-
-            // Removes the system tray icon if the application is terminated
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> SystemTrayUtils.removeFromSystemTray(trayIcon)));
-        }
-        catch (Exception e)
-        {
-            // If adding to system tray fails, we should show the GUI
-            e.printStackTrace();
-        }
-
-        if (!programConfigManager.doesFileExist() || !programConfigManager.isLastLoadedFilePathAvailable() ||
-                !programConfigManager.isFileAreaPathAvailable())
-        {
-            // Check the program configuration to see if the application has been launched before
-            // There is no program config, or there is no file paths set-up. This means this could be the first time the
-            // application has been launched on the device
-            System.out.println("Program Configuration does not required save location information, displaying " +
-                    "welcome page");
-            setApplicationState(new WelcomePageStateData());
-            window.show();
-        }
-        else if (programConfigManager.doesFileExist() && !programConfigManager.containsCompleteConnectionInfo())
-        {
-            // If the program configuration exists but there is no previously connected device, the user has configured
-            // there file area (its not the first time launching), but they never connected to a device. In this
-            // scenario we need to show the GUI and start a scan
-            System.out.println("Program Configuration does not contain all of the required connection information, " +
-                    "starting network scan");
-            NetworkScanner.handleScan();
-            window.show();
-        }
-        else
-        {
-            // If the program has been set-up/launched before and has previously connected to a device, run in system
-            // tray and attempt to connect to the device
-            System.out.println("Program Configuration contains all necessary data, attempting to connect to " +
-                    "previously used Hardware Monitor");
-            startNetworkClient(true);
-        }
-
-        addNativeSensors();
-
-        Thread thread = new Thread(() ->
-        {
-            try
-            {
-                while (true)
-                {
-                    Thread.sleep(SENSOR_POLL_RATE_MS);
-
-                    Platform.runLater(() ->
-                    {
-                        if (NetworkClient.getInstance().isConnected())
-                        {
-                            Native.updateSensors();
-                        }
-                    });
-                }
-            }
-            catch (InterruptedException e)
-            {
-                e.printStackTrace();
-            }
-            catch (Exception e)
-            {
-                if (Version.BOOTSTRAPPER_LAUNCH_REQUIRED)
-                {
-                    System.err.println("No NativeAddSensors method. System not launched with the bootstrapper");
-                    e.printStackTrace();
-
-                    Alert alert = new Alert(Alert.AlertType.ERROR, "Failed to update sensors");
-                    alert.setTitle("Hardware Monitor Error");
-                    alert.setHeaderText("Failed to update sensors");
-                    alert.setContentText("There was an error updating the sensor data due to failed communication with " +
-                            "the native interface provided by the bootstrapper application (ERROR CODE: " +
-                            EXIT_ERROR_CODE_NATIVE_SENSOR_UPDATE_FAILED + ")");
-                    alert.showAndWait();
-                    System.exit(EXIT_ERROR_CODE_NATIVE_SENSOR_UPDATE_FAILED);
-                }
-                else
-                {
-                    e.printStackTrace();
-                    System.err.println("Failed to update sensors. Native interface not working correctly");
-                }
-            }
-        });
-
-        if (Version.BOOTSTRAPPER_LAUNCH_REQUIRED)
-        {
-            thread.start();
-        }
-        else
-        {
-            Alert alert = new Alert(Alert.AlertType.WARNING, "No bootstrapper enabled");
-            alert.setTitle("Hardware Monitor Warning");
-            alert.setHeaderText("No bootstrapper enabled");
-            alert.setContentText("The bootstrapper is disabled, meaning that the application will not poll for " +
-                    "hardware data and therefor not update any sensors with real data. This warning is for " +
-                    "developers only, if you are seeing this as a user, somebody built the software wrong! Set " +
-                    "BOOTSTRAPPER_LAUNCH_REQUIRED to false");
-            alert.showAndWait();
-        }
-    }
-
-    private void addNativeSensors()
-    {
-        try
-        {
-            Native.addSensors();
-        }
-        catch (UnsatisfiedLinkError e)
-        {
-            if (Version.BOOTSTRAPPER_LAUNCH_REQUIRED)
-            {
-                System.err.println("No NativeAddSensors method. System not launched with the bootstrapper");
-                e.printStackTrace();
-
-                Alert alert = new Alert(Alert.AlertType.ERROR, "Failed to retrieve sensor data");
-                alert.setTitle("Hardware Monitor Error");
-                alert.setHeaderText("Failed to retrieve sensor data");
-                alert.setContentText("There was an error loading the sensor data due to a communication problem with " +
-                        "the native interface provided by the bootstrapper application. Do not attempt to run the JAR " +
-                        "file without the bootstrapper. If you see this error for any other reason please contact " +
-                        "Bennero support (ERROR CODE: " + EXIT_ERROR_CODE_NATIVE_GET_SENSOR_FAILED + ")");
-                alert.showAndWait();
-
-                System.exit(EXIT_ERROR_CODE_NATIVE_GET_SENSOR_FAILED);
-            }
-            else
-            {
-                // Add debug sensors
-                for (int i = 0; i < 6; i++)
-                {
-                    new SensorRequest(i, "Core #" + i + " Temp", 100.0f, SensorType.TEMPERATURE,
-                            "DEBUG_CPU", 25.0f);
-                }
-
-                new SensorRequest(6, "Core Clock", 1800.0f, SensorType.CLOCK,
-                        "DEBUG_CPU", 25.0f);
-                new SensorRequest(7, "Memory Clock", 1250.0f, SensorType.CLOCK,
-                        "DEBUG_CPU", 1105.0f);
-                new SensorRequest(8, "Core Utilisation", 100.0f, SensorType.LOAD,
-                        "DEBUG_CPU", 53.0f);
-                new SensorRequest(9, "Power Draw", 300.0f, SensorType.POWER,
-                        "DEBUG_CPU", 125.0f);
-            }
-        }
     }
 
     private void networkClientConnect(NetworkClient networkClient,

@@ -36,7 +36,7 @@ import com.bennero.ui.ColouredTextField;
 import com.bennero.ui.NoSensor;
 import com.bennero.ui.PageOptions;
 import com.bennero.ui.TextFieldEditPane;
-import com.bennero.util.SensorManager;
+import com.bennero.core.SensorManager;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.HPos;

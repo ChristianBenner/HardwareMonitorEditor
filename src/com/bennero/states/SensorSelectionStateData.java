@@ -26,7 +26,7 @@ package com.bennero.states;
 import com.bennero.common.PageData;
 import com.bennero.common.TransitionType;
 import com.bennero.pages.SensorSelectionPane;
-import com.bennero.util.SensorManager;
+import com.bennero.core.SensorManager;
 import javafx.scene.Node;
 
 /**

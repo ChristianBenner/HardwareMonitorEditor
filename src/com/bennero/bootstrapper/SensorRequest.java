@@ -25,7 +25,7 @@ package com.bennero.bootstrapper;
 
 import com.bennero.common.Sensor;
 import com.bennero.common.SensorType;
-import com.bennero.util.SensorManager;
+import com.bennero.core.SensorManager;
 import javafx.application.Platform;
 
 /**

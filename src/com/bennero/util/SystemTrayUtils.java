@@ -40,57 +40,5 @@ import java.awt.event.MouseEvent;
  */
 public class SystemTrayUtils
 {
-    public static TrayIcon addToSystemTray() throws Exception
-    {
-        // Check if system tray is supported
-        if (!SystemTray.isSupported())
-        {
-            System.err.println("System Tray not supported");
-            throw new Exception("System Tray not supported");
-        }
 
-        // Retrieve system tray
-        SystemTray systemTray = SystemTray.getSystemTray();
-
-        // 'Open' menu item
-        MenuItem openMenuItem = new MenuItem("Open");
-        openMenuItem.addActionListener(e -> ApplicationCore.getInstance().getWindow().show());
-
-        // 'Exit' menu item
-        MenuItem exitMenuItem = new MenuItem("Exit");
-        exitMenuItem.addActionListener(e ->
-        {
-            Platform.exit();
-        });
-
-        // Create pop-up menu
-        PopupMenu popupMenu = new PopupMenu();
-        popupMenu.add(openMenuItem);
-        popupMenu.add(exitMenuItem);
-
-        // Get and create system tray icon
-        Image imageIcon = ImageIO.read(SystemTrayUtils.class.getClassLoader().getResourceAsStream("icon.png"));
-        TrayIcon trayIcon = new TrayIcon(imageIcon, "Hardware Monitor Editor", popupMenu);
-        trayIcon.setImageAutoSize(true);
-        trayIcon.addMouseListener(new MouseAdapter()
-        {
-            @Override
-            public void mouseClicked(MouseEvent e)
-            {
-                ApplicationCore.getInstance().getWindow().show();
-            }
-        });
-
-        systemTray.add(trayIcon);
-        return trayIcon;
-    }
-
-    public static void removeFromSystemTray(TrayIcon trayIcon)
-    {
-        if (trayIcon != null)
-        {
-            SystemTray systemTray = SystemTray.getSystemTray();
-            systemTray.remove(trayIcon);
-        }
-    }
 }
