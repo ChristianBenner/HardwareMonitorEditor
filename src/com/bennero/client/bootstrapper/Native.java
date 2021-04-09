@@ -7,9 +7,11 @@
  * License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
  * version.
  *
- * An additional term included with this license is the requirement to preserve legal notices and author attributions
- * such as this one. Do not remove the original author license notices from the program unless given permission from
- * the original author: christianbenner35@gmail.com
+ * Additional terms included with this license are to:
+ * - Preserve legal notices and author attributions such as this one. Do not remove the original author license notices
+ *   from the program
+ * - Preserve the donation button and its link to the original authors donation page (christianbenner35@gmail.com)
+ * - Only break the terms if given permission from the original author christianbenner35@gmail.com
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -19,21 +21,20 @@
  * =====================================================================================================================
  */
 
+package com.bennero.client.bootstrapper;
+
 /**
- * Module info defines the modules required by the Hardware Monitor Editor project
+ * Native class defines all of the native methods. Native methods to be registered with the application natively through
+ * JNI (Java Native Interface). In the context of the hardware monitor this is to be accomplished by the bootstrapper
+ * project.
  *
  * @author      Christian Benner
  * @version     %I%, %G%
  * @since       1.0
  */
-module HardwareMonitorEditor
+public class Native
 {
-    exports com.bennero.client.core;
+    public static native void addSensors();
 
-    requires javafx.controls;
-    requires javafx.base;
-    requires javafx.graphics;
-    requires javafx.web;
-    requires HardwareMonitorCommon;
-    requires java.desktop;
+    public static native void updateSensors();
 }
