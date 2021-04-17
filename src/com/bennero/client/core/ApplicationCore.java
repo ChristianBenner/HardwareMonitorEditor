@@ -67,6 +67,8 @@ public class ApplicationCore extends Application
     private ProgramConfigManager programConfigManager;
     private Window window;
     private SystemTrayManager systemTrayManager;
+    private SensorManager sensorManager;
+    private SaveManager saveManager;
 
     /**
      * Get singleton instance of the application core
@@ -126,6 +128,8 @@ public class ApplicationCore extends Application
     {
         applicationCore = this;
         programConfigManager = ProgramConfigManager.getInstance();
+        sensorManager = SensorManager.getInstance();
+        saveManager = SaveManager.getInstance();
     }
 
     @Override
@@ -175,7 +179,6 @@ public class ApplicationCore extends Application
         }
 
         // Add the sensors to the application and start the thread that updates them
-        SensorManager sensorManager = SensorManager.getInstance();
         sensorManager.addNativeSensors();
         sensorManager.startSensorUpdateThread();
     }
@@ -235,7 +238,7 @@ public class ApplicationCore extends Application
     public void onConnected()
     {
         // Load save
-        if (!SaveManager.getInstance().loadPreviousSave())
+        if (!saveManager.loadPreviousSave())
         {
             setApplicationState(new LoadingStateData("Save Error", "Failed to load previous save"));
 
@@ -256,17 +259,17 @@ public class ApplicationCore extends Application
 
                 if (alert.getResult() == openSaveButtonType)
                 {
-                    selectedOption = SaveManager.displayOpenSaveUI();
+                    selectedOption = saveManager.displayOpenSaveUI();
                 }
                 else if (alert.getResult() == newSaveButtonType)
                 {
-                    selectedOption = SaveManager.displayNewSaveUI();
+                    selectedOption = saveManager.displayNewSaveUI();
                 }
             }
         }
 
         // If the save contains no pages, we should open the page editor so that the user can add some
-        if (SaveManager.getInstance().getSaveData().getPageDataList().isEmpty())
+        if (saveManager.getSaveData().getPageDataList().isEmpty())
         {
             window.show();
         }

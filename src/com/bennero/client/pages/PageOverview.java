@@ -132,7 +132,7 @@ public class PageOverview extends StackPane
         //openSaveButton.setId("hw-default-button");
         openSaveButton.setOnAction(actionEvent ->
         {
-            if (SaveManager.displayOpenSaveUI())
+            if (saveManager.displayOpenSaveUI())
             {
                 ApplicationCore.s_setApplicationState(new PageOverviewStateData());
             }
@@ -149,7 +149,7 @@ public class PageOverview extends StackPane
 
         newButton.setOnAction(actionEvent ->
         {
-            if (SaveManager.displayNewSaveUI())
+            if (saveManager.displayNewSaveUI())
             {
                 ApplicationCore.s_setApplicationState(new PageOverviewStateData());
             }

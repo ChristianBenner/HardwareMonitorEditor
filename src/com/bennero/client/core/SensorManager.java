@@ -108,7 +108,7 @@ public class SensorManager
     public boolean isAvailable(Sensor sensor)
     {
         boolean foundSensor = false;
-        List<Sensor> sensorList = SensorManager.getInstance().getSensorList();
+        List<Sensor> sensorList = getSensorList();
         // Check to see if the sensor exists in the list of found sensors
         for(int i = 0; !foundSensor && i < sensorList.size(); i++)
         {

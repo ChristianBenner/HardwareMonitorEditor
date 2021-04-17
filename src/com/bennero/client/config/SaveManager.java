@@ -66,7 +66,7 @@ public class SaveManager
         return instance;
     }
 
-    public static boolean displayOpenSaveUI()
+    public boolean displayOpenSaveUI()
     {
         File selectedFile = CoreUtils.showFileSelector();
 
@@ -82,7 +82,7 @@ public class SaveManager
         return false;
     }
 
-    public static boolean displayNewSaveUI()
+    public boolean displayNewSaveUI()
     {
         final ProgramConfigManager programConfigManager = ProgramConfigManager.getInstance();
         final SaveManager saveManager = SaveManager.getInstance();
@@ -126,7 +126,7 @@ public class SaveManager
         return false;
     }
 
-    private static void purgeCurrentPages()
+    private void purgeCurrentPages()
     {
         // If current save data is not null, remove all the pages from the monitor
         SaveData saveData = SaveManager.getInstance().getSaveData();
