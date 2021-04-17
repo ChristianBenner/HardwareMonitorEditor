@@ -96,7 +96,7 @@ public class ConnectionRequestReplyMessage
         }
         else
         {
-            System.out.println("Server (v" + VERSION_MAJOR + "" + VERSION_MINOR + "." + VERSION_PATCH +
+            System.out.println("Server (v" + VERSION_MAJOR + "." + VERSION_MINOR + "." + VERSION_PATCH +
                     ") accepted client connection");
         }
 

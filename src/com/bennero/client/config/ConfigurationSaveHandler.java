@@ -32,9 +32,7 @@ import javax.xml.parsers.SAXParserFactory;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 
 /**
  * ConfigurationSaveHandler is a base class that provides some basic methods for saving and reading configuration save
@@ -89,7 +87,8 @@ public abstract class ConfigurationSaveHandler extends DefaultHandler
         {
             System.out.println("Saving configuration data");
             XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
-            XMLStreamWriter streamWriter = outputFactory.createXMLStreamWriter(new FileWriter(file));
+            Writer writer = new OutputStreamWriter(new FileOutputStream(file), "UTF-8");
+            XMLStreamWriter streamWriter = outputFactory.createXMLStreamWriter(writer);
             save(streamWriter);
             streamWriter.flush();
             streamWriter.close();
