@@ -20,5 +20,5 @@ if EXIST %JRE_FOLDER_PATH% (
 	rd /q /s %JRE_FOLDER_PATH%
 )
 
-"C:\Program Files\Java\jdk-14.0.1\bin\jlink" --module-path lib\Medusa-11.5.jar;lib\jmods; --add-modules javafx.controls,javafx.base,javafx.graphics,javafx.media,javafx.web,eu.hansolo.medusa --output %JRE_FOLDER_PATH%
+"C:\Program Files\Java\jdk-14.0.1\bin\jlink" --module-path lib\Medusa-11.5.jar;lib\jmods; --strip-debug --no-header-files --no-man-pages --add-modules javafx.controls,javafx.base,javafx.graphics,javafx.media,javafx.web,eu.hansolo.medusa --output %JRE_FOLDER_PATH%
 echo "Created new JRE using jlink at location %JRE_FOLDER_PATH%

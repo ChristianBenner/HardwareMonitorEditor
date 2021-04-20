@@ -47,7 +47,7 @@ public class Window
 {
     public static final int WINDOW_WIDTH_PX = 800;
     public static final int WINDOW_HEIGHT_PX = 480;
-    private static final String WINDOW_TITLE = "Hardware Monitor Editor v" + VERSION_MAJOR + "" + VERSION_MINOR + "." +
+    private static final String WINDOW_TITLE = "Hardware Monitor Editor v" + VERSION_MAJOR + "." + VERSION_MINOR + "." +
             VERSION_PATCH;
 
     private Stage stage;
