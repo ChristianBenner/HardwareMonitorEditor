@@ -23,8 +23,8 @@
 
 package com.bennero.client.ui;
 
-import com.bennero.common.Constants;
 import com.bennero.client.ui.coloureditor.ColourEditor;
+import com.bennero.common.Constants;
 import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;

@@ -23,10 +23,10 @@
 
 package com.bennero.client.ui;
 
-import com.bennero.common.PageData;
-import com.bennero.common.TransitionType;
 import com.bennero.client.network.NetworkClient;
 import com.bennero.client.ui.coloureditor.ColourEditor;
+import com.bennero.common.PageData;
+import com.bennero.common.TransitionType;
 import javafx.beans.value.ChangeListener;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;

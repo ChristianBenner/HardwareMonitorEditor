@@ -23,12 +23,12 @@
 
 package com.bennero.client.pages;
 
-import com.bennero.common.TransitionType;
 import com.bennero.client.config.ProgramConfigManager;
 import com.bennero.client.config.SaveManager;
 import com.bennero.client.core.ApplicationCore;
 import com.bennero.client.core.CoreUtils;
 import com.bennero.client.network.NetworkScanner;
+import com.bennero.common.TransitionType;
 import javafx.animation.Transition;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;

@@ -23,14 +23,14 @@
 
 package com.bennero.client.pages;
 
-import com.bennero.common.networking.ConnectionInformation;
-import com.bennero.common.networking.NetworkUtils;
 import com.bennero.client.core.ApplicationCore;
 import com.bennero.client.network.NetworkClient;
 import com.bennero.client.network.NetworkScanner;
 import com.bennero.client.states.ConnectionListStateData;
 import com.bennero.client.states.InformationStateData;
 import com.bennero.client.states.LoadingStateData;
+import com.bennero.common.networking.ConnectionInformation;
+import com.bennero.common.networking.NetworkUtils;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;

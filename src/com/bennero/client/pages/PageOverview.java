@@ -23,7 +23,6 @@
 
 package com.bennero.client.pages;
 
-import com.bennero.common.PageData;
 import com.bennero.client.config.SaveData;
 import com.bennero.client.config.SaveManager;
 import com.bennero.client.core.ApplicationCore;
@@ -35,6 +34,7 @@ import com.bennero.client.ui.ClientOptions;
 import com.bennero.client.ui.NewPageButton;
 import com.bennero.client.ui.PageInfo;
 import com.bennero.client.util.PageGenerator;
+import com.bennero.common.PageData;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;

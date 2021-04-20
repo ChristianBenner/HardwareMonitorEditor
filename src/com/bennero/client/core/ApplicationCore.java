@@ -23,12 +23,12 @@
 
 package com.bennero.client.core;
 
-import com.bennero.client.states.*;
 import com.bennero.client.config.ProgramConfigManager;
 import com.bennero.client.config.SaveManager;
 import com.bennero.client.network.ConnectedEvent;
 import com.bennero.client.network.NetworkClient;
 import com.bennero.client.network.NetworkScanner;
+import com.bennero.client.states.*;
 import com.bennero.common.networking.ConnectionInformation;
 import com.bennero.common.networking.NetworkUtils;
 import javafx.application.Application;
@@ -43,7 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.bennero.client.Version.*;
-import static com.bennero.common.Constants.*;
+import static com.bennero.common.Constants.HEARTBEAT_TIMEOUT_MS;
 import static com.bennero.common.networking.NetworkUtils.ip4AddressToString;
 
 /**

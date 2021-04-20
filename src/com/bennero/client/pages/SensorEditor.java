@@ -23,23 +23,23 @@
 
 package com.bennero.client.pages;
 
-import com.bennero.common.PageData;
-import com.bennero.common.Sensor;
-import com.bennero.common.SkinHelper;
 import com.bennero.client.config.SaveManager;
 import com.bennero.client.core.ApplicationCore;
 import com.bennero.client.states.PageEditorStateData;
 import com.bennero.client.states.StateData;
-import com.bennero.client.ui.coloureditor.ColourEditor;
 import com.bennero.client.ui.UIHelper;
+import com.bennero.client.ui.coloureditor.ColourEditor;
+import com.bennero.common.PageData;
+import com.bennero.common.Sensor;
+import com.bennero.common.SkinHelper;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 
-import static com.bennero.common.Skin.*;
 import static com.bennero.client.ui.UIHelper.*;
+import static com.bennero.common.Skin.*;
 
 /**
  * SensorEditor is a system for customising the look of how a sensor presents hardware data. The user can select from

@@ -23,8 +23,8 @@
 
 package com.bennero.client.core;
 
-import com.bennero.common.TransitionType;
 import com.bennero.client.states.StateData;
+import com.bennero.common.TransitionType;
 import javafx.animation.Transition;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleProperty;

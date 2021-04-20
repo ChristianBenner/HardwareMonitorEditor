@@ -23,8 +23,8 @@
 
 package com.bennero.client.states;
 
-import com.bennero.common.TransitionType;
 import com.bennero.client.pages.WelcomePage;
+import com.bennero.common.TransitionType;
 import javafx.scene.Node;
 
 /**

@@ -23,10 +23,9 @@
 
 package com.bennero.client.pages;
 
-import com.bennero.common.PageData;
-import com.bennero.common.Sensor;
 import com.bennero.client.config.SaveManager;
 import com.bennero.client.core.ApplicationCore;
+import com.bennero.client.core.SensorManager;
 import com.bennero.client.network.NetworkClient;
 import com.bennero.client.states.PageEditorStateData;
 import com.bennero.client.states.PageOverviewStateData;
@@ -36,7 +35,8 @@ import com.bennero.client.ui.ColouredTextField;
 import com.bennero.client.ui.NoSensor;
 import com.bennero.client.ui.PageOptions;
 import com.bennero.client.ui.TextFieldEditPane;
-import com.bennero.client.core.SensorManager;
+import com.bennero.common.PageData;
+import com.bennero.common.Sensor;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.HPos;

@@ -23,9 +23,9 @@
 
 package com.bennero.client.states;
 
+import com.bennero.client.pages.PageEditor;
 import com.bennero.common.PageData;
 import com.bennero.common.TransitionType;
-import com.bennero.client.pages.PageEditor;
 import javafx.scene.Node;
 
 /**

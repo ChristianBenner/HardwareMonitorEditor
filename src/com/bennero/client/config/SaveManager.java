@@ -23,12 +23,12 @@
 
 package com.bennero.client.config;
 
-import com.bennero.common.PageData;
-import com.bennero.common.Sensor;
 import com.bennero.client.core.ApplicationCore;
 import com.bennero.client.core.CoreUtils;
 import com.bennero.client.network.NetworkClient;
 import com.bennero.client.util.PageGenerator;
+import com.bennero.common.PageData;
+import com.bennero.common.Sensor;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextInputDialog;

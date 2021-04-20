@@ -23,9 +23,9 @@
 
 package com.bennero.client.bootstrapper;
 
+import com.bennero.client.core.SensorManager;
 import com.bennero.common.Sensor;
 import com.bennero.common.SensorType;
-import com.bennero.client.core.SensorManager;
 import javafx.application.Platform;
 
 /**

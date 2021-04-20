@@ -23,15 +23,15 @@
 
 package com.bennero.client.network;
 
-import com.bennero.common.networking.AddressInformation;
-import com.bennero.common.networking.ConnectionInformation;
-import com.bennero.common.Constants;
-import com.bennero.common.networking.NetworkUtils;
 import com.bennero.client.core.ApplicationCore;
-import com.bennero.common.messages.BroadcastAnnouncementDataPositions;
-import com.bennero.common.messages.MessageType;
 import com.bennero.client.states.ConnectionListStateData;
 import com.bennero.client.states.LoadingStateData;
+import com.bennero.common.Constants;
+import com.bennero.common.messages.BroadcastAnnouncementDataPositions;
+import com.bennero.common.messages.MessageType;
+import com.bennero.common.networking.AddressInformation;
+import com.bennero.common.networking.ConnectionInformation;
+import com.bennero.common.networking.NetworkUtils;
 import javafx.application.Platform;
 import javafx.event.Event;
 import javafx.event.EventHandler;

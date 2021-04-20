@@ -23,9 +23,9 @@
 
 package com.bennero.client.states;
 
-import com.bennero.common.networking.ConnectionInformation;
-import com.bennero.common.TransitionType;
 import com.bennero.client.pages.ConnectionListPage;
+import com.bennero.common.TransitionType;
+import com.bennero.common.networking.ConnectionInformation;
 import javafx.scene.Node;
 
 import java.util.List;

@@ -24,8 +24,11 @@
 package com.bennero.client.network;
 
 import com.bennero.client.bootstrapper.Native;
-import com.bennero.common.*;
 import com.bennero.client.config.ProgramConfigManager;
+import com.bennero.common.PageData;
+import com.bennero.common.Sensor;
+import com.bennero.common.Skin;
+import com.bennero.common.SkinHelper;
 import com.bennero.common.messages.*;
 import com.bennero.common.networking.AddressInformation;
 import com.bennero.common.networking.ConnectionInformation;
@@ -37,8 +40,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.*;
 
-import static com.bennero.client.network.ConnectionRequestReplyMessage.processConnectionRequestReplyMessageData;
 import static com.bennero.client.Version.*;
+import static com.bennero.client.network.ConnectionRequestReplyMessage.processConnectionRequestReplyMessageData;
 import static com.bennero.common.Constants.*;
 import static com.bennero.common.networking.NetworkUtils.*;
 

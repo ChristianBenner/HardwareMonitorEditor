@@ -23,10 +23,10 @@
 
 package com.bennero.client.states;
 
+import com.bennero.client.pages.SensorEditor;
 import com.bennero.common.PageData;
 import com.bennero.common.Sensor;
 import com.bennero.common.TransitionType;
-import com.bennero.client.pages.SensorEditor;
 import javafx.scene.Node;
 
 /**

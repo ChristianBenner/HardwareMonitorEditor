@@ -23,12 +23,12 @@
 
 package com.bennero.client.pages;
 
-import com.bennero.common.PageData;
-import com.bennero.common.Sensor;
 import com.bennero.client.core.ApplicationCore;
 import com.bennero.client.states.PageEditorStateData;
 import com.bennero.client.states.SensorEditorStateData;
 import com.bennero.client.states.SensorSelectionStateData;
+import com.bennero.common.PageData;
+import com.bennero.common.Sensor;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;

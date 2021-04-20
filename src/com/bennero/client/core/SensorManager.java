@@ -26,10 +26,10 @@ package com.bennero.client.core;
 import com.bennero.client.Version;
 import com.bennero.client.bootstrapper.Native;
 import com.bennero.client.bootstrapper.SensorRequest;
+import com.bennero.client.network.NetworkClient;
 import com.bennero.common.Sensor;
 import com.bennero.common.SensorType;
 import com.bennero.common.Skin;
-import com.bennero.client.network.NetworkClient;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 
@@ -37,7 +37,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.bennero.common.Constants.*;
-import static com.bennero.common.Constants.EXIT_ERROR_CODE_NATIVE_SENSOR_UPDATE_FAILED;
 
 /**
  * A singleton that stores all of the sensors that have been created (not GUI gauges but Sensor objects that hold
