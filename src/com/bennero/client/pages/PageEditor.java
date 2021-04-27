@@ -91,7 +91,6 @@ public class PageEditor extends StackPane
         this.pageData = pageData;
         this.saveManager = SaveManager.getInstance();
         this.networkClient = NetworkClient.getInstance();
-        this.sendPageNetworkData();
 
         super.setBackground(new Background(new BackgroundFill(pageData.getColour(), CornerRadii.EMPTY, Insets.EMPTY)));
 
@@ -422,17 +421,6 @@ public class PageEditor extends StackPane
                     }));
 
             headerPane.getChildren().add(subtitleStackPane);
-        }
-    }
-
-    private void sendPageNetworkData()
-    {
-        networkClient.writePageMessage(pageData);
-
-        List<Sensor> sensors = pageData.getSensorList();
-        for (int i = 0; i < sensors.size(); i++)
-        {
-            networkClient.writeSensorMessage(sensors.get(i), (byte) pageData.getUniqueId());
         }
     }
 

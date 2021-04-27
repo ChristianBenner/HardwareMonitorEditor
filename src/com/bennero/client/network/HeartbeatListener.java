@@ -120,11 +120,11 @@ public class HeartbeatListener implements Runnable
             // Ensures that the message came from a hardware monitor and not a random device on the network
             if (hwMonitorSystemUniqueConnectionId == HW_HEARTBEAT_VALIDATION_NUMBER)
             {
-                System.out.println("Received a heartbeat from Hardware Monitor");
+                //System.out.println("Received a heartbeat from Hardware Monitor");
             }
             else
             {
-                System.out.println("Received an invalid heartbeat from Hardware Monitor");
+                //System.out.println("Received an invalid heartbeat from Hardware Monitor");
             }
         }
     }
