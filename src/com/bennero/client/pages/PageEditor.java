@@ -25,7 +25,6 @@ package com.bennero.client.pages;
 
 import com.bennero.client.config.SaveManager;
 import com.bennero.client.core.ApplicationCore;
-import com.bennero.client.core.SensorManager;
 import com.bennero.client.network.NetworkClient;
 import com.bennero.client.states.PageEditorStateData;
 import com.bennero.client.states.PageOverviewStateData;
@@ -35,26 +34,20 @@ import com.bennero.client.ui.*;
 import com.bennero.common.PageData;
 import com.bennero.common.Sensor;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.*;
-import javafx.scene.Cursor;
-import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
-import javax.swing.*;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * PageEditor class is the user interface that lets users customize the page holding sensors (the appearance of a page
@@ -78,6 +71,7 @@ public class PageEditor extends StackPane
     private VBox headerPane;
     private BorderPane borderPane;
     private ArrayList<Sensor> placedSensors;
+    private ArrayList<Button> addSensorButtons;
 
     private StackPane titleStackPane;
     private StackPane subtitleStackPane;
@@ -92,6 +86,7 @@ public class PageEditor extends StackPane
         this.pageData = pageData;
         this.saveManager = SaveManager.getInstance();
         this.networkClient = NetworkClient.getInstance();
+        this.addSensorButtons = new ArrayList<>();
 
         HIGHLIGHT_COLOUR = Color.color(pageData.getTitleColour().getRed(), pageData.getTitleColour().getGreen(),
                 pageData.getTitleColour().getBlue());
@@ -295,13 +290,15 @@ public class PageEditor extends StackPane
 
         Image editIcon = new Image(getClass().getClassLoader().getResourceAsStream("edit_icon.png"));
         Image removeIcon = new Image(getClass().getClassLoader().getResourceAsStream("remove_icon.png"));
+        Image moveIcon = new Image(getClass().getClassLoader().getResourceAsStream("move_icon.png"));
 
         // Add sensors to page
         for (Sensor sensor : pageData.getSensorList())
         {
             if (!isSpaceTaken(sensor))
             {
-                EditableSensor editableSensor = new EditableSensor(HIGHLIGHT_COLOUR, editIcon, removeIcon, sensor,
+                EditableSensor editableSensor = new EditableSensor(HIGHLIGHT_COLOUR, editIcon, removeIcon, moveIcon,
+                        sensor,
                 actionEvent ->
                 {
                     // Edit button has been selected
@@ -327,6 +324,86 @@ public class PageEditor extends StackPane
 
                         // Send network message to remove the sensor
                         NetworkClient.getInstance().removeSensorMessage((byte) sensor.getUniqueId(), (byte) pageData.getUniqueId());
+                    }
+                });
+
+                editableSensor.setMoveButtonDragEvent(mouseEvent ->
+                {
+                    // Discover what segment (column span/row span the mouse is first clicked in)
+                    // Check where the mouse has been dragged too and see if the sensor fits
+
+                    //if(mouseEvent.getSceneX() &
+                    double mouseX = mouseEvent.getSceneX();
+                    double mouseY = mouseEvent.getSceneY();
+
+                    boolean foundMoveLocation = false;
+
+                    // Find what column/row we are hovering over by looking if the mouse is over an element in the grid
+                    // array
+                    for(int row = 0; row < pageData.getRows() && !foundMoveLocation; row++)
+                    {
+                        for(int column = 0; column < pageData.getColumns() && !foundMoveLocation; column++)
+                        {
+                            Node nodeToReplace = gridArray[row][column];
+                            if(nodeToReplace != null)
+                            {
+                                Bounds nodeBounds = nodeToReplace.localToScene(nodeToReplace.getBoundsInLocal());
+
+                                // Check if mouse is within the location
+                                if(mouseX > nodeBounds.getMinX() && mouseX < nodeBounds.getMaxX() &&
+                                        mouseY > nodeBounds.getMinY() && mouseY < nodeBounds.getMaxY())
+                                {
+                                    foundMoveLocation = true;
+                                    int columnOffset = editableSensor.getSelectedColumnOffset();
+                                    int rowOffset = editableSensor.getSelectedRowOffset();
+                                    int newColumnIndex = column - columnOffset;
+                                    int newRowIndex = row - rowOffset;
+
+                                    System.out.println("Mouse: x[" + mouseX + "], y[" + mouseY + "], Bounds: x[" + nodeBounds.getMinX() + "], y[" + nodeBounds.getMinY() + "], ex[" + nodeBounds.getMaxX() + "], ey[" + nodeBounds.getMaxY() + "]");
+                                    System.out.println("Mouse at free loc. ROW: " + row + ", COL: " + column);
+                                    System.out.println("Dragged from. ROW: " + (sensor.getRow() + rowOffset) + ", COL: " + (sensor.getColumn() + columnOffset));
+                                    System.out.println("Dest. ROW: " + newRowIndex + ", COL: " + newColumnIndex);
+
+                                    // We need to also make sure that there are no sensors covering this location
+                                    if(newRowIndex >= 0 && newColumnIndex >= 0 && !isSpaceTaken(newColumnIndex,
+                                            newRowIndex, sensor.getColumnSpan(), sensor.getRowSpan()))
+                                    {
+                                        System.out.println("SPACE FREE");
+                                        int previousRow = sensor.getRow();
+                                        int previousColumn = sensor.getColumn();
+
+                                        // Remove all of the unused nodes from where the sensor will span across
+                                        for(int y = newRowIndex; y < newRowIndex + sensor.getRowSpan(); y++)
+                                        {
+                                            for(int x = newColumnIndex; x < newColumnIndex + sensor.getColumnSpan(); x++)
+                                            {
+                                                Node temp = gridArray[y][x];
+                                                sensorPane.getChildren().remove(temp);
+                                                gridArray[y][x] = null;
+                                            }
+                                        }
+
+                                        // Set where the sensor was dragged from to null
+                                        gridArray[previousRow][previousColumn] = null;
+
+                                        // Move the sensor to the left column and expand the right side
+                                        sensor.setPosition(newRowIndex, newColumnIndex);
+
+                                        GridPane.setColumnIndex(editableSensor, newColumnIndex);
+                                        GridPane.setRowIndex(editableSensor, newRowIndex);
+
+                                        gridArray[sensor.getRow()][sensor.getColumn()] = editableSensor;
+
+                                        populateFreedSpace(previousRow, previousRow + sensor.getRowSpan(),
+                                                previousColumn, previousColumn + sensor.getColumnSpan());
+                                    }
+                                    else
+                                    {
+                                        System.out.println("SPACE TAKEN");
+                                    }
+                                }
+                            }
+                        }
                     }
                 });
 
@@ -684,7 +761,7 @@ public class PageEditor extends StackPane
             {
                 sensor.setColumnSpan(newColumnSpan);
                 GridPane.setColumnSpan(editableSensor, newColumnSpan);
-                removeUnusedNodes(sensor);
+                removeUnusedNodesAfterExpansion(sensor);
 
                 resized = true;
             }
@@ -742,7 +819,7 @@ public class PageEditor extends StackPane
                 sensor.setRowSpan(newRowSpan);
                 GridPane.setRowSpan(editableSensor, newRowSpan);
 
-                removeUnusedNodes(sensor);
+                removeUnusedNodesAfterExpansion(sensor);
 
                 resized = true;
             }
@@ -816,7 +893,7 @@ public class PageEditor extends StackPane
 
                 gridArray[sensor.getRow()][sensor.getColumn()] = editableSensor;
 
-                removeUnusedNodes(sensor);
+                removeUnusedNodesAfterExpansion(sensor);
 
                 resized = true;
             }
@@ -891,7 +968,7 @@ public class PageEditor extends StackPane
 
                 gridArray[sensor.getRow()][sensor.getColumn()] = editableSensor;
 
-                removeUnusedNodes(sensor);
+                removeUnusedNodesAfterExpansion(sensor);
 
                 resized = true;
             }
@@ -900,7 +977,7 @@ public class PageEditor extends StackPane
         return resized;
     }
 
-    private void removeUnusedNodes(Sensor sensor)
+    private void removeUnusedNodesAfterExpansion(Sensor sensor)
     {
         // Remove all nodes in area (except for the sensor itself)
         for(int y = sensor.getRow(); y < sensor.getRow() + sensor.getRowSpan(); y++)

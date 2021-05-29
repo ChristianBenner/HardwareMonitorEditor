@@ -28,7 +28,7 @@ import com.bennero.common.Sensor;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
-import javafx.geometry.Insets;
+import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
@@ -42,16 +42,18 @@ public class EditableSensor extends StackPane
 {
     private final Border HOVER_BORDER;
 
-    private ResizeButton topLeftDragButton;
-    private ResizeButton topDragButton;
-    private ResizeButton topRightDragButton;
-    private ResizeButton rightDragButton;
-    private ResizeButton bottomRightDragButton;
-    private ResizeButton bottomDragButton;
-    private ResizeButton bottomLeftDragButton;
-    private ResizeButton leftDragButton;
+    private DragButton topLeftDragButton;
+    private DragButton topDragButton;
+    private DragButton topRightDragButton;
+    private DragButton rightDragButton;
+    private DragButton bottomRightDragButton;
+    private DragButton bottomDragButton;
+    private DragButton bottomLeftDragButton;
+    private DragButton leftDragButton;
     private Group hoverButtonGroup;
     private boolean mouseInside;
+    private int selectedColumnOffsetOnMove;
+    private int selectedRowOffsetOnMove;
 
     public class DragEvent extends Event
     {
@@ -99,12 +101,19 @@ public class EditableSensor extends StackPane
     }
 
     private EventHandler<DragEvent> dragEvent;
+    private EventHandler<MouseEvent> moveButtonDragEvent;
 
-    public EditableSensor(Color highlightColour, Image editIcon, Image removeIcon, Sensor sensor,
+    public EditableSensor(Color highlightColour,
+                          Image editIcon,
+                          Image removeIcon,
+                          Image moveIcon,
+                          Sensor sensor,
                           EventHandler<ActionEvent> editEvent,
                           EventHandler<ActionEvent> removeEvent)
     {
         mouseInside = false;
+        selectedColumnOffsetOnMove = 0;
+        selectedRowOffsetOnMove = 0;
 
         // Check if the sensor manager has the sensor we are trying to add
         if(SensorManager.getInstance().isAvailable(sensor))
@@ -121,7 +130,7 @@ public class EditableSensor extends StackPane
                 new BorderWidths(3.0)));
 
         // Create the UI used for resizing the sensors
-        topLeftDragButton = new ResizeButton(Pos.TOP_LEFT, highlightColour, Cursor.NW_RESIZE,
+        topLeftDragButton = new ResizeSensorButton(Pos.TOP_LEFT, highlightColour, Cursor.NW_RESIZE,
                 mouseEvent -> dragEvent.handle(new DragEvent(mouseEvent, true, false, false, true)),
                 mouseEvent -> {
                     if(!mouseInside)
@@ -130,7 +139,7 @@ public class EditableSensor extends StackPane
                     }
                 });
 
-        topDragButton = new ResizeButton(Pos.TOP_CENTER, highlightColour, Cursor.N_RESIZE,
+        topDragButton = new ResizeSensorButton(Pos.TOP_CENTER, highlightColour, Cursor.N_RESIZE,
                 mouseEvent -> dragEvent.handle(new DragEvent(mouseEvent, true, false, false, false)),
                 mouseEvent -> {
                     if(!mouseInside)
@@ -139,7 +148,7 @@ public class EditableSensor extends StackPane
                     }
                 });
 
-        topRightDragButton = new ResizeButton(Pos.TOP_RIGHT, highlightColour, Cursor.NE_RESIZE,
+        topRightDragButton = new ResizeSensorButton(Pos.TOP_RIGHT, highlightColour, Cursor.NE_RESIZE,
                 mouseEvent -> dragEvent.handle(new DragEvent(mouseEvent, true, true, false, false)),
                 mouseEvent -> {
                     if(!mouseInside)
@@ -148,7 +157,7 @@ public class EditableSensor extends StackPane
                     }
                 });
 
-        rightDragButton = new ResizeButton(Pos.CENTER_RIGHT, highlightColour, Cursor.E_RESIZE,
+        rightDragButton = new ResizeSensorButton(Pos.CENTER_RIGHT, highlightColour, Cursor.E_RESIZE,
                 mouseEvent -> dragEvent.handle(new DragEvent(mouseEvent, false, true, false, false)),
                 mouseEvent -> {
                     if(!mouseInside)
@@ -157,7 +166,7 @@ public class EditableSensor extends StackPane
                     }
                 });
 
-        bottomRightDragButton = new ResizeButton(Pos.BOTTOM_RIGHT, highlightColour, Cursor.SE_RESIZE,
+        bottomRightDragButton = new ResizeSensorButton(Pos.BOTTOM_RIGHT, highlightColour, Cursor.SE_RESIZE,
                 mouseEvent -> dragEvent.handle(new DragEvent(mouseEvent, false, true, true, false)),
                 mouseEvent -> {
                     if(!mouseInside)
@@ -166,7 +175,7 @@ public class EditableSensor extends StackPane
                     }
                 });
 
-        bottomDragButton = new ResizeButton(Pos.BOTTOM_CENTER, highlightColour, Cursor.S_RESIZE,
+        bottomDragButton = new ResizeSensorButton(Pos.BOTTOM_CENTER, highlightColour, Cursor.S_RESIZE,
                 mouseEvent -> dragEvent.handle(new DragEvent(mouseEvent, false, false, true, false)),
                 mouseEvent -> {
                     if(!mouseInside)
@@ -175,7 +184,7 @@ public class EditableSensor extends StackPane
                     }
                 });
 
-        bottomLeftDragButton = new ResizeButton(Pos.BOTTOM_LEFT, highlightColour, Cursor.SW_RESIZE,
+        bottomLeftDragButton = new ResizeSensorButton(Pos.BOTTOM_LEFT, highlightColour, Cursor.SW_RESIZE,
                 mouseEvent -> dragEvent.handle(new DragEvent(mouseEvent, false, false, true, true)),
                 mouseEvent -> {
                     if(!mouseInside)
@@ -184,7 +193,7 @@ public class EditableSensor extends StackPane
                     }
                 });
 
-        leftDragButton = new ResizeButton(Pos.CENTER_LEFT, highlightColour, Cursor.W_RESIZE,
+        leftDragButton = new ResizeSensorButton(Pos.CENTER_LEFT, highlightColour, Cursor.W_RESIZE,
                 mouseEvent -> dragEvent.handle(new DragEvent(mouseEvent, false, false, false, true)),
                 mouseEvent -> {
                     if(!mouseInside)
@@ -223,24 +232,68 @@ public class EditableSensor extends StackPane
             }
         });
 
+        // A frame for holding the interaction buttons
         HBox hBox = new HBox();
 
+        // Create an edit button that opens the sensor editor
         Button edit = new Button();
         edit.setCursor(Cursor.HAND);
         edit.setPrefSize(32, 32);
         edit.setBackground(new Background(new BackgroundImage(editIcon, BackgroundRepeat.NO_REPEAT,
                 BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, BackgroundSize.DEFAULT)));
         edit.setOnAction(editEvent);
-
         hBox.getChildren().add(edit);
+
+        // Create a delete button that removes the sensor from the page
         Button delete = new Button();
         delete.setCursor(Cursor.HAND);
         delete.setPrefSize(32, 32);
         delete.setBackground(new Background(new BackgroundImage(removeIcon, BackgroundRepeat.NO_REPEAT,
                 BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, BackgroundSize.DEFAULT)));
         delete.setOnAction(removeEvent);
-
         hBox.getChildren().add(delete);
+
+        // Create a move icon that allows to the user to drag the sensor to a new location on the page
+        DragButton move = new DragButton(Cursor.HAND,
+                pressedEvent ->
+                {
+                    // Calculate these values to see what column/row the mouse is on
+                    //private int selectedColumnOffsetOnMove;
+                    //private int selectedRowOffsetOnMove;
+
+                    Bounds sensorBounds = sensor.localToScene(sensor.getBoundsInLocal());
+                    double mouseX = pressedEvent.getSceneX();
+                    double mouseY = pressedEvent.getSceneY();
+                    double sensorX = sensorBounds.getMinX();
+                    double sensorY = sensorBounds.getMinY();
+                    double sensorWidth = sensorBounds.getWidth();
+                    double sensorHeight = sensorBounds.getHeight();
+                    int sensorColumnSpan = sensor.getColumnSpan();
+                    int sensorRowSpan = sensor.getRowSpan();
+                    double sensorColumnWidth = sensorWidth / sensorColumnSpan;
+                    double sensorRowHeight = sensorHeight / sensorRowSpan;
+                    double mouseRelativeToSensorX = mouseX - sensorX;
+                    double mouseRelativeToSensorY = mouseY - sensorY;
+
+                    // Now calculate how many sensor column widths fit into the space between the mouse and the sensor start
+                    selectedColumnOffsetOnMove = (int)mouseRelativeToSensorX / (int)sensorColumnWidth;
+                    selectedRowOffsetOnMove = (int)mouseRelativeToSensorY / (int)sensorRowHeight;
+                },
+                dragEvent ->
+                {
+                    // Find what column/row we are hovering over
+                    moveButtonDragEvent.handle(dragEvent);
+                },
+                finishDragEvent ->
+                {
+
+                });
+        move.setCursor(Cursor.HAND);
+        move.setPrefSize(32, 32);
+        move.setBackground(new Background(new BackgroundImage(moveIcon, BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, BackgroundSize.DEFAULT)));
+        hBox.getChildren().add(move);
+
         hoverButtonGroup.getChildren().add(hBox);
         super.getChildren().add(hoverButtonGroup);
     }
@@ -248,6 +301,11 @@ public class EditableSensor extends StackPane
     public void setDragEvent(EventHandler<DragEvent> dragEvent)
     {
         this.dragEvent = dragEvent;
+    }
+
+    public void setMoveButtonDragEvent(EventHandler<MouseEvent> moveEvent)
+    {
+        this.moveButtonDragEvent = moveEvent;
     }
 
     public void showEditUI()
@@ -279,5 +337,15 @@ public class EditableSensor extends StackPane
         leftDragButton.setVisible(false);
       // super.setBackground(Background.EMPTY);
         super.setBorder(Border.EMPTY);
+    }
+
+    public int getSelectedColumnOffset()
+    {
+        return selectedColumnOffsetOnMove;
+    }
+
+    public int getSelectedRowOffset()
+    {
+        return selectedRowOffsetOnMove;
     }
 }

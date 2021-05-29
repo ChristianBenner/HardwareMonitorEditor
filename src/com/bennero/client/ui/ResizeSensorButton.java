@@ -27,24 +27,18 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
-import javafx.scene.control.Button;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 
-public class ResizeButton extends Button
+public class ResizeSensorButton extends DragButton
 {
     private final double RESIZE_BUTTON_SIZE = 15.0;
-    private boolean dragging;
-    private double startDragX;
-    private double startDragY;
-    private double dragX;
-    private double dragY;
 
-    public ResizeButton(Pos alignment, Color colour, Cursor cursor, EventHandler<MouseEvent> dragEvent,
-                        EventHandler<MouseEvent> finishDrag)
+    public ResizeSensorButton(Pos alignment, Color colour, Cursor cursor, EventHandler<MouseEvent> dragEvent,
+                              EventHandler<MouseEvent> finishDrag)
     {
-        dragging = false;
+        super(cursor, dragEvent, finishDrag);
 
         setBorder(Border.EMPTY);
         setBackground(new Background(new BackgroundFill(colour, CornerRadii.EMPTY, Insets.EMPTY)));
@@ -53,56 +47,5 @@ public class ResizeButton extends Button
         setMaxSize(RESIZE_BUTTON_SIZE, RESIZE_BUTTON_SIZE);
         setVisible(false);
         StackPane.setAlignment(this, alignment);
-
-        setOnMousePressed(mouseEvent ->
-        {
-            dragging = true;
-            startDragX = mouseEvent.getX();
-            startDragY = mouseEvent.getY();
-            setCursor(cursor);
-        });
-
-        setOnMouseMoved(mouseEvent ->
-        {
-            if(dragging)
-            {
-                dragEvent.handle(mouseEvent);
-                dragX = mouseEvent.getX();
-                dragY = mouseEvent.getY();
-            }
-        });
-        setOnMouseDragged(dragEvent);
-
-        setOnMouseReleased(mouseEvent ->
-        {
-            dragging = false;
-            setCursor(Cursor.DEFAULT);
-            finishDrag.handle(mouseEvent);
-        });
-    }
-
-    public double getStartX()
-    {
-        return startDragX;
-    }
-
-    public double getStartY()
-    {
-        return startDragY;
-    }
-
-    public double getX()
-    {
-        return dragX;
-    }
-
-    public double getY()
-    {
-        return dragY;
-    }
-
-    public boolean isDragging()
-    {
-        return dragging;
     }
 }
