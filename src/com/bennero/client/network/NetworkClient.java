@@ -29,6 +29,8 @@ import com.bennero.common.PageData;
 import com.bennero.common.Sensor;
 import com.bennero.common.Skin;
 import com.bennero.common.SkinHelper;
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
 import com.bennero.common.messages.*;
 import com.bennero.common.networking.AddressInformation;
 import com.bennero.common.networking.ConnectionInformation;
@@ -53,13 +55,17 @@ import static com.bennero.common.networking.NetworkUtils.*;
  * @version     %I%, %G%
  * @since       1.0
  */
-public class NetworkClient extends Thread
+public class NetworkClient
 {
+    private static final String LOGGER_TAG = NetworkClient.class.getSimpleName();
+
     private static NetworkClient instance = null;
     private Socket socket;
     private PrintStream socketWriter;
     private ProgramConfigManager programConfigManager;
     private boolean connected;
+    private HeartbeatListener heartbeatListener;
+    private Thread connectionThread;
 
     public static NetworkClient getInstance()
     {
@@ -75,28 +81,6 @@ public class NetworkClient extends Thread
     {
         this.programConfigManager = ProgramConfigManager.getInstance();
         this.connected = false;
-    }
-
-    @Override
-    public void run()
-    {
-        while (true)
-        {
-            // todo is this even used?
-            Platform.runLater(() ->
-            {
-                Native.updateSensors();
-            });
-
-            try
-            {
-                sleep(2000);
-            }
-            catch (InterruptedException e)
-            {
-                e.printStackTrace();
-            }
-        }
     }
 
     public boolean isConnected()
@@ -119,7 +103,7 @@ public class NetworkClient extends Thread
     public void connect(ConnectionInformation connectionInformation,
                         EventHandler<ConnectedEvent> connectionEventHandler)
     {
-        Thread thread = new Thread(() ->
+        connectionThread = new Thread(() ->
         {
             Platform.runLater(() -> connectionEventHandler.handle(new ConnectedEvent(connectionInformation,
                     ConnectionStatus.CONNECTING)));
@@ -135,10 +119,10 @@ public class NetworkClient extends Thread
                 socket.connect(new InetSocketAddress(InetAddress.getByAddress(connectionInformation.getIp4Address()), PORT), 5000);
                 socketWriter = new PrintStream(socket.getOutputStream(), true);
 
-                Thread heartbeatThread = new Thread(new HeartbeatListener(HEARTBEAT_TIMEOUT_MS,
+                heartbeatListener = new HeartbeatListener(HEARTBEAT_TIMEOUT_MS,
                         event -> Platform.runLater(() -> connectionEventHandler.handle(new ConnectedEvent(connectionInformation, ConnectionStatus.HEARTBEAT_TIMEOUT))),
-                        event -> Platform.runLater(() -> connectionEventHandler.handle(new ConnectedEvent(connectionInformation, ConnectionStatus.UNEXPECTED_DISCONNECT)))));
-                heartbeatThread.start();
+                        event -> Platform.runLater(() -> connectionEventHandler.handle(new ConnectedEvent(connectionInformation, ConnectionStatus.UNEXPECTED_DISCONNECT))));
+                heartbeatListener.start();
 
                 if (socket.isConnected())
                 {
@@ -202,7 +186,59 @@ public class NetworkClient extends Thread
                 Platform.runLater(() -> connectionEventHandler.handle(new ConnectedEvent(connectionInformation, ConnectionStatus.FAILED)));
             }
         });
-        thread.start();
+        connectionThread.start();
+    }
+
+    public boolean disconnect()
+    {
+        boolean success = false;
+
+        if(isConnected())
+        {
+
+           // heartbeatListener.join();
+            heartbeatListener.stopThread();
+            sendDisconnectMessage();
+            success = true;
+            Logger.log(LogLevel.INFO, LOGGER_TAG, "Disconnected from hardware monitor");
+            programConfigManager.clearConnectionData();
+            try
+            {
+                socket.close();
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+
+            connected = false;
+
+
+            //heartbeatListener.stopThread();
+            /*try
+            {
+
+                socket.shutdownOutput();
+                socket.close();
+                connected = false;
+                heartbeatListener.stopThread();
+                heartbeatListener.join();
+                Logger.log(LogLevel.INFO, LOGGER_TAG, "Disconnected from hardware monitor");
+                success = true;
+            }
+            catch (IOException | InterruptedException e)
+            {
+                Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to disconnect from hardware monitor: " +
+                        e.getMessage());
+            }*/
+        }
+        else
+        {
+            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Did not disconnect as not currently connected");
+            success = true;
+        }
+
+        return success;
     }
 
     public void removePageMessage(byte pageId)
@@ -461,6 +497,21 @@ public class NetworkClient extends Thread
         writeStringToMessage(bytes, PageDataPositions.SUBTITLE_POS, subtitle, NAME_STRING_NUM_BYTES);
         bytes[PageDataPositions.SUBTITLE_POS_ENABLED_POS] = subtitleEnabled;
         bytes[PageDataPositions.SUBTITLE_POS_ALIGNMENT_POS] = subtitleAlignment;
+    }
+
+    private void sendDisconnectMessage()
+    {
+        if (socket != null && socket.isConnected())
+        {
+            byte[] message = new byte[MESSAGE_NUM_BYTES];
+
+            message[MESSAGE_TYPE_POS] = MessageType.DISCONNECT_MESSAGE;
+            sendMessage(message, 0, MESSAGE_NUM_BYTES);
+        }
+        else
+        {
+            System.err.println("Failed to send disconnect message because socket is not connected");
+        }
     }
 
     private void sendMessage(byte[] message, int offset, int length)

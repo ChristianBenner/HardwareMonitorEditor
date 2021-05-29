@@ -23,6 +23,8 @@
 
 package com.bennero.client.network;
 
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
 import com.bennero.common.messages.MessageType;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -32,6 +34,7 @@ import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.concurrent.BlockingQueue;
 
 import static com.bennero.common.Constants.*;
 import static com.bennero.common.networking.NetworkUtils.readLong;
@@ -45,13 +48,17 @@ import static com.bennero.common.networking.NetworkUtils.readLong;
  * @version     %I%, %G%
  * @since       1.0
  */
-public class HeartbeatListener implements Runnable
+public class HeartbeatListener extends Thread
 {
+    // Tag for logging
+    private static final String TAG = HeartbeatListener.class.getSimpleName();
+
     private int heartbeatTimeoutMilliseconds;
     private EventHandler noHeartbeatReceived;
     private EventHandler lostConnection;
     private boolean run;
     private ServerSocket serverSocket;
+    private Socket socket;
 
     public HeartbeatListener(int heartbeatTimeoutMilliseconds,
                              EventHandler noHeartbeatReceived,
@@ -64,12 +71,31 @@ public class HeartbeatListener implements Runnable
         run = true;
     }
 
+    public void stopThread()
+    {
+        run = false;
+
+        try
+        {
+            serverSocket.close();
+
+            if(socket != null)
+            {
+                socket.close();
+            }
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void run()
     {
         try
         {
-            Socket socket = serverSocket.accept();
+            socket = serverSocket.accept();
             serverSocket.setSoTimeout(heartbeatTimeoutMilliseconds);
             socket.setSoTimeout(heartbeatTimeoutMilliseconds);
             InputStream is = socket.getInputStream();
@@ -84,15 +110,27 @@ public class HeartbeatListener implements Runnable
                 }
                 catch (SocketTimeoutException se)
                 {
-                    se.printStackTrace();
-                    run = false;
-                    noHeartbeatReceived.handle(new Event(null));
+                    if(run)
+                    {
+                        se.printStackTrace();
+                        noHeartbeatReceived.handle(new Event(null));
+                        Logger.log(LogLevel.ERROR, TAG, "No heartbeat received");
+                        run = false;
+                    }
                 }
                 catch (Exception e)
                 {
-                    e.printStackTrace();
-                    run = false;
-                    lostConnection.handle(new Event(null));
+                    if(run)
+                    {
+                        e.printStackTrace();
+                        lostConnection.handle(new Event(null));
+                        Logger.log(LogLevel.ERROR, TAG, "Socket unexpected connection loss");
+                        run = false;
+                    }
+                    else
+                    {
+                        Logger.log(LogLevel.INFO, TAG, "Expected connection drop");
+                    }
                 }
             }
         }
@@ -120,11 +158,11 @@ public class HeartbeatListener implements Runnable
             // Ensures that the message came from a hardware monitor and not a random device on the network
             if (hwMonitorSystemUniqueConnectionId == HW_HEARTBEAT_VALIDATION_NUMBER)
             {
-                //System.out.println("Received a heartbeat from Hardware Monitor");
+                Logger.log(LogLevel.DEBUG, TAG, "Received a heartbeat from Hardware Monitor");
             }
             else
             {
-                //System.out.println("Received an invalid heartbeat from Hardware Monitor");
+                Logger.log(LogLevel.WARNING, TAG, "Received an invalid heartbeat from Hardware Monitor");
             }
         }
     }

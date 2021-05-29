@@ -29,6 +29,8 @@ import com.bennero.client.network.ConnectedEvent;
 import com.bennero.client.network.NetworkClient;
 import com.bennero.client.network.NetworkScanner;
 import com.bennero.client.states.*;
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
 import com.bennero.common.networking.ConnectionInformation;
 import com.bennero.common.networking.NetworkUtils;
 import javafx.application.Application;
@@ -130,6 +132,10 @@ public class ApplicationCore extends Application
         programConfigManager = ProgramConfigManager.getInstance();
         sensorManager = SensorManager.getInstance();
         saveManager = SaveManager.getInstance();
+
+        final LogLevel LOG_LEVEL_ON_BOOTSTRAPPER_LAUNCH = DEBUG_BOOTSTRAPPER ? LogLevel.DEBUG : LogLevel.INFO;
+        final LogLevel LOG_LEVEL = BOOTSTRAPPER_LAUNCH_REQUIRED ? LOG_LEVEL_ON_BOOTSTRAPPER_LAUNCH : LogLevel.DEBUG;
+        Logger.setLogLevel(LOG_LEVEL);
     }
 
     @Override

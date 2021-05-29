@@ -60,11 +60,14 @@ import static com.bennero.common.networking.NetworkUtils.writeToMessage;
  */
 public class NetworkScanner
 {
-    private static final long MS_PER_SECOND = 1000;
+    private static final int MS_PER_SECOND = 1000;
+    private static final int BROADCAST_POLL_HZ = 1;
+    private static final int BROADCAST_POLL_SLEEP_PERIOD = MS_PER_SECOND / BROADCAST_POLL_HZ;
 
-    private Thread broadcastReplyThread;
+    private BroadcastReplyReceiver broadcastReplyThread;
     private Thread broadcastSenderThread;
     private boolean sendBroadcastMessages;
+    private List<InetAddress> addresses;
 
     public static void handleScan()
     {
@@ -123,12 +126,20 @@ public class NetworkScanner
 
     public NetworkScanner()
     {
-        // Nothing to do here
+        try
+        {
+            addresses = discoverBroadcastAddresses();
+        }
+        catch (SocketException e)
+        {
+            addresses = new ArrayList<>();
+            e.printStackTrace();
+        }
     }
 
     public void scan(int seconds, EventHandler<ConnectionInformation> broadcastReplyDataEventHandler, EventHandler endScan)
     {
-        broadcastReplyThread = new Thread(new BroadcastReplyReceiver(broadcastReplyDataEventHandler, endScan));
+        broadcastReplyThread = new BroadcastReplyReceiver(broadcastReplyDataEventHandler, endScan);
         broadcastReplyThread.start();
 
         sendBroadcastMessages = true;
@@ -143,7 +154,7 @@ public class NetworkScanner
                 sendBroadcastMessages();
                 try
                 {
-                    Thread.sleep(1000);
+                    Thread.sleep(BROADCAST_POLL_SLEEP_PERIOD);
                 }
                 catch (InterruptedException e)
                 {
@@ -153,7 +164,7 @@ public class NetworkScanner
 
             try
             {
-                broadcastReplyThread.interrupt();
+                broadcastReplyThread.stopThread();
                 broadcastReplyThread.join();
             }
             catch (InterruptedException e)
@@ -174,16 +185,6 @@ public class NetworkScanner
 
     private void sendBroadcastMessages()
     {
-        List<InetAddress> addresses = new ArrayList<>();
-        try
-        {
-            addresses = discoverBroadcastAddresses();
-        }
-        catch (SocketException e)
-        {
-            e.printStackTrace();
-        }
-
         try
         {
             sendBroadcastMessage(InetAddress.getByName("255.255.255.255"));

@@ -50,15 +50,36 @@ import static com.bennero.common.networking.NetworkUtils.*;
  * @version     %I%, %G%
  * @since       1.0
  */
-public class BroadcastReplyReceiver implements Runnable
+public class BroadcastReplyReceiver extends Thread
 {
     private EventHandler<ConnectionInformation> receivedBroadcastReply;
     private EventHandler endScan;
+    private boolean run;
+    private ServerSocketChannel serverSocketChannel;
 
     public BroadcastReplyReceiver(EventHandler<ConnectionInformation> receivedBroadcastReply, EventHandler endScan)
     {
         this.receivedBroadcastReply = receivedBroadcastReply;
         this.endScan = endScan;
+        this.run = false;
+    }
+
+    public void stopThread()
+    {
+        if(serverSocketChannel != null)
+        {
+            try
+            {
+                serverSocketChannel.socket().close();
+                serverSocketChannel.close();
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+        }
+
+        run = false;
     }
 
     @Override
@@ -66,12 +87,12 @@ public class BroadcastReplyReceiver implements Runnable
     {
         try
         {
-            ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+            serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.configureBlocking(true);
             serverSocketChannel.socket().setReceiveBufferSize(MESSAGE_NUM_BYTES);
             serverSocketChannel.socket().bind(new InetSocketAddress(BROADCAST_REPLY_PORT));
+            this.run = true;
 
-            boolean run = true;
             while (run)
             {
                 // Build to accept multiple connections
@@ -86,6 +107,7 @@ public class BroadcastReplyReceiver implements Runnable
                 socketChannel.close();
             }
 
+            serverSocketChannel.close();
             endScan.handle(new Event(null));
         }
         catch (IOException e)
@@ -112,9 +134,9 @@ public class BroadcastReplyReceiver implements Runnable
                 final byte[] ip4Address = readBytes(bytes, BroadcastReplyDataPositions.IP4_ADDRESS_POS,
                         IP4_ADDRESS_NUM_BYTES);
                 String hostName = readString(bytes, BroadcastReplyDataPositions.HOSTNAME_POS, NAME_STRING_NUM_BYTES);
-
+                
                 System.out.println("Received a broadcast reply message from a hardware monitor: VERSION[" +
-                        majorVersion + "" + minorVersion + "." + patchVersion + "] IP4[" +
+                        majorVersion + "." + minorVersion + "." + patchVersion + "] IP4[" +
                         NetworkUtils.ip4AddressToString(ip4Address) + "], MAC[" +
                         NetworkUtils.macAddressToString(macAddress) + "], HOSTNAME[" + hostName + "]");
 

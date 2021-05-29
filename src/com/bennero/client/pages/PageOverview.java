@@ -23,12 +23,15 @@
 
 package com.bennero.client.pages;
 
+import com.bennero.client.config.ProgramConfigManager;
 import com.bennero.client.config.SaveData;
 import com.bennero.client.config.SaveManager;
 import com.bennero.client.core.ApplicationCore;
 import com.bennero.client.core.CoreUtils;
 import com.bennero.client.core.Window;
 import com.bennero.client.network.NetworkClient;
+import com.bennero.client.network.NetworkScanner;
+import com.bennero.client.states.NetworkScanStateData;
 import com.bennero.client.states.PageEditorStateData;
 import com.bennero.client.states.PageOverviewStateData;
 import com.bennero.client.ui.ClientOptions;
@@ -36,15 +39,15 @@ import com.bennero.client.ui.NewPageButton;
 import com.bennero.client.ui.PageInfo;
 import com.bennero.client.util.PageGenerator;
 import com.bennero.common.PageData;
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 
@@ -122,6 +125,8 @@ public class PageOverview extends StackPane
         Image newSaveIconHover = new Image(getClass().getClassLoader().getResourceAsStream("new_save_icon_hover.png"));
         Image settingsIcon = new Image(getClass().getClassLoader().getResourceAsStream("settings_icon.png"));
         Image settingsIconHover = new Image(getClass().getClassLoader().getResourceAsStream("settings_icon_hover.png"));
+        Image disconnectIcon = new Image(getClass().getClassLoader().getResourceAsStream("disconnect_icon.png"));
+        Image disconnectIconHover = new Image(getClass().getClassLoader().getResourceAsStream("disconnect_icon_hover.png"));
 
         Button openSaveButton = new Button();
         openSaveButton.setCursor(Cursor.HAND);
@@ -185,6 +190,53 @@ public class PageOverview extends StackPane
 
         StackPane.setAlignment(optionsButton, Pos.TOP_RIGHT);
         topLeftButtonBox.getChildren().add(optionsButton);
+
+        Button disconnectButton = new Button();
+        disconnectButton.setCursor(Cursor.HAND);
+        disconnectButton.setPrefSize(32, 32);
+        disconnectButton.setBackground(new Background(new BackgroundImage(disconnectIcon, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT)));
+        disconnectButton.setOnMouseEntered(mouseEvent -> disconnectButton.setBackground(new Background(new BackgroundImage(disconnectIconHover, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT))));
+        disconnectButton.setOnMouseExited(mouseEvent -> disconnectButton.setBackground(new Background(new BackgroundImage(disconnectIcon, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT))));
+        disconnectButton.setOnAction(actionEvent ->
+        {
+            final String HOSTNAME = ProgramConfigManager.getInstance().getConnectionInformation().getHostname();
+
+            Alert disconnectAlert = new Alert(Alert.AlertType.CONFIRMATION,
+                    "Are you sure you want to disconnect from " + HOSTNAME + "?",
+                    ButtonType.YES, ButtonType.NO);
+            disconnectAlert.setTitle("Disconnect");
+            disconnectAlert.setHeaderText("Disconnect");
+            Optional<ButtonType> result = disconnectAlert.showAndWait();
+            if(result.isPresent())
+            {
+                if(result.get() == ButtonType.YES)
+                {
+                    // Disconnect
+                    Logger.log(LogLevel.INFO, getClass().getName(),
+                            "Disconnecting from Hardware Monitor '" + HOSTNAME + "'");
+
+                    // Disconnect from current hardware monitor
+                    boolean disconnected = NetworkClient.getInstance().disconnect();
+
+                    if(disconnected)
+                    {
+                        NetworkScanner.handleScan();
+                    }
+                    else
+                    {
+                        Alert failedToDisconnectAlert = new Alert(Alert.AlertType.ERROR,
+                                "An error occurred when disconnecting from " + HOSTNAME,
+                                ButtonType.OK);
+                        failedToDisconnectAlert.setTitle("Failed to disconnect");
+                        failedToDisconnectAlert.setHeaderText("Failed to disconnect");
+                        failedToDisconnectAlert.showAndWait();
+                    }
+                }
+            }
+        });
+
+        StackPane.setAlignment(disconnectButton, Pos.TOP_RIGHT);
+        topLeftButtonBox.getChildren().add(disconnectButton);
         topLeftGroup.getChildren().add(topLeftButtonBox);
 
         Group topRightGroup = new Group();

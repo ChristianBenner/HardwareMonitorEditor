@@ -42,7 +42,7 @@ import javafx.scene.Node;
  */
 public class NetworkScanStateData extends StateData
 {
-    private static final String NAME = "LOADING";
+    private static final String NAME = "NETWORK_SCAN";
     private final String information;
     private NetworkScanInfoPage networkScanInfoPage;
     private int numberOfFoundDevices;

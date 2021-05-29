@@ -43,7 +43,12 @@ public class NoSensor extends VBox
         super.getChildren().add(imageView);
 
         // Text
-        Label errorText = new Label("Could not find '" + sensorName + "'");
+        Label name = new Label(sensorName);
+        name.setId("no-sensor-label");
+        name.setTextAlignment(TextAlignment.CENTER);
+        super.getChildren().add(name);
+
+        Label errorText = new Label("Not Found");
         errorText.setId("no-sensor-label");
         errorText.setTextAlignment(TextAlignment.CENTER);
         super.getChildren().add(errorText);

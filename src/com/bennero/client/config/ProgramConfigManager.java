@@ -262,6 +262,13 @@ public class ProgramConfigManager extends ConfigurationSaveHandler
         super.save();
     }
 
+    public void clearLastConnectedIp4()
+    {
+        this.lastConnectedIp4 = null;
+        this.lastConnectedIp4Available = false;
+        super.save();
+    }
+
     public String getLastConnectedMac()
     {
         return lastConnectedMac;
@@ -274,6 +281,13 @@ public class ProgramConfigManager extends ConfigurationSaveHandler
         super.save();
     }
 
+    public void clearLastConnectedMac()
+    {
+        this.lastConnectedMac = null;
+        this.lastConnectedMacAvailable = false;
+        super.save();
+    }
+
     public String getLastConnectedHostname()
     {
         return lastConnectedHostname;
@@ -283,6 +297,13 @@ public class ProgramConfigManager extends ConfigurationSaveHandler
     {
         this.lastConnectedHostname = lastConnectedHostname;
         this.lastConnectedHostnameAvailable = true;
+        super.save();
+    }
+
+    public void clearLastConnectedHostname()
+    {
+        this.lastConnectedHostname = null;
+        this.lastConnectedHostnameAvailable = false;
         super.save();
     }
 
@@ -321,6 +342,17 @@ public class ProgramConfigManager extends ConfigurationSaveHandler
         this.lastConnectedIp4Available = true;
         this.lastConnectedMacAvailable = true;
         this.lastConnectedHostnameAvailable = true;
+        super.save();
+    }
+
+    public void clearConnectionData()
+    {
+        this.lastConnectedIp4 = null;
+        this.lastConnectedMac = null;
+        this.lastConnectedHostname = null;
+        this.lastConnectedIp4Available = false;
+        this.lastConnectedMacAvailable = false;
+        this.lastConnectedHostnameAvailable = false;
         super.save();
     }
 
