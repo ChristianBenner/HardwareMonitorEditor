@@ -358,15 +358,24 @@ public class PageEditor extends StackPane
                                     int rowOffset = editableSensor.getSelectedRowOffset();
                                     int newColumnIndex = column - columnOffset;
                                     int newRowIndex = row - rowOffset;
+                                    int draggedFromColumn = sensor.getColumn() + columnOffset;
+                                    int draggedFromRow = sensor.getRow() + rowOffset;
 
                                     System.out.println("Mouse: x[" + mouseX + "], y[" + mouseY + "], Bounds: x[" + nodeBounds.getMinX() + "], y[" + nodeBounds.getMinY() + "], ex[" + nodeBounds.getMaxX() + "], ey[" + nodeBounds.getMaxY() + "]");
                                     System.out.println("Mouse at free loc. ROW: " + row + ", COL: " + column);
                                     System.out.println("Dragged from. ROW: " + (sensor.getRow() + rowOffset) + ", COL: " + (sensor.getColumn() + columnOffset));
                                     System.out.println("Dest. ROW: " + newRowIndex + ", COL: " + newColumnIndex);
 
-                                    // We need to also make sure that there are no sensors covering this location
-                                    if(newRowIndex >= 0 && newColumnIndex >= 0 && !isSpaceTaken(newColumnIndex,
-                                            newRowIndex, sensor.getColumnSpan(), sensor.getRowSpan()))
+                                    // Check if the new location for the sensor would fit (including around other
+                                    // sensors on the page)
+                                    if(!(row == draggedFromRow && column == draggedFromColumn) &&
+                                            !(row == sensor.getRow() && column == sensor.getColumn()) &&
+                                            newRowIndex + sensor.getRowSpan() <= pageData.getRows() &&
+                                            newColumnIndex + sensor.getColumnSpan() <= pageData.getColumns() &&
+                                            newRowIndex >= 0 &&
+                                            newColumnIndex >= 0 &&
+                                            !isSpaceTaken(newColumnIndex, newRowIndex, sensor.getColumnSpan(),
+                                                    sensor.getRowSpan(), sensor))
                                     {
                                         System.out.println("SPACE FREE");
                                         int previousRow = sensor.getRow();
@@ -608,6 +617,87 @@ public class PageEditor extends StackPane
             if (withinRow && withinColumn)
             {
                 taken = true;
+            }
+        }
+
+        return taken;
+    }
+
+    // Exclude a given sensor from the checks
+    private boolean isSpaceTaken(int column, int row, int columnSpan, int rowSpan, Sensor excludedSensor)
+    {
+        boolean taken = false;
+
+        // Check that no other sensor has been placed at that position
+        for (int i = 0; i < placedSensors.size() && !taken; i++)
+        {
+            Sensor placedSensor = placedSensors.get(i);
+
+            if(placedSensor != excludedSensor)
+            {
+                System.out.println("COMPARING SENSOR: " + placedSensor.getTitle() + " AGAINST " + excludedSensor.getTitle());
+                int endColumn = column + columnSpan;
+                int endRow = row + rowSpan;
+                int placedStartColumn = placedSensor.getColumn();
+                int placedEndColumn = placedStartColumn + placedSensor.getColumnSpan();
+                int placedStartRow = placedSensor.getRow();
+                int placedEndRow = placedStartRow + placedSensor.getRowSpan();
+
+                boolean withinRow = (row >= placedStartRow && row < placedEndRow) ||
+                        (endRow > placedStartRow && endRow <= placedEndRow);
+                boolean withinColumn = (column >= placedStartColumn && column < placedEndColumn) ||
+                        (endColumn > placedStartColumn && endColumn <= placedEndColumn);
+
+                if (withinRow && withinColumn)
+                {
+                    taken = true;
+                }
+            }
+        }
+
+        return taken;
+    }
+
+    // Check if a space is taken, if the space is taken within the excluded area then it would be treated as if it was
+    // available
+    private boolean isSpaceTaken(int column, int row, int columnSpan, int rowSpan, int excludeColumn, int excludeRow,
+                                 int excludeColumnSpan, int excludeRowSpan)
+    {
+        boolean taken = false;
+
+        // Check that no other sensor has been placed at that position
+        for (int i = 0; i < placedSensors.size() && !taken; i++)
+        {
+            Sensor placedSensor = placedSensors.get(i);
+
+            int endColumn = column + columnSpan;
+            int endRow = row + rowSpan;
+            int placedStartColumn = placedSensor.getColumn();
+            int placedEndColumn = placedStartColumn + placedSensor.getColumnSpan();
+            int placedStartRow = placedSensor.getRow();
+            int placedEndRow = placedStartRow + placedSensor.getRowSpan();
+
+            boolean withinRow = (row >= placedStartRow && row < placedEndRow) ||
+                    (endRow > placedStartRow && endRow <= placedEndRow);
+            boolean withinColumn = (column >= placedStartColumn && column < placedEndColumn) ||
+                    (endColumn > placedStartColumn && endColumn <= placedEndColumn);
+
+            if (withinRow && withinColumn)
+            {
+                int endExcludedColumn = excludeColumn + excludeColumnSpan;
+                int endExcludedRow = excludeRow + excludeRowSpan;
+
+                // Will the new location be within the excluded area
+                boolean withinExcludedRow = (row >= excludeRow && row < endExcludedRow) ||
+                        (endRow > excludeRow && endRow <= endExcludedRow);
+                boolean withinExcludedColumn = (column >= excludeColumn && column < endExcludedColumn) ||
+                        (endColumn > excludeColumn && endColumn <= endExcludedColumn);
+
+                // if within the excluded space then it is not taken
+                if(!(withinExcludedRow && withinExcludedColumn))
+                {
+                    taken = true;
+                }
             }
         }
 
