@@ -380,31 +380,32 @@ public class PageEditor extends StackPane
                                         System.out.println("SPACE FREE");
                                         int previousRow = sensor.getRow();
                                         int previousColumn = sensor.getColumn();
+                                        int rowSpan = sensor.getRowSpan();
+                                        int columnSpan = sensor.getColumnSpan();
 
-                                        // Remove all of the unused nodes from where the sensor will span across
-                                        for(int y = newRowIndex; y < newRowIndex + sensor.getRowSpan(); y++)
-                                        {
-                                            for(int x = newColumnIndex; x < newColumnIndex + sensor.getColumnSpan(); x++)
-                                            {
-                                                Node temp = gridArray[y][x];
-                                                sensorPane.getChildren().remove(temp);
-                                                gridArray[y][x] = null;
-                                            }
-                                        }
+                                        // Remove all nodes where sensor will go but do not free the sensor itself
+                                        freeSpaceExcluding(newRowIndex, newRowIndex + rowSpan, newColumnIndex,
+                                                newColumnIndex + columnSpan, previousRow,
+                                                previousRow + rowSpan, previousColumn,
+                                                previousColumn + columnSpan);
 
                                         // Set where the sensor was dragged from to null
                                         gridArray[previousRow][previousColumn] = null;
 
                                         // Move the sensor to the left column and expand the right side
                                         sensor.setPosition(newRowIndex, newColumnIndex);
-
+                                        gridArray[newRowIndex][newColumnIndex] = editableSensor;
                                         GridPane.setColumnIndex(editableSensor, newColumnIndex);
                                         GridPane.setRowIndex(editableSensor, newRowIndex);
+                                        System.out.println("SET SENSOR POS TO: ROW[" + newRowIndex + "], COL[" + newColumnIndex + "]");
 
-                                        gridArray[sensor.getRow()][sensor.getColumn()] = editableSensor;
-
-                                        populateFreedSpace(previousRow, previousRow + sensor.getRowSpan(),
-                                                previousColumn, previousColumn + sensor.getColumnSpan());
+                                        // When populating freed space, we must also exclude the space which the sensor is in
+                                        populateFreedSpaceExcluding(previousRow,
+                                                previousRow + sensor.getRowSpan(),
+                                                previousColumn, previousColumn + sensor.getColumnSpan(),
+                                                newRowIndex, newRowIndex + sensor.getRowSpan(),
+                                                newColumnIndex,
+                                                newColumnIndex + sensor.getColumnSpan());
                                     }
                                     else
                                     {
@@ -1089,15 +1090,85 @@ public class PageEditor extends StackPane
 
     private void populateFreedSpace(int freeRowStart, int freeRowEnd, int freeColumnStart, int freeColumnEnd)
     {
-        for (int y = freeRowStart; y < freeRowEnd; y++)
+        for (int y = Math.max(freeRowStart, 0); y < Math.min(freeRowEnd, pageData.getRows()); y++)
         {
-            for(int x = freeColumnStart; x < freeColumnEnd; x++)
+            for(int x = Math.max(freeColumnStart, 0); x < Math.min(freeColumnEnd, pageData.getColumns()); x++)
             {
                 // Only place an add sensor button if the space is free
                 if (gridArray[y][x] == null)
                 {
                     // Place an add sensor button on the cell that has been freed up
                     placeAddSensorButton(y, x);
+                }
+            }
+        }
+    }
+
+    private void populateFreedSpaceExcluding(int freeRowStart,
+                                             int freeRowEnd,
+                                             int freeColumnStart,
+                                             int freeColumnEnd,
+                                             int excludeRowStart,
+                                             int excludeRowEnd,
+                                             int excludeColumnStart,
+                                             int excludeColumnEnd)
+    {
+        System.out.println("POPULATING FREE SPACE: freeRows[" + freeRowStart + "-" + freeRowEnd + "], " +
+                "freeColumns[" + freeColumnStart + "-" + freeColumnEnd + "], " +
+                "excludeRows[" + excludeRowStart + "-" + excludeRowEnd + "], " +
+                "excludeColumns[" + excludeColumnStart + "-" + excludeColumnEnd + "]");
+
+        for (int y = Math.max(freeRowStart, 0); y < Math.min(freeRowEnd, pageData.getRows()); y++)
+        {
+            for(int x = Math.max(freeColumnStart, 0); x < Math.min(freeColumnEnd, pageData.getColumns()); x++)
+            {
+                // Check if the x, y co-ordinates are within the excluded space, if they are, do not place the button
+                boolean inExcludedRow = y >= excludeRowStart && y < excludeRowEnd;
+                boolean inExcludedColumn = x >= excludeColumnStart && x < excludeColumnEnd;
+                boolean excludePos = inExcludedRow && inExcludedColumn;
+
+                if(excludePos)
+                {
+                    System.out.println("EXCLUDED: BUTTON ROW: " + y + " and COL: " + x);
+                }
+                else
+                {
+                    System.out.println("PLACED: BUTTON ROW: " + y + " and COL: " + x);
+                }
+
+                // Only place an add sensor button if the space is free
+                if (!excludePos && gridArray[y][x] == null)
+                {
+                    // Place an add sensor button on the cell that has been freed up
+                    placeAddSensorButton(y, x);
+                }
+            }
+        }
+    }
+
+    private void freeSpaceExcluding(int rowStart,
+                                    int rowEnd,
+                                    int colStart,
+                                    int colEnd,
+                                    int excludeRowStart,
+                                    int excludeRowEnd,
+                                    int excludeColStart,
+                                    int excludeColEnd)
+    {
+        for (int y = Math.max(rowStart, 0); y < Math.min(rowEnd, pageData.getRows()); y++)
+        {
+            for (int x = Math.max(colStart, 0); x < Math.min(colEnd, pageData.getColumns()); x++)
+            {
+                // Check if the x, y co-ordinates are within the excluded space, if they are, do not free the space
+                boolean inExcludedRow = y >= excludeRowStart && y < excludeRowEnd;
+                boolean inExcludedColumn = x >= excludeColStart && x < excludeColEnd;
+                boolean excludePos = inExcludedRow && inExcludedColumn;
+
+                if(!excludePos)
+                {
+                    Node temp = gridArray[y][x];
+                    sensorPane.getChildren().remove(temp);
+                    gridArray[y][x] = null;
                 }
             }
         }
