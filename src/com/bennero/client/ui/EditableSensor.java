@@ -54,6 +54,8 @@ public class EditableSensor extends StackPane
     private boolean mouseInside;
     private int selectedColumnOffsetOnMove;
     private int selectedRowOffsetOnMove;
+    private double selectedColumnOffsetExact;
+    private double selectedRowOffsetExact;
 
     public class DragEvent extends Event
     {
@@ -100,8 +102,45 @@ public class EditableSensor extends StackPane
         }
     }
 
+    public class MoveEvent extends Event
+    {
+        private int newColumn;
+        private int newRow;
+        private int previousColumn;
+        private int previousRow;
+
+        public MoveEvent(int newColumn, int newRow, int previousColumn, int previousRow)
+        {
+            super(null);
+            this.newColumn = newColumn;
+            this.newRow = newRow;
+            this.previousColumn = previousColumn;
+            this.previousRow = previousRow;
+        }
+
+        public int getNewColumn()
+        {
+            return newColumn;
+        }
+
+        public int getNewRow()
+        {
+            return newRow;
+        }
+
+        public int getPreviousColumn()
+        {
+            return previousColumn;
+        }
+
+        public int getPreviousRow()
+        {
+            return previousRow;
+        }
+    }
+
     private EventHandler<DragEvent> dragEvent;
-    private EventHandler<MouseEvent> moveButtonDragEvent;
+    private EventHandler<MoveEvent> moveButtonDragEvent;
 
     public EditableSensor(Color highlightColour,
                           Image editIcon,
@@ -278,11 +317,61 @@ public class EditableSensor extends StackPane
                     // Now calculate how many sensor column widths fit into the space between the mouse and the sensor start
                     selectedColumnOffsetOnMove = (int)mouseRelativeToSensorX / (int)sensorColumnWidth;
                     selectedRowOffsetOnMove = (int)mouseRelativeToSensorY / (int)sensorRowHeight;
+                    selectedColumnOffsetExact = mouseRelativeToSensorX / sensorColumnWidth;
+                    selectedRowOffsetExact = mouseRelativeToSensorY / sensorRowHeight;
                 },
                 dragEvent ->
                 {
+                    Bounds sensorBounds = this.localToScene(this.getBoundsInLocal());
+                    double mouseX = dragEvent.getSceneX();
+                    double mouseY = dragEvent.getSceneY();
+                    double sensorX = sensorBounds.getMinX();
+                    double sensorY = sensorBounds.getMinY();
+                    double sensorWidth = sensorBounds.getWidth();
+                    double sensorHeight = sensorBounds.getHeight();
+                    int sensorColumnSpan = sensor.getColumnSpan();
+                    int sensorRowSpan = sensor.getRowSpan();
+                    double sensorColumnWidth = sensorWidth / sensorColumnSpan;
+                    double sensorRowHeight = sensorHeight / sensorRowSpan;
+                    double mouseRelativeToSensorX = mouseX - sensorX;
+                    double mouseRelativeToSensorY = mouseY - sensorY;
+                    double columnDragOffset = mouseRelativeToSensorX / sensorColumnWidth;
+                    double rowDragOffset = mouseRelativeToSensorY / sensorRowHeight;
+                    double columnDragTotal = columnDragOffset - selectedColumnOffsetExact;
+                    double rowDragTotal = rowDragOffset - selectedRowOffsetExact;
+                    int columnMove = (int)columnDragTotal;
+                    int rowMove = (int)rowDragTotal;
+                    int currentCol = sensor.getColumn();
+                    int currentRow = sensor.getRow();
+                    int newCol = currentCol + columnMove;
+                    int newRow = currentRow + rowMove;
+
+                    System.out.println("mouseX: " + mouseX);
+                    System.out.println("mouseY: " + mouseY);
+                    System.out.println("sensorX: " + sensorX);
+                    System.out.println("sensorY: " + sensorY);
+                    System.out.println("sensorWidth: " + sensorWidth);
+                    System.out.println("sensorHeight: " + sensorHeight);
+                    System.out.println("sensorColumnSpan: " + sensorColumnSpan);
+                    System.out.println("sensorRowSpan: " + sensorRowSpan);
+                    System.out.println("sensorColumnWidth: " + sensorColumnWidth);
+                    System.out.println("sensorRowHeight: " + sensorRowHeight);
+                    System.out.println("mouseRelativeToSensorX: " + mouseRelativeToSensorX);
+                    System.out.println("mouseRelativeToSensorX: " + mouseRelativeToSensorY);
+                    System.out.println("columnDragTotal: " + columnDragTotal);
+                    System.out.println("rowDragTotal: " + rowDragTotal);
+                    System.out.println("columnMove: " + columnMove);
+                    System.out.println("rowMove: " + rowMove);
+                    System.out.println("currentCol: " + currentCol);
+                    System.out.println("currentRow: " + currentRow);
+                    System.out.println("newCol: " + newCol);
+                    System.out.println("newRow: " + newRow);
+
                     // Find what column/row we are hovering over
-                    moveButtonDragEvent.handle(dragEvent);
+                    if(newRow != currentRow || newCol != currentCol)
+                    {
+                        moveButtonDragEvent.handle(new MoveEvent(newCol, newRow, currentCol, currentRow));
+                    }
                 },
                 finishDragEvent ->
                 {
@@ -303,7 +392,7 @@ public class EditableSensor extends StackPane
         this.dragEvent = dragEvent;
     }
 
-    public void setMoveButtonDragEvent(EventHandler<MouseEvent> moveEvent)
+    public void setMoveButtonDragEvent(EventHandler<MoveEvent> moveEvent)
     {
         this.moveButtonDragEvent = moveEvent;
     }
@@ -347,5 +436,15 @@ public class EditableSensor extends StackPane
     public int getSelectedRowOffset()
     {
         return selectedRowOffsetOnMove;
+    }
+
+    public double getSelectedColumnOffsetExact()
+    {
+        return selectedColumnOffsetExact;
+    }
+
+    public double getSelectedRowOffsetExact()
+    {
+        return selectedRowOffsetExact;
     }
 }
