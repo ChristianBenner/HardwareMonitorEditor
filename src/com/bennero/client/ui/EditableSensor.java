@@ -25,6 +25,7 @@ package com.bennero.client.ui;
 
 import com.bennero.client.core.SensorManager;
 import com.bennero.common.Sensor;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -329,23 +330,26 @@ public class EditableSensor extends StackPane
                     double sensorY = sensorBounds.getMinY();
                     double sensorWidth = sensorBounds.getWidth();
                     double sensorHeight = sensorBounds.getHeight();
+                    double sensorCenterX = sensorX + (sensorWidth / 2.0);
+                    double sensorCenterY = sensorY + (sensorHeight / 2.0);
                     int sensorColumnSpan = sensor.getColumnSpan();
                     int sensorRowSpan = sensor.getRowSpan();
                     double sensorColumnWidth = sensorWidth / sensorColumnSpan;
                     double sensorRowHeight = sensorHeight / sensorRowSpan;
-                    double mouseRelativeToSensorX = mouseX - sensorX;
-                    double mouseRelativeToSensorY = mouseY - sensorY;
+                    double mouseRelativeToSensorX = mouseX - sensorCenterX;
+                    double mouseRelativeToSensorY = mouseY - sensorCenterY;
                     double columnDragOffset = mouseRelativeToSensorX / sensorColumnWidth;
                     double rowDragOffset = mouseRelativeToSensorY / sensorRowHeight;
-                    double columnDragTotal = columnDragOffset - selectedColumnOffsetExact;
-                    double rowDragTotal = rowDragOffset - selectedRowOffsetExact;
-                    int columnMove = (int)columnDragTotal;
-                    int rowMove = (int)rowDragTotal;
+                    double columnDragTotal = columnDragOffset;// - selectedColumnOffsetExact;
+                    double rowDragTotal = rowDragOffset;// - selectedRowOffsetExact;
+                    int columnMove = (int) columnDragTotal;
+                    int rowMove = (int) rowDragTotal;
                     int currentCol = sensor.getColumn();
                     int currentRow = sensor.getRow();
                     int newCol = currentCol + columnMove;
                     int newRow = currentRow + rowMove;
 
+                    System.out.println("****************************START*****************************");
                     System.out.println("mouseX: " + mouseX);
                     System.out.println("mouseY: " + mouseY);
                     System.out.println("sensorX: " + sensorX);
@@ -366,9 +370,10 @@ public class EditableSensor extends StackPane
                     System.out.println("currentRow: " + currentRow);
                     System.out.println("newCol: " + newCol);
                     System.out.println("newRow: " + newRow);
+                    System.out.println("****************************END*******************************");
 
                     // Find what column/row we are hovering over
-                    if(newRow != currentRow || newCol != currentCol)
+                    if (newRow != currentRow || newCol != currentCol)
                     {
                         moveButtonDragEvent.handle(new MoveEvent(newCol, newRow, currentCol, currentRow));
                     }

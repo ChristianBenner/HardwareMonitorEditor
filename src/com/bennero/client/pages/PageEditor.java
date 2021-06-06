@@ -33,6 +33,7 @@ import com.bennero.client.states.SensorSelectionStateData;
 import com.bennero.client.ui.*;
 import com.bennero.common.PageData;
 import com.bennero.common.Sensor;
+import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -355,8 +356,18 @@ public class PageEditor extends StackPane
                         // Move the sensor to the left column and expand the right side
                         sensor.setPosition(newRow, newCol);
                         gridArray[newRow][newCol] = editableSensor;
+
+                        Bounds sensorBoundsPre = editableSensor.localToScene(editableSensor.getBoundsInLocal());
+                        System.out.println("PRE-MOVE: " + sensorBoundsPre);
                         GridPane.setColumnIndex(editableSensor, newCol);
                         GridPane.setRowIndex(editableSensor, newRow);
+
+                        // Re-calculate the bounds now
+                        applyCss();
+                        layout();
+
+                        Bounds sensorBounds = editableSensor.localToScene(editableSensor.getBoundsInLocal());
+                        System.out.println("BOUNDS: " + sensorBounds);
                         System.out.println("SET SENSOR POS TO: ROW[" + newRow + "], COL[" + newCol + "]");
 
                         // When populating freed space, we must also exclude the space which the sensor is in
