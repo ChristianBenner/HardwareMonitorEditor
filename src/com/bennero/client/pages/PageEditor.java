@@ -33,7 +33,7 @@ import com.bennero.client.states.SensorSelectionStateData;
 import com.bennero.client.ui.*;
 import com.bennero.common.PageData;
 import com.bennero.common.Sensor;
-import javafx.application.Platform;
+import com.bennero.client.util.GridUtils;
 import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -296,7 +296,7 @@ public class PageEditor extends StackPane
         // Add sensors to page
         for (Sensor sensor : pageData.getSensorList())
         {
-            if (!isSpaceTaken(sensor))
+            if (!GridUtils.isSpaceTaken(placedSensors, sensor))
             {
                 EditableSensor editableSensor = new EditableSensor(HIGHLIGHT_COLOUR, editIcon, removeIcon, moveIcon,
                         sensor,
@@ -339,7 +339,7 @@ public class PageEditor extends StackPane
                             newCol + sensor.getColumnSpan() <= pageData.getColumns() &&
                             newRow >= 0 &&
                             newCol >= 0 &&
-                            !isSpaceTaken(newCol, newRow, sensor.getColumnSpan(), sensor.getRowSpan(), sensor))
+                            !GridUtils.isSpaceTaken(placedSensors, newCol, newRow, sensor.getColumnSpan(), sensor.getRowSpan(), sensor))
                     {
                         int rowSpan = sensor.getRowSpan();
                         int columnSpan = sensor.getColumnSpan();
@@ -357,18 +357,11 @@ public class PageEditor extends StackPane
                         sensor.setPosition(newRow, newCol);
                         gridArray[newRow][newCol] = editableSensor;
 
-                        Bounds sensorBoundsPre = editableSensor.localToScene(editableSensor.getBoundsInLocal());
-                        System.out.println("PRE-MOVE: " + sensorBoundsPre);
                         GridPane.setColumnIndex(editableSensor, newCol);
                         GridPane.setRowIndex(editableSensor, newRow);
 
-                        // Re-calculate the bounds now
-                        applyCss();
+                        // Re-calculate the bounds
                         layout();
-
-                        Bounds sensorBounds = editableSensor.localToScene(editableSensor.getBoundsInLocal());
-                        System.out.println("BOUNDS: " + sensorBounds);
-                        System.out.println("SET SENSOR POS TO: ROW[" + newRow + "], COL[" + newCol + "]");
 
                         // When populating freed space, we must also exclude the space which the sensor is in
                         populateFreedSpaceExcluding(prevRow,
@@ -378,188 +371,6 @@ public class PageEditor extends StackPane
                                 newCol,
                                 newCol + sensor.getColumnSpan());
                     }
-
-
-                  /*  double mouseX = mouseEvent.getSceneX();
-                    double mouseY = mouseEvent.getSceneY();
-
-
-                    int currentCol = sensor.getRow();
-                    int currentRow = sensor.getColumn();
-                    int colDrag = editableSensor.getSelectedColumnOffset();
-                    int rowDrag = editableSensor.getSelectedRowOffset();
-
-                    System.out.println("DRAG: ROW[" + rowDrag + "], COL[" + colDrag + "]");
-                    System.out.println("DRAG EXACT: ROW[" + editableSensor.getSelectedRowOffsetExact() + "], COL[" + editableSensor.getSelectedColumnOffsetExact() + "]");
-
-                    // Move to location + colDrag/rowDrag
-                    int newCol = currentCol + colDrag;
-                    int newRow = currentRow + rowDrag;
-                    System.out.println("NEW SENSOR POS TO: ROW[" + newRow + "], COL[" + newCol + "]");
-
-                    System.out.println("newRow != currentRow: " + ((newRow != currentRow) ? "TRUE" : "FALSE"));
-                    System.out.println("newCol != currentCol: " + ((newCol != currentCol) ? "TRUE" : "FALSE"));
-                    System.out.println("newRow + sensor.getRowSpan() <= pageData.getRows(): " + ((newRow + sensor.getRowSpan() <= pageData.getRows()) ? "TRUE" : "FALSE"));
-                    System.out.println("newCol + sensor.getColumnSpan() <= pageData.getColumns(): " + (newCol + sensor.getColumnSpan() <= pageData.getColumns() ? "TRUE" : "FALSE"));
-                    System.out.println("newRow >= 0: " + (newRow >= 0 ? "TRUE" : "FALSE"));
-                    System.out.println("newCol >= 0: " + ((newCol >= 0) ? "TRUE" : "FALSE"));
-                    System.out.println("!isSpaceTaken(newCol, newRow, sensor.getColumnSpan(), sensor.getRowSpan(), sensor): " + (!isSpaceTaken(newCol, newRow, sensor.getColumnSpan(), sensor.getRowSpan(), sensor) ? "TRUE" : "FALSE"));
-
-                    if(newRow != currentRow &&
-                            newCol != currentCol &&
-                            newRow + sensor.getRowSpan() <= pageData.getRows() &&
-                            newCol + sensor.getColumnSpan() <= pageData.getColumns() &&
-                            newRow >= 0 &&
-                            newCol >= 0 &&
-                            !isSpaceTaken(newCol, newRow, sensor.getColumnSpan(), sensor.getRowSpan(), sensor))
-                    {
-                        int rowSpan = sensor.getRowSpan();
-                        int columnSpan = sensor.getColumnSpan();
-
-                        // Remove all nodes where sensor will go but do not free the sensor itself
-                        freeSpaceExcluding(newRow, newRow + rowSpan, newCol,
-                                newCol + columnSpan, currentRow,
-                                currentRow + rowSpan, currentCol,
-                                currentCol + columnSpan);
-
-                        // Set where the sensor was dragged from to null
-                        gridArray[currentRow][currentCol] = null;
-
-                        // Move the sensor to the left column and expand the right side
-                        sensor.setPosition(newRow, newCol);
-                        gridArray[newRow][newCol] = editableSensor;
-                        GridPane.setColumnIndex(editableSensor, newCol);
-                        GridPane.setRowIndex(editableSensor, newRow);
-                        System.out.println("SET SENSOR POS TO: ROW[" + newRow + "], COL[" + newCol + "]");
-
-                        // When populating freed space, we must also exclude the space which the sensor is in
-                        populateFreedSpaceExcluding(currentRow,
-                                currentRow + sensor.getRowSpan(),
-                                currentCol, currentCol + sensor.getColumnSpan(),
-                                newRow, newRow + sensor.getRowSpan(),
-                                newCol,
-                                newCol + sensor.getColumnSpan());
-                    }*/
-
-
-
-
-
-
-
-
-
-
-
-
-/*                    // Discover what segment (column span/row span the mouse is first clicked in)
-                    // Check where the mouse has been dragged too and see if the sensor fits
-
-                    //if(mouseEvent.getSceneX() &
-                    double mouseX = mouseEvent.getSceneX();
-                    double mouseY = mouseEvent.getSceneY();
-
-                    boolean foundMoveLocation = false;
-
-                    // todo: CHECK MOUSE MOVEMENT WITHIN SAME SENSOR, IF MOUSE ACROSS SENSORS OWN SPAN THEN MOVE
-
-                    // Find what column/row we are hovering over by looking if the mouse is over an element in the grid
-                    // array
-                    for(int row = 0; row < pageData.getRows() && !foundMoveLocation; row++)
-                    {
-                        for(int column = 0; column < pageData.getColumns() && !foundMoveLocation; column++)
-                        {
-                            Node nodeToReplace = gridArray[row][column];
-                            if(nodeToReplace != null)
-                            {
-                                Bounds nodeBounds = nodeToReplace.localToScene(nodeToReplace.getBoundsInLocal());
-
-                                // Check if mouse is within the location
-                                if(mouseX > nodeBounds.getMinX() && mouseX < nodeBounds.getMaxX() &&
-                                        mouseY > nodeBounds.getMinY() && mouseY < nodeBounds.getMaxY())
-                                {
-                                    foundMoveLocation = true;
-                                    int columnOffset = editableSensor.getSelectedColumnOffset();
-                                    int rowOffset = editableSensor.getSelectedRowOffset();
-                                    // todo: remove these getters???
-                                    double colOffsetExact = editableSensor.getSelectedColumnOffsetExact();
-                                    double rowOffsetExact = editableSensor.getSelectedRowOffsetExact();
-*//*
-                                    if(colOffsetExact > 0.5)
-                                    {
-                                        Math.round()
-                                    }
-                                    else*//*
-
-                                    int newColumnIndex = column - columnOffset;
-                                    int newRowIndex = row - rowOffset;
-                                    int draggedFromColumn = sensor.getColumn() + columnOffset;
-                                    int draggedFromRow = sensor.getRow() + rowOffset;
-
-                                    System.out.println("Mouse: x[" + mouseX + "], y[" + mouseY + "], Bounds: x[" + nodeBounds.getMinX() + "], y[" + nodeBounds.getMinY() + "], ex[" + nodeBounds.getMaxX() + "], ey[" + nodeBounds.getMaxY() + "]");
-                                    System.out.println("Mouse at free loc. ROW: " + row + ", COL: " + column);
-                                    System.out.println("Dragged from. ROW: " + (sensor.getRow() + rowOffset) + ", COL: " + (sensor.getColumn() + columnOffset));
-                                    System.out.println("EXACT Dragged from. ROW: " + (sensor.getRow() + rowOffsetExact) + ", COL: " + (sensor.getColumn() + colOffsetExact));
-                                    System.out.println("Dest. ROW: " + newRowIndex + ", COL: " + newColumnIndex);
-
-                                    System.out.println(!(row == draggedFromRow && column == draggedFromColumn) ? "TRUE" : "FALSE");
-                                    System.out.println(!(row == sensor.getRow() && column == sensor.getColumn()) ? "TRUE" : "FALSE");
-                                    System.out.println(newRowIndex + sensor.getRowSpan() <= pageData.getRows() ? "TRUE" : "FALSE");
-                                    System.out.println(newColumnIndex + sensor.getColumnSpan() <= pageData.getColumns() ? "TRUE" : "FALSE");
-                                    System.out.println(newRowIndex >= 0 ? "TRUE" : "FALSE");
-                                    System.out.println(newColumnIndex >= 0 ? "TRUE" : "FALSE");
-                                    System.out.println(!isSpaceTaken(newColumnIndex, newRowIndex, sensor.getColumnSpan(),
-                                            sensor.getRowSpan(), sensor) ? "TRUE" : "FALSE");
-
-                                    // Check if the new location for the sensor would fit (including around other
-                                    // sensors on the page)
-                                    if(!(row == draggedFromRow && column == draggedFromColumn) &&
-                                            !(row == sensor.getRow() && column == sensor.getColumn()) &&
-                                            newRowIndex + sensor.getRowSpan() <= pageData.getRows() &&
-                                            newColumnIndex + sensor.getColumnSpan() <= pageData.getColumns() &&
-                                            newRowIndex >= 0 &&
-                                            newColumnIndex >= 0 &&
-                                            !isSpaceTaken(newColumnIndex, newRowIndex, sensor.getColumnSpan(),
-                                                    sensor.getRowSpan(), sensor))
-                                    {
-                                        System.out.println("SPACE FREE");
-                                        int previousRow = sensor.getRow();
-                                        int previousColumn = sensor.getColumn();
-                                        int rowSpan = sensor.getRowSpan();
-                                        int columnSpan = sensor.getColumnSpan();
-
-                                        // Remove all nodes where sensor will go but do not free the sensor itself
-                                        freeSpaceExcluding(newRowIndex, newRowIndex + rowSpan, newColumnIndex,
-                                                newColumnIndex + columnSpan, previousRow,
-                                                previousRow + rowSpan, previousColumn,
-                                                previousColumn + columnSpan);
-
-                                        // Set where the sensor was dragged from to null
-                                        gridArray[previousRow][previousColumn] = null;
-
-                                        // Move the sensor to the left column and expand the right side
-                                        sensor.setPosition(newRowIndex, newColumnIndex);
-                                        gridArray[newRowIndex][newColumnIndex] = editableSensor;
-                                        GridPane.setColumnIndex(editableSensor, newColumnIndex);
-                                        GridPane.setRowIndex(editableSensor, newRowIndex);
-                                        System.out.println("SET SENSOR POS TO: ROW[" + newRowIndex + "], COL[" + newColumnIndex + "]");
-
-                                        // When populating freed space, we must also exclude the space which the sensor is in
-                                        populateFreedSpaceExcluding(previousRow,
-                                                previousRow + sensor.getRowSpan(),
-                                                previousColumn, previousColumn + sensor.getColumnSpan(),
-                                                newRowIndex, newRowIndex + sensor.getRowSpan(),
-                                                newColumnIndex,
-                                                newColumnIndex + sensor.getColumnSpan());
-                                    }
-                                    else
-                                    {
-                                        System.out.println("SPACE TAKEN");
-                                    }
-                                }
-                            }
-                        }
-                    }*/
                 });
 
                 editableSensor.setDragEvent(dragEvent ->
@@ -703,180 +514,6 @@ public class PageEditor extends StackPane
         }
     }
 
-    private boolean isSpaceTaken(Sensor sensor)
-    {
-        boolean taken = false;
-
-        // Check that no other sensor has been placed at that position
-        for (int i = 0; i < placedSensors.size() && !taken; i++)
-        {
-            Sensor placedSensor = placedSensors.get(i);
-
-            if (placedSensor != sensor)
-            {
-                int startColumn = sensor.getColumn();
-                int endColumn = startColumn + sensor.getColumnSpan();
-                int startRow = sensor.getRow();
-                int endRow = startRow + sensor.getRowSpan();
-
-                int placedStartColumn = placedSensor.getColumn();
-                int placedEndColumn = placedStartColumn + placedSensor.getColumnSpan();
-                int placedStartRow = placedSensor.getRow();
-                int placedEndRow = placedStartRow + placedSensor.getRowSpan();
-
-                boolean withinRow = (startRow >= placedStartRow && startRow < placedEndRow) ||
-                        (endRow > placedStartRow && endRow <= placedEndRow);
-                boolean withinColumn = (startColumn >= placedStartColumn && startColumn < placedEndColumn) ||
-                        (endColumn > placedStartColumn && endColumn <= placedEndColumn);
-
-                if (withinRow && withinColumn)
-                {
-                    taken = true;
-                }
-            }
-        }
-
-        return taken;
-    }
-
-    private boolean isSpaceTaken(int column, int row, int columnSpan, int rowSpan)
-    {
-        boolean taken = false;
-
-        // Check that no other sensor has been placed at that position
-        for (int i = 0; i < placedSensors.size() && !taken; i++)
-        {
-            Sensor placedSensor = placedSensors.get(i);
-
-            int endColumn = column + columnSpan;
-            int endRow = row + rowSpan;
-            int placedStartColumn = placedSensor.getColumn();
-            int placedEndColumn = placedStartColumn + placedSensor.getColumnSpan();
-            int placedStartRow = placedSensor.getRow();
-            int placedEndRow = placedStartRow + placedSensor.getRowSpan();
-
-            boolean withinRow = (row >= placedStartRow && row < placedEndRow) ||
-                    (endRow > placedStartRow && endRow <= placedEndRow);
-            boolean withinColumn = (column >= placedStartColumn && column < placedEndColumn) ||
-                    (endColumn > placedStartColumn && endColumn <= placedEndColumn);
-
-            if (withinRow && withinColumn)
-            {
-                taken = true;
-            }
-        }
-
-        return taken;
-    }
-
-    // Exclude a given sensor from the checks
-    private boolean isSpaceTaken(int column, int row, int columnSpan, int rowSpan, Sensor excludedSensor)
-    {
-        boolean taken = false;
-
-        // Check that no other sensor has been placed at that position
-        for (int i = 0; i < placedSensors.size() && !taken; i++)
-        {
-            Sensor placedSensor = placedSensors.get(i);
-
-            if(placedSensor != excludedSensor)
-            {
-                int endColumn = column + columnSpan;
-                int endRow = row + rowSpan;
-                int placedStartColumn = placedSensor.getColumn();
-                int placedEndColumn = placedStartColumn + placedSensor.getColumnSpan();
-                int placedStartRow = placedSensor.getRow();
-                int placedEndRow = placedStartRow + placedSensor.getRowSpan();
-
-                boolean withinRow = (row >= placedStartRow && row < placedEndRow) ||
-                        (endRow > placedStartRow && endRow <= placedEndRow);
-                boolean withinColumn = (column >= placedStartColumn && column < placedEndColumn) ||
-                        (endColumn > placedStartColumn && endColumn <= placedEndColumn);
-
-                if (withinRow && withinColumn)
-                {
-                    taken = true;
-                }
-            }
-        }
-
-        return taken;
-    }
-
-    // Check if a space is taken, if the space is taken within the excluded area then it would be treated as if it was
-    // available
-    private boolean isSpaceTaken(int column, int row, int columnSpan, int rowSpan, int excludeColumn, int excludeRow,
-                                 int excludeColumnSpan, int excludeRowSpan)
-    {
-        boolean taken = false;
-
-        // Check that no other sensor has been placed at that position
-        for (int i = 0; i < placedSensors.size() && !taken; i++)
-        {
-            Sensor placedSensor = placedSensors.get(i);
-
-            int endColumn = column + columnSpan;
-            int endRow = row + rowSpan;
-            int placedStartColumn = placedSensor.getColumn();
-            int placedEndColumn = placedStartColumn + placedSensor.getColumnSpan();
-            int placedStartRow = placedSensor.getRow();
-            int placedEndRow = placedStartRow + placedSensor.getRowSpan();
-
-            boolean withinRow = (row >= placedStartRow && row < placedEndRow) ||
-                    (endRow > placedStartRow && endRow <= placedEndRow);
-            boolean withinColumn = (column >= placedStartColumn && column < placedEndColumn) ||
-                    (endColumn > placedStartColumn && endColumn <= placedEndColumn);
-
-            if (withinRow && withinColumn)
-            {
-                int endExcludedColumn = excludeColumn + excludeColumnSpan;
-                int endExcludedRow = excludeRow + excludeRowSpan;
-
-                // Will the new location be within the excluded area
-                boolean withinExcludedRow = (row >= excludeRow && row < endExcludedRow) ||
-                        (endRow > excludeRow && endRow <= endExcludedRow);
-                boolean withinExcludedColumn = (column >= excludeColumn && column < endExcludedColumn) ||
-                        (endColumn > excludeColumn && endColumn <= endExcludedColumn);
-
-                // if within the excluded space then it is not taken
-                if(!(withinExcludedRow && withinExcludedColumn))
-                {
-                    taken = true;
-                }
-            }
-        }
-
-        return taken;
-    }
-
-    private boolean isRegionTaken(int column, int row, int endColumn, int endRow)
-    {
-        boolean taken = false;
-
-        // Check that no other sensor has been placed at that position
-        for (int i = 0; i < placedSensors.size() && !taken; i++)
-        {
-            Sensor placedSensor = placedSensors.get(i);
-
-            int placedStartColumn = placedSensor.getColumn();
-            int placedEndColumn = placedStartColumn + placedSensor.getColumnSpan();
-            int placedStartRow = placedSensor.getRow();
-            int placedEndRow = placedStartRow + placedSensor.getRowSpan();
-
-            boolean withinRow = (row >= placedStartRow && row < placedEndRow) ||
-                    (endRow > placedStartRow && endRow <= placedEndRow);
-            boolean withinColumn = (column >= placedStartColumn && column < placedEndColumn) ||
-                    (endColumn > placedStartColumn && endColumn <= placedEndColumn);
-
-            if (withinRow && withinColumn)
-            {
-                taken = true;
-            }
-        }
-
-        return taken;
-    }
-
     // returns null if no sensor in space
     private Sensor getSensorByLocation(int column, int row)
     {
@@ -919,7 +556,7 @@ public class PageEditor extends StackPane
         {
             for (int row = 0; row < pageData.getRows(); row++)
             {
-                if (!isSpaceTaken(column, row, 1, 1))
+                if (!GridUtils.isSpaceTaken(placedSensors, column, row, 1, 1))
                 {
                     placeAddSensorButton(row, column);
                 }
@@ -991,8 +628,9 @@ public class PageEditor extends StackPane
 
             // This checks if the mouse is passed the next nodes right side, it also checks that there is no sensor
             // covering that space
-            if(currentX > nextNodeEndX && !isRegionTaken(sensorColumn + sensorColumnSpan, sensorRow,
-                    sensorColumn + newColumnSpan, sensorRow + sensor.getRowSpan()))
+            if(currentX > nextNodeEndX && !GridUtils.isRegionTaken(placedSensors,
+                    sensorColumn + sensorColumnSpan, sensorRow, sensorColumn + newColumnSpan,
+                    sensorRow + sensor.getRowSpan()))
             {
                 sensor.setColumnSpan(newColumnSpan);
                 GridPane.setColumnSpan(editableSensor, newColumnSpan);
@@ -1048,8 +686,9 @@ public class PageEditor extends StackPane
 
             // This checks if the mouse is passed the next nodes bottom side, it also checks that there is no sensor
             // covering that space
-            if(currentY > nextNodeEndY && !isRegionTaken(sensorColumn, sensorRow + sensorRowSpan,
-                    sensorColumn + sensor.getColumnSpan(), sensorRow + newRowSpan))
+            if(currentY > nextNodeEndY && !GridUtils.isRegionTaken(placedSensors, sensorColumn,
+                    sensorRow + sensorRowSpan, sensorColumn + sensor.getColumnSpan(),
+                    sensorRow + newRowSpan))
             {
                 sensor.setRowSpan(newRowSpan);
                 GridPane.setRowSpan(editableSensor, newRowSpan);
@@ -1103,8 +742,8 @@ public class PageEditor extends StackPane
         int leftNodeColumnIndex = sensorColumn - 1;
 
         // Check if any sensor takes up the space on the left of this sensor
-        if(leftNodeColumnIndex >= 0 &&
-                !isSpaceTaken(leftNodeColumnIndex, sensorRow, 1, sensor.getRowSpan()))
+        if(leftNodeColumnIndex >= 0 && !GridUtils.isSpaceTaken(placedSensors, leftNodeColumnIndex, sensorRow,
+                1, sensor.getRowSpan()))
         {
             // This means that the space is free
             Node leftNode = gridArray[sensorRow][leftNodeColumnIndex];
@@ -1178,8 +817,8 @@ public class PageEditor extends StackPane
 
         //if(leftNodeColumnIndex >= 0 && !isSpaceTaken(leftNodeColumnIndex, sensorRow, 1, sensor.getRowSpan()))
         // Check if any sensor takes up the space above this sensor
-        if(aboveNodeRowIndex >= 0 &&
-                !isRegionTaken(sensorColumn, aboveNodeRowIndex, sensorColumn + sensor.getColumnSpan(), sensorRow));
+        if(aboveNodeRowIndex >= 0 && !GridUtils.isRegionTaken(placedSensors, sensorColumn, aboveNodeRowIndex,
+                sensorColumn + sensor.getColumnSpan(), sensorRow));
         {
             // Check if the mouse is at the beginning of the node above
             Node aboveNode = gridArray[aboveNodeRowIndex][sensorColumn];
@@ -1257,11 +896,6 @@ public class PageEditor extends StackPane
                                              int excludeColumnStart,
                                              int excludeColumnEnd)
     {
-        System.out.println("POPULATING FREE SPACE: freeRows[" + freeRowStart + "-" + freeRowEnd + "], " +
-                "freeColumns[" + freeColumnStart + "-" + freeColumnEnd + "], " +
-                "excludeRows[" + excludeRowStart + "-" + excludeRowEnd + "], " +
-                "excludeColumns[" + excludeColumnStart + "-" + excludeColumnEnd + "]");
-
         for (int y = Math.max(freeRowStart, 0); y < Math.min(freeRowEnd, pageData.getRows()); y++)
         {
             for(int x = Math.max(freeColumnStart, 0); x < Math.min(freeColumnEnd, pageData.getColumns()); x++)
@@ -1270,15 +904,6 @@ public class PageEditor extends StackPane
                 boolean inExcludedRow = y >= excludeRowStart && y < excludeRowEnd;
                 boolean inExcludedColumn = x >= excludeColumnStart && x < excludeColumnEnd;
                 boolean excludePos = inExcludedRow && inExcludedColumn;
-
-                if(excludePos)
-                {
-                    System.out.println("EXCLUDED: BUTTON ROW: " + y + " and COL: " + x);
-                }
-                else
-                {
-                    System.out.println("PLACED: BUTTON ROW: " + y + " and COL: " + x);
-                }
 
                 // Only place an add sensor button if the space is free
                 if (!excludePos && gridArray[y][x] == null)

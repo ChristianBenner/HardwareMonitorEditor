@@ -53,10 +53,6 @@ public class EditableSensor extends StackPane
     private DragButton leftDragButton;
     private Group hoverButtonGroup;
     private boolean mouseInside;
-    private int selectedColumnOffsetOnMove;
-    private int selectedRowOffsetOnMove;
-    private double selectedColumnOffsetExact;
-    private double selectedRowOffsetExact;
 
     public class DragEvent extends Event
     {
@@ -152,8 +148,6 @@ public class EditableSensor extends StackPane
                           EventHandler<ActionEvent> removeEvent)
     {
         mouseInside = false;
-        selectedColumnOffsetOnMove = 0;
-        selectedRowOffsetOnMove = 0;
 
         // Check if the sensor manager has the sensor we are trying to add
         if(SensorManager.getInstance().isAvailable(sensor))
@@ -295,93 +289,41 @@ public class EditableSensor extends StackPane
 
         // Create a move icon that allows to the user to drag the sensor to a new location on the page
         DragButton move = new DragButton(Cursor.HAND,
-                pressedEvent ->
+            dragEvent ->
+            {
+                Bounds sensorBounds = this.localToScene(this.getBoundsInLocal());
+                double mouseX = dragEvent.getSceneX();
+                double mouseY = dragEvent.getSceneY();
+                double sensorX = sensorBounds.getMinX();
+                double sensorY = sensorBounds.getMinY();
+                double sensorWidth = sensorBounds.getWidth();
+                double sensorHeight = sensorBounds.getHeight();
+                double sensorCenterX = sensorX + (sensorWidth / 2.0);
+                double sensorCenterY = sensorY + (sensorHeight / 2.0);
+                int sensorColumnSpan = sensor.getColumnSpan();
+                int sensorRowSpan = sensor.getRowSpan();
+                double sensorColumnWidth = sensorWidth / sensorColumnSpan;
+                double sensorRowHeight = sensorHeight / sensorRowSpan;
+                double mouseRelativeToSensorX = mouseX - sensorCenterX;
+                double mouseRelativeToSensorY = mouseY - sensorCenterY;
+                double columnDragOffset = mouseRelativeToSensorX / sensorColumnWidth;
+                double rowDragOffset = mouseRelativeToSensorY / sensorRowHeight;
+                double columnDragTotal = columnDragOffset;
+                double rowDragTotal = rowDragOffset;
+                int columnMove = (int) columnDragTotal;
+                int rowMove = (int) rowDragTotal;
+                int currentCol = sensor.getColumn();
+                int currentRow = sensor.getRow();
+                int newCol = currentCol + columnMove;
+                int newRow = currentRow + rowMove;
+
+                // Find what column/row we are hovering over
+                if (newRow != currentRow || newCol != currentCol)
                 {
-                    // Calculate these values to see what column/row the mouse is on
-                    //private int selectedColumnOffsetOnMove;
-                    //private int selectedRowOffsetOnMove;
+                    moveButtonDragEvent.handle(new MoveEvent(newCol, newRow, currentCol, currentRow));
+                }
+            });
 
-                    Bounds sensorBounds = sensor.localToScene(sensor.getBoundsInLocal());
-                    double mouseX = pressedEvent.getSceneX();
-                    double mouseY = pressedEvent.getSceneY();
-                    double sensorX = sensorBounds.getMinX();
-                    double sensorY = sensorBounds.getMinY();
-                    double sensorWidth = sensorBounds.getWidth();
-                    double sensorHeight = sensorBounds.getHeight();
-                    int sensorColumnSpan = sensor.getColumnSpan();
-                    int sensorRowSpan = sensor.getRowSpan();
-                    double sensorColumnWidth = sensorWidth / sensorColumnSpan;
-                    double sensorRowHeight = sensorHeight / sensorRowSpan;
-                    double mouseRelativeToSensorX = mouseX - sensorX;
-                    double mouseRelativeToSensorY = mouseY - sensorY;
-
-                    // Now calculate how many sensor column widths fit into the space between the mouse and the sensor start
-                    selectedColumnOffsetOnMove = (int)mouseRelativeToSensorX / (int)sensorColumnWidth;
-                    selectedRowOffsetOnMove = (int)mouseRelativeToSensorY / (int)sensorRowHeight;
-                    selectedColumnOffsetExact = mouseRelativeToSensorX / sensorColumnWidth;
-                    selectedRowOffsetExact = mouseRelativeToSensorY / sensorRowHeight;
-                },
-                dragEvent ->
-                {
-                    Bounds sensorBounds = this.localToScene(this.getBoundsInLocal());
-                    double mouseX = dragEvent.getSceneX();
-                    double mouseY = dragEvent.getSceneY();
-                    double sensorX = sensorBounds.getMinX();
-                    double sensorY = sensorBounds.getMinY();
-                    double sensorWidth = sensorBounds.getWidth();
-                    double sensorHeight = sensorBounds.getHeight();
-                    double sensorCenterX = sensorX + (sensorWidth / 2.0);
-                    double sensorCenterY = sensorY + (sensorHeight / 2.0);
-                    int sensorColumnSpan = sensor.getColumnSpan();
-                    int sensorRowSpan = sensor.getRowSpan();
-                    double sensorColumnWidth = sensorWidth / sensorColumnSpan;
-                    double sensorRowHeight = sensorHeight / sensorRowSpan;
-                    double mouseRelativeToSensorX = mouseX - sensorCenterX;
-                    double mouseRelativeToSensorY = mouseY - sensorCenterY;
-                    double columnDragOffset = mouseRelativeToSensorX / sensorColumnWidth;
-                    double rowDragOffset = mouseRelativeToSensorY / sensorRowHeight;
-                    double columnDragTotal = columnDragOffset;// - selectedColumnOffsetExact;
-                    double rowDragTotal = rowDragOffset;// - selectedRowOffsetExact;
-                    int columnMove = (int) columnDragTotal;
-                    int rowMove = (int) rowDragTotal;
-                    int currentCol = sensor.getColumn();
-                    int currentRow = sensor.getRow();
-                    int newCol = currentCol + columnMove;
-                    int newRow = currentRow + rowMove;
-
-                    System.out.println("****************************START*****************************");
-                    System.out.println("mouseX: " + mouseX);
-                    System.out.println("mouseY: " + mouseY);
-                    System.out.println("sensorX: " + sensorX);
-                    System.out.println("sensorY: " + sensorY);
-                    System.out.println("sensorWidth: " + sensorWidth);
-                    System.out.println("sensorHeight: " + sensorHeight);
-                    System.out.println("sensorColumnSpan: " + sensorColumnSpan);
-                    System.out.println("sensorRowSpan: " + sensorRowSpan);
-                    System.out.println("sensorColumnWidth: " + sensorColumnWidth);
-                    System.out.println("sensorRowHeight: " + sensorRowHeight);
-                    System.out.println("mouseRelativeToSensorX: " + mouseRelativeToSensorX);
-                    System.out.println("mouseRelativeToSensorX: " + mouseRelativeToSensorY);
-                    System.out.println("columnDragTotal: " + columnDragTotal);
-                    System.out.println("rowDragTotal: " + rowDragTotal);
-                    System.out.println("columnMove: " + columnMove);
-                    System.out.println("rowMove: " + rowMove);
-                    System.out.println("currentCol: " + currentCol);
-                    System.out.println("currentRow: " + currentRow);
-                    System.out.println("newCol: " + newCol);
-                    System.out.println("newRow: " + newRow);
-                    System.out.println("****************************END*******************************");
-
-                    // Find what column/row we are hovering over
-                    if (newRow != currentRow || newCol != currentCol)
-                    {
-                        moveButtonDragEvent.handle(new MoveEvent(newCol, newRow, currentCol, currentRow));
-                    }
-                },
-                finishDragEvent ->
-                {
-
-                });
         move.setCursor(Cursor.HAND);
         move.setPrefSize(32, 32);
         move.setBackground(new Background(new BackgroundImage(moveIcon, BackgroundRepeat.NO_REPEAT,
@@ -413,7 +355,6 @@ public class EditableSensor extends StackPane
         bottomDragButton.setVisible(true);
         bottomLeftDragButton.setVisible(true);
         leftDragButton.setVisible(true);
-       // super.setBackground(HOVER_BACKGROUND);
         super.setBorder(HOVER_BORDER);
     }
 
@@ -429,27 +370,6 @@ public class EditableSensor extends StackPane
         bottomDragButton.setVisible(false);
         bottomLeftDragButton.setVisible(false);
         leftDragButton.setVisible(false);
-      // super.setBackground(Background.EMPTY);
         super.setBorder(Border.EMPTY);
-    }
-
-    public int getSelectedColumnOffset()
-    {
-        return selectedColumnOffsetOnMove;
-    }
-
-    public int getSelectedRowOffset()
-    {
-        return selectedRowOffsetOnMove;
-    }
-
-    public double getSelectedColumnOffsetExact()
-    {
-        return selectedColumnOffsetExact;
-    }
-
-    public double getSelectedRowOffsetExact()
-    {
-        return selectedRowOffsetExact;
     }
 }

@@ -31,10 +31,6 @@ import javafx.scene.input.MouseEvent;
 public class DragButton extends Button
 {
     private boolean dragging;
-    private double startDragX;
-    private double startDragY;
-    private double dragX;
-    private double dragY;
 
     public DragButton(Cursor cursor,
                       EventHandler<MouseEvent> mousePressedEvent,
@@ -46,8 +42,6 @@ public class DragButton extends Button
         setOnMousePressed(mouseEvent ->
         {
             dragging = true;
-            startDragX = mouseEvent.getX();
-            startDragY = mouseEvent.getY();
             setCursor(cursor);
 
             if(mousePressedEvent != null)
@@ -56,22 +50,23 @@ public class DragButton extends Button
             }
         });
 
-        setOnMouseMoved(mouseEvent ->
+        setOnMouseDragged(mouseEvent ->
         {
-            if(dragging)
+            if(dragging && dragEvent != null)
             {
-                dragX = mouseEvent.getX();
-                dragY = mouseEvent.getY();
                 dragEvent.handle(mouseEvent);
             }
         });
-        setOnMouseDragged(dragEvent);
 
         setOnMouseReleased(mouseEvent ->
         {
             dragging = false;
             setCursor(Cursor.DEFAULT);
-            finishDrag.handle(mouseEvent);
+
+            if(finishDrag != null)
+            {
+                finishDrag.handle(mouseEvent);
+            }
         });
     }
 
@@ -85,24 +80,13 @@ public class DragButton extends Button
                 finishDrag);
     }
 
-    public double getStartX()
+    public DragButton(Cursor cursor,
+                      EventHandler<MouseEvent> dragEvent)
     {
-        return startDragX;
-    }
-
-    public double getStartY()
-    {
-        return startDragY;
-    }
-
-    public double getX()
-    {
-        return dragX;
-    }
-
-    public double getY()
-    {
-        return dragY;
+        this(cursor,
+                null,
+                dragEvent,
+                null);
     }
 
     public boolean isDragging()
