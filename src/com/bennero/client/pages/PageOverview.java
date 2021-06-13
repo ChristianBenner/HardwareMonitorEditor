@@ -217,6 +217,7 @@ public class PageOverview extends StackPane
 
                     // Disconnect from current hardware monitor
                     NetworkClient.getInstance().disconnect();
+                    NetworkScanner.handleScan();
                 }
             }
         });
