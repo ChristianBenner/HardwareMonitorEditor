@@ -216,21 +216,7 @@ public class PageOverview extends StackPane
                             "Disconnecting from Hardware Monitor '" + HOSTNAME + "'");
 
                     // Disconnect from current hardware monitor
-                    boolean disconnected = NetworkClient.getInstance().disconnect();
-
-                    if(disconnected)
-                    {
-                        NetworkScanner.handleScan();
-                    }
-                    else
-                    {
-                        Alert failedToDisconnectAlert = new Alert(Alert.AlertType.ERROR,
-                                "An error occurred when disconnecting from " + HOSTNAME,
-                                ButtonType.OK);
-                        failedToDisconnectAlert.setTitle("Failed to disconnect");
-                        failedToDisconnectAlert.setHeaderText("Failed to disconnect");
-                        failedToDisconnectAlert.showAndWait();
-                    }
+                    NetworkClient.getInstance().disconnect();
                 }
             }
         });

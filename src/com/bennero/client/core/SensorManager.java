@@ -30,6 +30,8 @@ import com.bennero.client.network.NetworkClient;
 import com.bennero.common.Sensor;
 import com.bennero.common.SensorType;
 import com.bennero.common.Skin;
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 
@@ -50,6 +52,8 @@ import static com.bennero.common.Constants.*;
  */
 public class SensorManager
 {
+    private static final String LOGGER_TAG = SensorManager.class.getSimpleName();
+
     private static SensorManager instance = null;
     private static int sensorGuiId = 0;
 
@@ -96,7 +100,7 @@ public class SensorManager
         {
             Platform.runLater(() ->
             {
-                System.out.println("Adding Sensor: " + name + ", ID: " + id);
+                System.out.println("Adding Sensor Data: " + name + ", ID: " + id);
                 sensorList.add(sensorData);
             });
         }
@@ -125,6 +129,11 @@ public class SensorManager
         return false;
     }
 
+    public int getAvailableId()
+    {
+        return ++sensorGuiId;
+    }
+
     public Sensor createSensorGui(SensorData sensorData,
                                   int row,
                                   int column,
@@ -136,13 +145,11 @@ public class SensorManager
                                   int rowSpan,
                                   int columnSpan)
     {
-        Sensor sensor = new Sensor(sensorGuiId++, row, column, sensorData.getType(), skin, sensorData.getMax(),
+        Sensor sensor = new Sensor(getAvailableId(), row, column, sensorData.getType(), skin, sensorData.getMax(),
                 threshold, sensorData.getName(), title, averagingEnabled, averagingPeriod, rowSpan, columnSpan);
         sensor.setHardwareType(sensorData.getHardwareType());
         sensor.setValue(sensorData.getInitialValue());
-        sensor.setValueChangeListener((observableValue, aFloat, t1) -> NetworkClient.getInstance().
-                writeSensorValueMessage(sensor.getUniqueId(), t1));
-        sensorData.addSensor(sensor);
+        registerSensor(sensor, sensorData);
         return sensor;
     }
 
@@ -152,7 +159,16 @@ public class SensorManager
                 sensorData.getName(), false, 10000, 1, 1);
     }
 
-    public boolean registerExistingSensor(Sensor sensor)
+    public void registerSensor(Sensor sensor, SensorData sensorData)
+    {
+        sensor.setValueChangeListener((observableValue, aFloat, t1) -> NetworkClient.getInstance().
+                writeSensorValueMessage(sensor.getUniqueId(), t1));
+        sensorData.addSensor(sensor);
+        Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Registered Sensor: [ID: " + sensor.getUniqueId() +
+                "], [SENSOR_DATA_ID: " + sensorData.getId() + "], [NAME: " + sensor.getTitle() + "]");
+    }
+
+    public void registerExistingSensor(Sensor sensor)
     {
         boolean foundSensorData = false;
 
@@ -162,14 +178,14 @@ public class SensorManager
         {
             if (compareSensorGuiToData(sensorList.get(i), sensor))
             {
-                sensor.setValueChangeListener((observableValue, aFloat, t1) -> NetworkClient.getInstance().
-                        writeSensorValueMessage(sensor.getUniqueId(), t1));
-                sensorList.get(i).addSensor(sensor);
+                registerSensor(sensor, sensorList.get(i));
+                if(sensorGuiId < sensor.getUniqueId())
+                {
+                    sensorGuiId = sensor.getUniqueId();
+                }
                 foundSensorData = true;
             }
         }
-
-        return foundSensorData;
     }
 
     public boolean isAvailable(SensorData sensorData)

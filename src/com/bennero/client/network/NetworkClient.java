@@ -110,7 +110,8 @@ public class NetworkClient
 
             try
             {
-                System.out.println("Attempting Connection: " + programConfigManager.getLastConnectedHostname() + " (" +
+                Logger.log(LogLevel.INFO, LOGGER_TAG, "Attempting Connection: " +
+                        programConfigManager.getLastConnectedHostname() + " (" +
                         NetworkUtils.ip4AddressToString(connectionInformation.getIp4Address()) + ")");
 
                 // This means that the IP4 and MAC address have just been discovered, so we can start with a direct
@@ -126,7 +127,8 @@ public class NetworkClient
 
                 if (socket.isConnected())
                 {
-                    System.out.println("Connected to " + NetworkUtils.ip4AddressToString(connectionInformation.getIp4Address()));
+                    Logger.log(LogLevel.INFO, LOGGER_TAG, "Connected to " +
+                            NetworkUtils.ip4AddressToString(connectionInformation.getIp4Address()));
 
                     // Update config to include latest network information
                     programConfigManager.setConnectionData(connectionInformation);
@@ -176,7 +178,8 @@ public class NetworkClient
                 }
                 else
                 {
-                    System.err.println("Failed to connect to " + NetworkUtils.ip4AddressToString(connectionInformation.getIp4Address()));
+                    Logger.log(LogLevel.WARNING, LOGGER_TAG, "Failed to connect to " +
+                            NetworkUtils.ip4AddressToString(connectionInformation.getIp4Address()));
                     Platform.runLater(() -> connectionEventHandler.handle(new ConnectedEvent(connectionInformation, ConnectionStatus.FAILED)));
                 }
             }
@@ -189,17 +192,12 @@ public class NetworkClient
         connectionThread.start();
     }
 
-    public boolean disconnect()
+    public void disconnect()
     {
-        boolean success = false;
-
         if(isConnected())
         {
-
-           // heartbeatListener.join();
             heartbeatListener.stopThread();
             sendDisconnectMessage();
-            success = true;
             Logger.log(LogLevel.INFO, LOGGER_TAG, "Disconnected from hardware monitor");
             programConfigManager.clearConnectionData();
             try
@@ -212,33 +210,11 @@ public class NetworkClient
             }
 
             connected = false;
-
-
-            //heartbeatListener.stopThread();
-            /*try
-            {
-
-                socket.shutdownOutput();
-                socket.close();
-                connected = false;
-                heartbeatListener.stopThread();
-                heartbeatListener.join();
-                Logger.log(LogLevel.INFO, LOGGER_TAG, "Disconnected from hardware monitor");
-                success = true;
-            }
-            catch (IOException | InterruptedException e)
-            {
-                Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to disconnect from hardware monitor: " +
-                        e.getMessage());
-            }*/
         }
         else
         {
             Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Did not disconnect as not currently connected");
-            success = true;
         }
-
-        return success;
     }
 
     public void removePageMessage(byte pageId)
@@ -250,11 +226,12 @@ public class NetworkClient
             message[MESSAGE_TYPE_POS] = MessageType.REMOVE_PAGE;
             message[MESSAGE_TYPE_POS + 1] = pageId;
             sendMessage(message, 0, MESSAGE_NUM_BYTES);
-            System.out.println("Sent removePage message");
+            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent Remove Page Message: [ID: " + pageId + "]");
         }
         else
         {
-            System.err.println("Failed to send remove page message because socket is not connected");
+            Logger.log(LogLevel.ERROR, LOGGER_TAG,
+                    "Failed to send Remove Page message because socket is not connected");
         }
     }
 
@@ -268,11 +245,12 @@ public class NetworkClient
             message[RemoveSensorDataPositions.SENSOR_ID_POS] = sensorId;
             message[RemoveSensorDataPositions.PAGE_ID_POS] = pageId;
             sendMessage(message, 0, MESSAGE_NUM_BYTES);
-            System.out.println("Sent removeSensor message");
+            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent Remove Sensor Message: [ID: " + sensorId + "]");
         }
         else
         {
-            System.err.println("Failed to send remove sensor message because socket is not connected");
+            Logger.log(LogLevel.ERROR, LOGGER_TAG,
+                    "Failed to send Remove Sensor message because socket is not connected");
         }
     }
 
@@ -283,11 +261,13 @@ public class NetworkClient
             byte[] message = new byte[MESSAGE_NUM_BYTES];
             writePageSetupMessage(pageData, message);
             sendMessage(message, 0, MESSAGE_NUM_BYTES);
-            System.out.println("Sent pageData message");
+            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent PageData Message: [ID: " + pageData.getUniqueId() +
+                    "], [TITLE: " + pageData.getTitle() + "]");
         }
         else
         {
-            System.err.println("Failed to send page message because socket is not connected");
+            Logger.log(LogLevel.ERROR, LOGGER_TAG,
+                    "Failed to send PageData message because socket is not connected");
         }
     }
 
@@ -298,11 +278,13 @@ public class NetworkClient
             byte[] message = new byte[MESSAGE_NUM_BYTES];
             writeSensorSetupMessage(sensor, pageId, message);
             sendMessage(message, 0, MESSAGE_NUM_BYTES);
-            System.out.println("Sent sensorSetup message");
+            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent Sensor set-up Message: [ID: " + sensor.getUniqueId() +
+                    "], [TITLE: " + sensor.getTitle() + "]");
         }
         else
         {
-            System.err.println("Failed to send sensor message because socket is not connected");
+            Logger.log(LogLevel.ERROR, LOGGER_TAG,
+                    "Failed to send Sensor set-up Message because socket is not connected");
         }
     }
 
@@ -321,7 +303,8 @@ public class NetworkClient
         }
         else
         {
-            System.err.println("Failed to send sensor value message because socket is not connected");
+            Logger.log(LogLevel.ERROR, LOGGER_TAG,
+                    "Failed to send Sensor value message because socket is not connected");
         }
     }
 
@@ -341,7 +324,7 @@ public class NetworkClient
         writeStringToMessage(message, ConnectionRequestDataPositions.HOSTNAME_POS, siteLocalAddress.getHostname(), NAME_STRING_NUM_BYTES);
 
         sendMessage(message, 0, MESSAGE_NUM_BYTES);
-        System.out.println("Sent connection request message");
+        Logger.log(LogLevel.INFO, LOGGER_TAG, "Sent connection request message");
     }
 
     private void writeSensorSetupMessage(Sensor sensor, byte pageId, byte[] bytes)

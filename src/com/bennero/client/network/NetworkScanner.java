@@ -27,6 +27,8 @@ import com.bennero.client.core.ApplicationCore;
 import com.bennero.client.states.ConnectionListStateData;
 import com.bennero.client.states.LoadingStateData;
 import com.bennero.common.Constants;
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
 import com.bennero.common.messages.BroadcastAnnouncementDataPositions;
 import com.bennero.common.messages.MessageType;
 import com.bennero.common.networking.AddressInformation;
@@ -60,6 +62,7 @@ import static com.bennero.common.networking.NetworkUtils.writeToMessage;
  */
 public class NetworkScanner
 {
+    private static final String LOGGER_TAG = NetworkScanner.class.getName();
     private static final int MS_PER_SECOND = 1000;
     private static final int BROADCAST_POLL_HZ = 1;
     private static final int BROADCAST_POLL_SLEEP_PERIOD = MS_PER_SECOND / BROADCAST_POLL_HZ;
@@ -236,7 +239,8 @@ public class NetworkScanner
             DatagramPacket packet = new DatagramPacket(message, MESSAGE_NUM_BYTES, inetAddress, Constants.BROADCAST_RECEIVE_PORT);
             broadcastSocket.send(packet);
             broadcastSocket.close();
-            System.out.println("Sent broadcastAvailability message on: " + inetAddress.getHostAddress());
+            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent broadcastAvailability message on: " +
+                    inetAddress.getHostAddress());
         }
         catch (Exception e)
         {
