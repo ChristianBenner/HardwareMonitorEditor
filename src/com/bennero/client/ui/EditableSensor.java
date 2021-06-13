@@ -149,14 +149,14 @@ public class EditableSensor extends StackPane
         mouseInside = false;
 
         // Check if the sensor manager has the sensor we are trying to add
-        if(SensorManager.getInstance().isAvailable(sensor))
+        if(SensorManager.getInstance().isAvailable(sensor.getSensorData()))
         {
             super.getChildren().add(sensor);
         }
         else
         {
             // Put a warning sign because the sensor was not found in the list provided by bootstrapper
-            super.getChildren().add(new NoSensor(sensor.getOriginalName()));
+            super.getChildren().add(new NoSensor(sensor.getSensorData().getOriginalName()));
         }
 
         HOVER_BORDER = new Border(new BorderStroke(highlightColour, BorderStrokeStyle.DASHED, CornerRadii.EMPTY,

@@ -33,6 +33,7 @@ import com.bennero.client.ui.coloureditor.ColourEditor;
 import com.bennero.common.PageData;
 import com.bennero.common.SensorData;
 import com.bennero.common.SensorGUI;
+import com.bennero.common.Skin;
 import com.bennero.common.SkinHelper;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -62,9 +63,11 @@ public class SensorEditor extends BorderPane
 
     private SaveManager saveManager;
 
-    public SensorEditor(PageData pageData, SensorData sensorData, SensorGUI sensor, StateData backButtonState)
+    public SensorEditor(PageData pageData, SensorGUI sensor, StateData backButtonState)
     {
         this.saveManager = SaveManager.getInstance();
+
+        SensorData sensorData = sensor.getSensorData();
 
         super.setBackground(new Background(new BackgroundFill(Color.DARKGREY, CornerRadii.EMPTY, Insets.EMPTY)));
         super.setPadding(new Insets(10));

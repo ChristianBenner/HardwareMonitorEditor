@@ -119,11 +119,10 @@ public class SensorSelectionPane extends BorderPane
         {
             if (sensorListView.getSelectionModel().getSelectedItem() != null)
             {
-                SensorData theSensor = sensorListView.getSelectionModel().getSelectedItem().sensor;
-                theSensor.setPosition(row, column);
-
-                ApplicationCore.s_setApplicationState(new SensorEditorStateData(pageData, theSensor,
-                        new SensorSelectionStateData(pageData, theSensor.getRow(), theSensor.getColumn())));
+                SensorGUI sensorGUI = sensorListView.getSelectionModel().getSelectedItem().sensor.createGUI();
+                sensorGUI.setPosition(row, column);
+                ApplicationCore.s_setApplicationState(new SensorEditorStateData(pageData, sensorGUI,
+                        new SensorSelectionStateData(pageData, row, column)));
             }
         });
 
@@ -146,9 +145,9 @@ public class SensorSelectionPane extends BorderPane
         this.column = column;
     }
 
-    public void addSensors(List<SensorGUI> sensors)
+    public void addSensors(List<SensorData> sensors)
     {
-        for (SensorGUI sensor : sensors)
+        for (SensorData sensor : sensors)
         {
             addSensor(sensor);
         }

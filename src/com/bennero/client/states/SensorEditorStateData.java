@@ -25,6 +25,7 @@ package com.bennero.client.states;
 
 import com.bennero.client.pages.SensorEditor;
 import com.bennero.common.PageData;
+import com.bennero.common.SensorData;
 import com.bennero.common.SensorGUI;
 import com.bennero.common.TransitionType;
 import javafx.scene.Node;
@@ -44,20 +45,22 @@ public class SensorEditorStateData extends StateData
 {
     private static final String NAME = "SENSOR_SELECTION";
     private final PageData pageData;
-    private final SensorGUI sensor;
+    private final SensorGUI existing;
     private final StateData backButtonState;
 
-    public SensorEditorStateData(PageData pageData, SensorGUI sensor, StateData backButtonState)
+    public SensorEditorStateData(PageData pageData,
+                                 SensorGUI existing,
+                                 StateData backButtonState)
     {
         super(NAME, TransitionType.FADE);
         this.pageData = pageData;
-        this.sensor = sensor;
+        this.existing = existing;
         this.backButtonState = backButtonState;
     }
 
     @Override
     public Node createGUI()
     {
-        return new SensorEditor(pageData, sensor, backButtonState);
+        return new SensorEditor(pageData, existing, backButtonState);
     }
 }

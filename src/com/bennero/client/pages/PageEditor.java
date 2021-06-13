@@ -25,6 +25,7 @@ package com.bennero.client.pages;
 
 import com.bennero.client.config.SaveManager;
 import com.bennero.client.core.ApplicationCore;
+import com.bennero.client.core.SensorManager;
 import com.bennero.client.network.NetworkClient;
 import com.bennero.client.states.PageEditorStateData;
 import com.bennero.client.states.PageOverviewStateData;
@@ -32,6 +33,7 @@ import com.bennero.client.states.SensorEditorStateData;
 import com.bennero.client.states.SensorSelectionStateData;
 import com.bennero.client.ui.*;
 import com.bennero.common.PageData;
+import com.bennero.common.SensorData;
 import com.bennero.common.SensorGUI;
 import com.bennero.client.util.GridUtils;
 import javafx.collections.ObservableList;
@@ -49,6 +51,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * PageEditor class is the user interface that lets users customize the page holding sensors (the appearance of a page

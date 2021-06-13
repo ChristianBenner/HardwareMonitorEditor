@@ -80,7 +80,6 @@ public class SensorManager
         final float sensorMax = sensorRequest.getMax();
         final float sensorThreshold = sensorMax * 0.9f;
         final String sensorHardwareType = sensorRequest.getHardwareType();
-
         boolean exists = false;
         // Try to identify if the sensor already exists before adding it
         for (int i = 0; i < sensorList.size() & !exists; i++)
@@ -97,9 +96,8 @@ public class SensorManager
 
         SensorData sensorData = new SensorData(sensorId, sensorType, sensorMax, sensorThreshold, sensorName,
                 sensorHardwareType);
-        sensorData.setValue(sensorRequest.getInitialValue());
         sensorData.setValueChangeListener((observableValue, aFloat, t1) -> NetworkClient.getInstance().writeSensorValueMessage(sensorId, t1));
-
+        sensorData.setValue(sensorRequest.getInitialValue());
         Platform.runLater(() ->
         {
             System.out.println("Adding Sensor: " + sensorRequest.getName() + ", ID: " + sensorRequest.getId());
