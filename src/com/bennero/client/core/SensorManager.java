@@ -27,9 +27,9 @@ import com.bennero.client.Version;
 import com.bennero.client.bootstrapper.Native;
 import com.bennero.client.bootstrapper.SensorRequest;
 import com.bennero.client.network.NetworkClient;
-import com.bennero.common.Sensor;
+import com.bennero.common.SensorGUI;
+import com.bennero.common.SensorData;
 import com.bennero.common.SensorType;
-import com.bennero.common.Skin;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 
@@ -42,7 +42,7 @@ import static com.bennero.common.Constants.*;
  * A singleton that stores all of the sensors that have been created (not GUI gauges but Sensor objects that hold
  * information on each hardware sensor). The SensorManager can process SensorRequests.
  *
- * @see         Sensor
+ * @see         SensorGUI
  * @author      Christian Benner
  * @version     %I%, %G%
  * @since       1.0
@@ -50,7 +50,7 @@ import static com.bennero.common.Constants.*;
 public class SensorManager
 {
     private static SensorManager instance = null;
-    private List<Sensor> sensorList;
+    private List<SensorData> sensorList;
 
     public static SensorManager getInstance()
     {
@@ -67,47 +67,52 @@ public class SensorManager
         sensorList = new ArrayList<>();
     }
 
-    public List<Sensor> getSensorList()
+    public List<SensorData> getSensorList()
     {
         return sensorList;
     }
 
-    public Sensor addSensor(SensorRequest sensorRequest)
+    public SensorData addSensor(SensorRequest sensorRequest)
     {
+        final int sensorId = sensorRequest.getId();
+        final String sensorName = sensorRequest.getName();
+        final byte sensorType = sensorRequest.getSensorType();
+        final float sensorMax = sensorRequest.getMax();
+        final float sensorThreshold = sensorMax * 0.9f;
+        final String sensorHardwareType = sensorRequest.getHardwareType();
+
         boolean exists = false;
         // Try to identify if the sensor already exists before adding it
         for (int i = 0; i < sensorList.size() & !exists; i++)
         {
-            Sensor existingSensor = sensorList.get(i);
-            if (existingSensor.getOriginalName().compareTo(sensorRequest.getName()) == 0 &&
-                    existingSensor.getType() == sensorRequest.getSensorType() &&
-                    existingSensor.getHardwareType().compareTo(sensorRequest.getHardwareType()) == 0)
+            SensorData existingSensor = sensorList.get(i);
+            if (existingSensor.getOriginalName().compareTo(sensorName) == 0 &&
+                    existingSensor.getType() == sensorType &&
+                    existingSensor.getHardwareType().compareTo(sensorHardwareType) == 0)
             {
-                System.out.println("Sensor Exists: " + sensorRequest.getName());
+                System.out.println("Sensor Exists: " + sensorName);
                 return existingSensor;
             }
         }
 
-        Sensor sensor = new Sensor(sensorRequest.getId(), 0, 0, sensorRequest.getSensorType(), Skin.SPACE,
-                sensorRequest.getMax(), sensorRequest.getMax() * 0.9f, sensorRequest.getName(),
-                sensorRequest.getName(), false, 10000, 1, 1);
-        sensor.setHardwareType(sensorRequest.getHardwareType());
-        sensor.setValue(sensorRequest.getInitialValue());
-        sensor.setValueChangeListener((observableValue, aFloat, t1) -> NetworkClient.getInstance().writeSensorValueMessage(sensor.getUniqueId(), t1));
+        SensorData sensorData = new SensorData(sensorId, sensorType, sensorMax, sensorThreshold, sensorName,
+                sensorHardwareType);
+        sensorData.setValue(sensorRequest.getInitialValue());
+        sensorData.setValueChangeListener((observableValue, aFloat, t1) -> NetworkClient.getInstance().writeSensorValueMessage(sensorId, t1));
 
         Platform.runLater(() ->
         {
             System.out.println("Adding Sensor: " + sensorRequest.getName() + ", ID: " + sensorRequest.getId());
-            sensorList.add(sensor);
+            sensorList.add(sensorData);
         });
 
-        return sensor;
+        return sensorData;
     }
 
-    public boolean isAvailable(Sensor sensor)
+    public boolean isAvailable(SensorData sensor)
     {
         boolean foundSensor = false;
-        List<Sensor> sensorList = getSensorList();
+        List<SensorData> sensorList = getSensorList();
         // Check to see if the sensor exists in the list of found sensors
         for(int i = 0; !foundSensor && i < sensorList.size(); i++)
         {

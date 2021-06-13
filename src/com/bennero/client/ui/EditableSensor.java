@@ -24,8 +24,7 @@
 package com.bennero.client.ui;
 
 import com.bennero.client.core.SensorManager;
-import com.bennero.common.Sensor;
-import javafx.application.Platform;
+import com.bennero.common.SensorGUI;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -143,7 +142,7 @@ public class EditableSensor extends StackPane
                           Image editIcon,
                           Image removeIcon,
                           Image moveIcon,
-                          Sensor sensor,
+                          SensorGUI sensor,
                           EventHandler<ActionEvent> editEvent,
                           EventHandler<ActionEvent> removeEvent)
     {

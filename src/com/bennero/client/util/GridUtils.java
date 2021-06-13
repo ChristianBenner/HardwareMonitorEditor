@@ -23,20 +23,20 @@
 
 package com.bennero.client.util;
 
-import com.bennero.common.Sensor;
+import com.bennero.common.SensorGUI;
 
 import java.util.ArrayList;
 
 public class GridUtils
 {
-    public static boolean isSpaceTaken(ArrayList<Sensor> placedSensors, Sensor sensor)
+    public static boolean isSpaceTaken(ArrayList<SensorGUI> placedSensors, SensorGUI sensor)
     {
         boolean taken = false;
 
         // Check that no other sensor has been placed at that position
         for (int i = 0; i < placedSensors.size() && !taken; i++)
         {
-            Sensor placedSensor = placedSensors.get(i);
+            SensorGUI placedSensor = placedSensors.get(i);
 
             if (placedSensor != sensor)
             {
@@ -65,7 +65,7 @@ public class GridUtils
         return taken;
     }
 
-    public static boolean isSpaceTaken(ArrayList<Sensor> placedSensors,
+    public static boolean isSpaceTaken(ArrayList<SensorGUI> placedSensors,
                                  int column,
                                  int row,
                                  int columnSpan,
@@ -76,7 +76,7 @@ public class GridUtils
         // Check that no other sensor has been placed at that position
         for (int i = 0; i < placedSensors.size() && !taken; i++)
         {
-            Sensor placedSensor = placedSensors.get(i);
+            SensorGUI placedSensor = placedSensors.get(i);
 
             int endColumn = column + columnSpan;
             int endRow = row + rowSpan;
@@ -100,19 +100,19 @@ public class GridUtils
     }
 
     // Exclude a given sensor from the checks
-    public static boolean isSpaceTaken(ArrayList<Sensor> placedSensors,
+    public static boolean isSpaceTaken(ArrayList<SensorGUI> placedSensors,
                                  int column,
                                  int row,
                                  int columnSpan,
                                  int rowSpan,
-                                 Sensor excludedSensor)
+                                 SensorGUI excludedSensor)
     {
         boolean taken = false;
 
         // Check that no other sensor has been placed at that position
         for (int i = 0; i < placedSensors.size() && !taken; i++)
         {
-            Sensor placedSensor = placedSensors.get(i);
+            SensorGUI placedSensor = placedSensors.get(i);
 
             if(placedSensor != excludedSensor)
             {
@@ -140,7 +140,7 @@ public class GridUtils
 
     // Check if a space is taken, if the space is taken within the excluded area then it would be treated as if it was
     // available
-    public static boolean isSpaceTaken(ArrayList<Sensor> placedSensors,
+    public static boolean isSpaceTaken(ArrayList<SensorGUI> placedSensors,
                                  int column,
                                  int row,
                                  int columnSpan,
@@ -155,7 +155,7 @@ public class GridUtils
         // Check that no other sensor has been placed at that position
         for (int i = 0; i < placedSensors.size() && !taken; i++)
         {
-            Sensor placedSensor = placedSensors.get(i);
+            SensorGUI placedSensor = placedSensors.get(i);
 
             int endColumn = column + columnSpan;
             int endRow = row + rowSpan;
@@ -191,7 +191,7 @@ public class GridUtils
         return taken;
     }
 
-    public static boolean isRegionTaken(ArrayList<Sensor> placedSensors,
+    public static boolean isRegionTaken(ArrayList<SensorGUI> placedSensors,
                                   int column,
                                   int row,
                                   int endColumn,
@@ -202,7 +202,7 @@ public class GridUtils
         // Check that no other sensor has been placed at that position
         for (int i = 0; i < placedSensors.size() && !taken; i++)
         {
-            Sensor placedSensor = placedSensors.get(i);
+            SensorGUI placedSensor = placedSensors.get(i);
 
             int placedStartColumn = placedSensor.getColumn();
             int placedEndColumn = placedStartColumn + placedSensor.getColumnSpan();

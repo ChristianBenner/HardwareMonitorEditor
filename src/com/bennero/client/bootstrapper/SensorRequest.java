@@ -24,7 +24,7 @@
 package com.bennero.client.bootstrapper;
 
 import com.bennero.client.core.SensorManager;
-import com.bennero.common.Sensor;
+import com.bennero.common.SensorData;
 import com.bennero.common.SensorType;
 import javafx.application.Platform;
 
@@ -45,7 +45,7 @@ public class SensorRequest
     private final String hardwareType;
     private final float initialValue;
 
-    private Sensor sensorRef;
+    private SensorData sensorRef;
 
     public SensorRequest(int id,
                          String name,

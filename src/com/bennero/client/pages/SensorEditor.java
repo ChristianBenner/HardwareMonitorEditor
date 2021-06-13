@@ -31,7 +31,8 @@ import com.bennero.client.states.StateData;
 import com.bennero.client.ui.UIHelper;
 import com.bennero.client.ui.coloureditor.ColourEditor;
 import com.bennero.common.PageData;
-import com.bennero.common.Sensor;
+import com.bennero.common.SensorData;
+import com.bennero.common.SensorGUI;
 import com.bennero.common.SkinHelper;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -61,7 +62,7 @@ public class SensorEditor extends BorderPane
 
     private SaveManager saveManager;
 
-    public SensorEditor(PageData pageData, Sensor sensor, StateData backButtonState)
+    public SensorEditor(PageData pageData, SensorData sensorData, SensorGUI sensor, StateData backButtonState)
     {
         this.saveManager = SaveManager.getInstance();
 
@@ -94,7 +95,7 @@ public class SensorEditor extends BorderPane
                         sensor.setSkin(SkinHelper.getByteCode(selected));
                     }
 
-                    loadSkinSpecificUI(selected, sensor);
+                    loadSkinSpecificUI(selected, sensor, sensorData);
                 });
 
         /////////// NAME PANE
@@ -121,12 +122,12 @@ public class SensorEditor extends BorderPane
         editOptions.setAlignment(Pos.CENTER_LEFT);
 
         /////////// CUSTOM MAX VALUE PANE
-        BorderPane maxValueGroup = createIntSpinnerOption("Max Value", (int) sensor.getMax(), 0,
+        BorderPane maxValueGroup = createIntSpinnerOption("Max Value", (int) sensorData.getMax(), 0,
                 Integer.MAX_VALUE, (observableValue, integer, t1) -> sensor.setThreshold(t1));
         editOptions.getChildren().add(maxValueGroup);
 
         // Populate the edit options
-        loadSkinSpecificUI(sensor.getSkin(), sensor);
+        loadSkinSpecificUI(sensor.getSkin(), sensor, sensorData);
 
         scrollPane.setFitToWidth(true);
         scrollPane.setContent(editOptions);
@@ -162,7 +163,7 @@ public class SensorEditor extends BorderPane
                     saveManager.getSaveData().save();
 
                     // Send the page sensor data to the client
-                    NetworkClient.getInstance().writeSensorMessage(sensor, (byte)pageData.getUniqueId());
+                    NetworkClient.getInstance().writeSensorMessage(sensorData, sensor, (byte)pageData.getUniqueId());
 
                     ApplicationCore.s_setApplicationState(new PageEditorStateData(pageData));
                 }
@@ -188,7 +189,7 @@ public class SensorEditor extends BorderPane
         pageTitle.setId("pane-title");
     }
 
-    private void loadSkinSpecificUI(byte skin, Sensor sensor)
+    private void loadSkinSpecificUI(byte skin, SensorGUI sensor, SensorData sensorData)
     {
         editOptions.getChildren().remove(interchangeableEditOptions);
         interchangeableEditOptions = new VBox();
@@ -237,7 +238,7 @@ public class SensorEditor extends BorderPane
 
         if (SkinHelper.checkSupport(skin, THRESHOLD_COLOUR_SUPPORTED))
         {
-            addThresholdUI(sensor);
+            addThresholdUI(sensor, sensorData);
         }
 
         if (SkinHelper.checkSupport(skin, BAR_BACKGROUND_COLOUR_SUPPORTED))
@@ -256,12 +257,12 @@ public class SensorEditor extends BorderPane
         }
     }
 
-    private void loadSkinSpecificUI(String skin, Sensor sensor)
+    private void loadSkinSpecificUI(String skin, SensorGUI sensor, SensorData sensorData)
     {
-        loadSkinSpecificUI(SkinHelper.getByteCode(skin), sensor);
+        loadSkinSpecificUI(SkinHelper.getByteCode(skin), sensor, sensorData);
     }
 
-    private void addAverageUI(Sensor sensor)
+    private void addAverageUI(SensorGUI sensor)
     {
         final boolean ENABLED_BY_DEFAULT = false;
 
@@ -287,7 +288,7 @@ public class SensorEditor extends BorderPane
         interchangeableEditOptions.getChildren().add(averagePeriodGroup);
     }
 
-    private void addNeedleColourUI(Sensor sensor)
+    private void addNeedleColourUI(SensorGUI sensor)
     {
         BorderPane colourOptions = createColourOption(colourEditor, "Needle Colour", sensor.getNeedleColour(),
                 (observableValue, color, t1) -> sensor.setNeedleColour(t1));
@@ -295,7 +296,7 @@ public class SensorEditor extends BorderPane
         interchangeableEditOptions.getChildren().add(colourOptions);
     }
 
-    private void addValueColourUI(Sensor sensor)
+    private void addValueColourUI(SensorGUI sensor)
     {
         BorderPane colourOptions = createColourOption(colourEditor, "Value Colour", sensor.getValueColour(),
                 (observableValue, color, t1) -> sensor.setValueColour(t1));
@@ -303,7 +304,7 @@ public class SensorEditor extends BorderPane
         interchangeableEditOptions.getChildren().add(colourOptions);
     }
 
-    private void addUnitColourUI(Sensor sensor)
+    private void addUnitColourUI(SensorGUI sensor)
     {
         BorderPane colourOptions = createColourOption(colourEditor, "Unit Colour", sensor.getUnitColour(),
                 (observableValue, color, t1) -> sensor.setUnitColour(t1));
@@ -311,7 +312,7 @@ public class SensorEditor extends BorderPane
         interchangeableEditOptions.getChildren().add(colourOptions);
     }
 
-    private void addKnobColourUI(Sensor sensor)
+    private void addKnobColourUI(SensorGUI sensor)
     {
         BorderPane colourOptions = createColourOption(colourEditor, "Knob Colour", sensor.getKnobColour(),
                 (observableValue, color, t1) -> sensor.setKnobColour(t1));
@@ -319,7 +320,7 @@ public class SensorEditor extends BorderPane
         interchangeableEditOptions.getChildren().add(colourOptions);
     }
 
-    private void addBarColourUI(Sensor sensor)
+    private void addBarColourUI(SensorGUI sensor)
     {
         BorderPane colourOptions = createColourOption(colourEditor, "Bar Colour", sensor.getBarColour(),
                 (observableValue, color, t1) -> sensor.setBarColour(t1));
@@ -327,21 +328,21 @@ public class SensorEditor extends BorderPane
         interchangeableEditOptions.getChildren().add(colourOptions);
     }
 
-    private void addThresholdUI(Sensor sensor)
+    private void addThresholdUI(SensorGUI sensor, SensorData sensorData)
     {
         BorderPane colourOptions = createColourOption(colourEditor, "Threshold Colour", sensor.getThresholdColour(),
                 (observableValue, color, t1) -> sensor.setThresholdColour(t1));
 
         BorderPane thresholdValueGroup = createIntSpinnerOption("Threshold Value",
-                (int) sensor.getThreshold(), (int) (sensor.getMax() * 0.25),
-                (int) sensor.getMax(),
+                (int) sensorData.getThreshold(), (int) (sensorData.getMax() * 0.25),
+                (int) sensorData.getMax(),
                 (observableValue, integer, t1) -> sensor.setThreshold(t1));
 
         interchangeableEditOptions.getChildren().add(colourOptions);
         interchangeableEditOptions.getChildren().add(thresholdValueGroup);
     }
 
-    private void addTitleColourUI(Sensor sensor)
+    private void addTitleColourUI(SensorGUI sensor)
     {
         BorderPane colourOptions = createColourOption(colourEditor, "Title Colour", sensor.getTitleColour(),
                 (observableValue, color, t1) -> sensor.setTitleColour(t1));
@@ -349,7 +350,7 @@ public class SensorEditor extends BorderPane
         interchangeableEditOptions.getChildren().add(colourOptions);
     }
 
-    private void addBarBackgroundColourUI(Sensor sensor)
+    private void addBarBackgroundColourUI(SensorGUI sensor)
     {
         BorderPane colourOptions = createColourOption(colourEditor, "Bar Background Colour", sensor.getBarBackgroundColour(),
                 (observableValue, color, t1) -> sensor.setBarBackgroundColour(t1));
@@ -357,7 +358,7 @@ public class SensorEditor extends BorderPane
         interchangeableEditOptions.getChildren().add(colourOptions);
     }
 
-    private void addForegroundBaseColourUI(Sensor sensor)
+    private void addForegroundBaseColourUI(SensorGUI sensor)
     {
         BorderPane colourOptions = createColourOption(colourEditor, "Foreground Colour", sensor.getTitleColour(),
                 (observableValue, color, t1) ->
@@ -409,7 +410,7 @@ public class SensorEditor extends BorderPane
         interchangeableEditOptions.getChildren().add(colourOptions);
     }
 
-    private void addTickLabelColourUI(Sensor sensor)
+    private void addTickLabelColourUI(SensorGUI sensor)
     {
         BorderPane colourOptions = createColourOption(colourEditor, "Tick Label Colour", sensor.getTickLabelColour(),
                 (observableValue, color, t1) -> sensor.setTickLabelColour(t1));
@@ -417,7 +418,7 @@ public class SensorEditor extends BorderPane
         interchangeableEditOptions.getChildren().add(colourOptions);
     }
 
-    private void addTickMarkColourUI(Sensor sensor)
+    private void addTickMarkColourUI(SensorGUI sensor)
     {
         BorderPane colourOptions = createColourOption(colourEditor, "Tick Label Colour", sensor.getTickMarkColour(),
                 (observableValue, color, t1) -> sensor.setTickMarkColour(t1));

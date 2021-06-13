@@ -23,12 +23,8 @@
 
 package com.bennero.client.network;
 
-import com.bennero.client.bootstrapper.Native;
 import com.bennero.client.config.ProgramConfigManager;
-import com.bennero.common.PageData;
-import com.bennero.common.Sensor;
-import com.bennero.common.Skin;
-import com.bennero.common.SkinHelper;
+import com.bennero.common.*;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
 import com.bennero.common.messages.*;
@@ -258,15 +254,15 @@ public class NetworkClient
         }
     }
 
-    public void removeSensorMessage(byte sensorId, byte pageId)
+    public void removeSensorGUIMessage(byte sensorId, byte pageId)
     {
         if (socket != null && socket.isConnected())
         {
             byte[] message = new byte[MESSAGE_NUM_BYTES];
 
             message[MESSAGE_TYPE_POS] = MessageType.REMOVE_SENSOR;
-            message[RemoveSensorDataPositions.SENSOR_ID_POS] = sensorId;
-            message[RemoveSensorDataPositions.PAGE_ID_POS] = pageId;
+            message[RemoveSensorGUIDataPositions.SENSOR_GUI_ID_POS] = sensorId;
+            message[RemoveSensorGUIDataPositions.PAGE_ID_POS] = pageId;
             sendMessage(message, 0, MESSAGE_NUM_BYTES);
             System.out.println("Sent removeSensor message");
         }
@@ -291,18 +287,40 @@ public class NetworkClient
         }
     }
 
-    public void writeSensorMessage(Sensor sensor, byte pageId)
+    public void writeSensorMessage(SensorData sensorData, SensorGUI sensorGUI, byte pageId)
     {
         if (socket != null && socket.isConnected())
         {
             byte[] message = new byte[MESSAGE_NUM_BYTES];
-            writeSensorSetupMessage(sensor, pageId, message);
+            writeSensorSetupMessage(sensorData, sensorGUI, pageId, message);
             sendMessage(message, 0, MESSAGE_NUM_BYTES);
             System.out.println("Sent sensorSetup message");
         }
         else
         {
             System.err.println("Failed to send sensor message because socket is not connected");
+        }
+    }
+
+    public void writeSensorRelocationMessage(SensorGUI sensorGUI, byte pageId)
+    {
+        if (socket != null && socket.isConnected())
+        {
+            byte[] message = new byte[MESSAGE_NUM_BYTES];
+
+            message[MESSAGE_TYPE_POS] = MessageType.SENSOR_RELOCATION_MESSAGE;
+            message[SensorDataPositions.ID_POS] = (byte)sensorGUI.getUniqueId();
+            message[SensorDataPositions.PAGE_ID_POS] = pageId;
+            message[SensorDataPositions.ROW_POS] = (byte)sensorGUI.getRow();
+            message[SensorDataPositions.COLUMN_POS] = (byte)sensorGUI.getColumn();
+            message[SensorDataPositions.ROW_SPAN_POS] = (byte)sensorGUI.getRowSpan();
+            message[SensorDataPositions.COLUMN_SPAN_POS] = (byte)sensorGUI.getColumnSpan();
+            sendMessage(message, 0, MESSAGE_NUM_BYTES);
+            System.out.println("Sent sensorRelocation message");
+        }
+        else
+        {
+            System.err.println("Failed to send sensor relocation message because socket is not connected");
         }
     }
 
@@ -344,108 +362,108 @@ public class NetworkClient
         System.out.println("Sent connection request message");
     }
 
-    private void writeSensorSetupMessage(Sensor sensor, byte pageId, byte[] bytes)
+    private void writeSensorSetupMessage(SensorData sensorData, SensorGUI sensorGUI, byte pageId, byte[] bytes)
     {
         bytes[MESSAGE_TYPE_POS] = MessageType.SENSOR_SETUP;
-        bytes[SensorDataPositions.ID_POS] = (byte) sensor.getUniqueId();
+        bytes[SensorDataPositions.ID_POS] = (byte) sensorData.getUniqueId();
         bytes[SensorDataPositions.PAGE_ID_POS] = pageId;
-        bytes[SensorDataPositions.ROW_POS] = (byte) sensor.getRow();
-        bytes[SensorDataPositions.COLUMN_POS] = (byte) sensor.getColumn();
-        bytes[SensorDataPositions.TYPE_POS] = sensor.getType();
-        bytes[SensorDataPositions.SKIN_POS] = sensor.getSkin();
-        writeToMessage(bytes, SensorDataPositions.MAX_POS, sensor.getMax());
-        writeToMessage(bytes, SensorDataPositions.THRESHOLD_POS, sensor.getThreshold());
-        bytes[SensorDataPositions.AVERAGE_ENABLED_POS] = sensor.isAverageEnabled() ? (byte) 0x01 : (byte) 0x00;
-        writeToMessage(bytes, SensorDataPositions.AVERAGING_PERIOD_POS, sensor.getAveragingPeriod());
-        bytes[SensorDataPositions.ROW_SPAN_POS] = (byte) sensor.getRowSpan();
-        bytes[SensorDataPositions.COLUMN_SPAN_POS] = (byte) sensor.getColumnSpan();
+        bytes[SensorDataPositions.ROW_POS] = (byte) sensorGUI.getRow();
+        bytes[SensorDataPositions.COLUMN_POS] = (byte) sensorGUI.getColumn();
+        bytes[SensorDataPositions.TYPE_POS] = sensorData.getType();
+        bytes[SensorDataPositions.SKIN_POS] = sensorGUI.getSkin();
+        writeToMessage(bytes, SensorDataPositions.MAX_POS, sensorData.getMax());
+        writeToMessage(bytes, SensorDataPositions.THRESHOLD_POS, sensorData.getThreshold());
+        bytes[SensorDataPositions.AVERAGE_ENABLED_POS] = sensorGUI.isAverageEnabled() ? (byte) 0x01 : (byte) 0x00;
+        writeToMessage(bytes, SensorDataPositions.AVERAGING_PERIOD_POS, sensorGUI.getAveragingPeriod());
+        bytes[SensorDataPositions.ROW_SPAN_POS] = (byte) sensorGUI.getRowSpan();
+        bytes[SensorDataPositions.COLUMN_SPAN_POS] = (byte) sensorGUI.getColumnSpan();
 
-        if (sensor.getAverageColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.AVERAGE_COLOUR_SUPPORTED))
+        if (sensorGUI.getAverageColour() != null && SkinHelper.checkSupport(sensorGUI.getSkin(), Skin.AVERAGE_COLOUR_SUPPORTED))
         {
-            bytes[SensorDataPositions.AVERAGE_COLOUR_R_POS] = (byte) (sensor.getAverageColour().getRed() * 255.0);
-            bytes[SensorDataPositions.AVERAGE_COLOUR_G_POS] = (byte) (sensor.getAverageColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.AVERAGE_COLOUR_B_POS] = (byte) (sensor.getAverageColour().getBlue() * 255.0);
+            bytes[SensorDataPositions.AVERAGE_COLOUR_R_POS] = (byte) (sensorGUI.getAverageColour().getRed() * 255.0);
+            bytes[SensorDataPositions.AVERAGE_COLOUR_G_POS] = (byte) (sensorGUI.getAverageColour().getGreen() * 255.0);
+            bytes[SensorDataPositions.AVERAGE_COLOUR_B_POS] = (byte) (sensorGUI.getAverageColour().getBlue() * 255.0);
         }
 
-        if (sensor.getNeedleColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.NEEDLE_COLOUR_SUPPORTED))
+        if (sensorGUI.getNeedleColour() != null && SkinHelper.checkSupport(sensorGUI.getSkin(), Skin.NEEDLE_COLOUR_SUPPORTED))
         {
-            bytes[SensorDataPositions.NEEDLE_COLOUR_R_POS] = (byte) (sensor.getNeedleColour().getRed() * 255.0);
-            bytes[SensorDataPositions.NEEDLE_COLOUR_G_POS] = (byte) (sensor.getNeedleColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.NEEDLE_COLOUR_B_POS] = (byte) (sensor.getNeedleColour().getBlue() * 255.0);
+            bytes[SensorDataPositions.NEEDLE_COLOUR_R_POS] = (byte) (sensorGUI.getNeedleColour().getRed() * 255.0);
+            bytes[SensorDataPositions.NEEDLE_COLOUR_G_POS] = (byte) (sensorGUI.getNeedleColour().getGreen() * 255.0);
+            bytes[SensorDataPositions.NEEDLE_COLOUR_B_POS] = (byte) (sensorGUI.getNeedleColour().getBlue() * 255.0);
         }
 
-        if (sensor.getValueColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.VALUE_COLOUR_SUPPORTED))
+        if (sensorGUI.getValueColour() != null && SkinHelper.checkSupport(sensorGUI.getSkin(), Skin.VALUE_COLOUR_SUPPORTED))
         {
-            bytes[SensorDataPositions.VALUE_COLOUR_R_POS] = (byte) (sensor.getValueColour().getRed() * 255.0);
-            bytes[SensorDataPositions.VALUE_COLOUR_G_POS] = (byte) (sensor.getValueColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.VALUE_COLOUR_B_POS] = (byte) (sensor.getValueColour().getBlue() * 255.0);
+            bytes[SensorDataPositions.VALUE_COLOUR_R_POS] = (byte) (sensorGUI.getValueColour().getRed() * 255.0);
+            bytes[SensorDataPositions.VALUE_COLOUR_G_POS] = (byte) (sensorGUI.getValueColour().getGreen() * 255.0);
+            bytes[SensorDataPositions.VALUE_COLOUR_B_POS] = (byte) (sensorGUI.getValueColour().getBlue() * 255.0);
         }
 
-        if (sensor.getUnitColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.UNIT_COLOUR_SUPPORTED))
+        if (sensorGUI.getUnitColour() != null && SkinHelper.checkSupport(sensorGUI.getSkin(), Skin.UNIT_COLOUR_SUPPORTED))
         {
-            bytes[SensorDataPositions.UNIT_COLOUR_R_POS] = (byte) (sensor.getUnitColour().getRed() * 255.0);
-            bytes[SensorDataPositions.UNIT_COLOUR_G_POS] = (byte) (sensor.getUnitColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.UNIT_COLOUR_B_POS] = (byte) (sensor.getUnitColour().getBlue() * 255.0);
+            bytes[SensorDataPositions.UNIT_COLOUR_R_POS] = (byte) (sensorGUI.getUnitColour().getRed() * 255.0);
+            bytes[SensorDataPositions.UNIT_COLOUR_G_POS] = (byte) (sensorGUI.getUnitColour().getGreen() * 255.0);
+            bytes[SensorDataPositions.UNIT_COLOUR_B_POS] = (byte) (sensorGUI.getUnitColour().getBlue() * 255.0);
         }
 
-        if (sensor.getKnobColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.KNOB_COLOUR_SUPPORTED))
+        if (sensorGUI.getKnobColour() != null && SkinHelper.checkSupport(sensorGUI.getSkin(), Skin.KNOB_COLOUR_SUPPORTED))
         {
-            bytes[SensorDataPositions.KNOB_COLOUR_R_POS] = (byte) (sensor.getKnobColour().getRed() * 255.0);
-            bytes[SensorDataPositions.KNOB_COLOUR_G_POS] = (byte) (sensor.getKnobColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.KNOB_COLOUR_B_POS] = (byte) (sensor.getKnobColour().getBlue() * 255.0);
+            bytes[SensorDataPositions.KNOB_COLOUR_R_POS] = (byte) (sensorGUI.getKnobColour().getRed() * 255.0);
+            bytes[SensorDataPositions.KNOB_COLOUR_G_POS] = (byte) (sensorGUI.getKnobColour().getGreen() * 255.0);
+            bytes[SensorDataPositions.KNOB_COLOUR_B_POS] = (byte) (sensorGUI.getKnobColour().getBlue() * 255.0);
         }
 
-        if (sensor.getBarColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.BAR_COLOUR_SUPPORTED))
+        if (sensorGUI.getBarColour() != null && SkinHelper.checkSupport(sensorGUI.getSkin(), Skin.BAR_COLOUR_SUPPORTED))
         {
-            bytes[SensorDataPositions.BAR_COLOUR_R_POS] = (byte) (sensor.getBarColour().getRed() * 255.0);
-            bytes[SensorDataPositions.BAR_COLOUR_G_POS] = (byte) (sensor.getBarColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.BAR_COLOUR_B_POS] = (byte) (sensor.getBarColour().getBlue() * 255.0);
+            bytes[SensorDataPositions.BAR_COLOUR_R_POS] = (byte) (sensorGUI.getBarColour().getRed() * 255.0);
+            bytes[SensorDataPositions.BAR_COLOUR_G_POS] = (byte) (sensorGUI.getBarColour().getGreen() * 255.0);
+            bytes[SensorDataPositions.BAR_COLOUR_B_POS] = (byte) (sensorGUI.getBarColour().getBlue() * 255.0);
         }
 
-        if (sensor.getThresholdColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.THRESHOLD_COLOUR_SUPPORTED))
+        if (sensorGUI.getThresholdColour() != null && SkinHelper.checkSupport(sensorGUI.getSkin(), Skin.THRESHOLD_COLOUR_SUPPORTED))
         {
-            bytes[SensorDataPositions.THRESHOLD_COLOUR_R_POS] = (byte) (sensor.getThresholdColour().getRed() * 255.0);
-            bytes[SensorDataPositions.THRESHOLD_COLOUR_G_POS] = (byte) (sensor.getThresholdColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.THRESHOLD_COLOUR_B_POS] = (byte) (sensor.getThresholdColour().getBlue() * 255.0);
+            bytes[SensorDataPositions.THRESHOLD_COLOUR_R_POS] = (byte) (sensorGUI.getThresholdColour().getRed() * 255.0);
+            bytes[SensorDataPositions.THRESHOLD_COLOUR_G_POS] = (byte) (sensorGUI.getThresholdColour().getGreen() * 255.0);
+            bytes[SensorDataPositions.THRESHOLD_COLOUR_B_POS] = (byte) (sensorGUI.getThresholdColour().getBlue() * 255.0);
         }
 
-        if (sensor.getTitleColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.TITLE_COLOUR_SUPPORTED))
+        if (sensorGUI.getTitleColour() != null && SkinHelper.checkSupport(sensorGUI.getSkin(), Skin.TITLE_COLOUR_SUPPORTED))
         {
-            bytes[SensorDataPositions.TITLE_COLOUR_R_POS] = (byte) (sensor.getTitleColour().getRed() * 255.0);
-            bytes[SensorDataPositions.TITLE_COLOUR_G_POS] = (byte) (sensor.getTitleColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.TITLE_COLOUR_B_POS] = (byte) (sensor.getTitleColour().getBlue() * 255.0);
+            bytes[SensorDataPositions.TITLE_COLOUR_R_POS] = (byte) (sensorGUI.getTitleColour().getRed() * 255.0);
+            bytes[SensorDataPositions.TITLE_COLOUR_G_POS] = (byte) (sensorGUI.getTitleColour().getGreen() * 255.0);
+            bytes[SensorDataPositions.TITLE_COLOUR_B_POS] = (byte) (sensorGUI.getTitleColour().getBlue() * 255.0);
         }
 
-        if (sensor.getBarBackgroundColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.BAR_BACKGROUND_COLOUR_SUPPORTED))
+        if (sensorGUI.getBarBackgroundColour() != null && SkinHelper.checkSupport(sensorGUI.getSkin(), Skin.BAR_BACKGROUND_COLOUR_SUPPORTED))
         {
-            bytes[SensorDataPositions.BAR_BACKGROUND_COLOUR_R_POS] = (byte) (sensor.getBarBackgroundColour().getRed() * 255.0);
-            bytes[SensorDataPositions.BAR_BACKGROUND_COLOUR_G_POS] = (byte) (sensor.getBarBackgroundColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.BAR_BACKGROUND_COLOUR_B_POS] = (byte) (sensor.getBarBackgroundColour().getBlue() * 255.0);
+            bytes[SensorDataPositions.BAR_BACKGROUND_COLOUR_R_POS] = (byte) (sensorGUI.getBarBackgroundColour().getRed() * 255.0);
+            bytes[SensorDataPositions.BAR_BACKGROUND_COLOUR_G_POS] = (byte) (sensorGUI.getBarBackgroundColour().getGreen() * 255.0);
+            bytes[SensorDataPositions.BAR_BACKGROUND_COLOUR_B_POS] = (byte) (sensorGUI.getBarBackgroundColour().getBlue() * 255.0);
         }
 
-        if (sensor.getForegroundColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.FOREGROUND_BASE_COLOUR_SUPPORTED))
+        if (sensorGUI.getForegroundColour() != null && SkinHelper.checkSupport(sensorGUI.getSkin(), Skin.FOREGROUND_BASE_COLOUR_SUPPORTED))
         {
-            bytes[SensorDataPositions.FOREGROUND_COLOUR_R_POS] = (byte) (sensor.getForegroundColour().getRed() * 255.0);
-            bytes[SensorDataPositions.FOREGROUND_COLOUR_G_POS] = (byte) (sensor.getForegroundColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.FOREGROUND_COLOUR_B_POS] = (byte) (sensor.getForegroundColour().getBlue() * 255.0);
+            bytes[SensorDataPositions.FOREGROUND_COLOUR_R_POS] = (byte) (sensorGUI.getForegroundColour().getRed() * 255.0);
+            bytes[SensorDataPositions.FOREGROUND_COLOUR_G_POS] = (byte) (sensorGUI.getForegroundColour().getGreen() * 255.0);
+            bytes[SensorDataPositions.FOREGROUND_COLOUR_B_POS] = (byte) (sensorGUI.getForegroundColour().getBlue() * 255.0);
         }
 
-        if (sensor.getTickLabelColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.TICK_LABEL_COLOUR_SUPPORTED))
+        if (sensorGUI.getTickLabelColour() != null && SkinHelper.checkSupport(sensorGUI.getSkin(), Skin.TICK_LABEL_COLOUR_SUPPORTED))
         {
-            bytes[SensorDataPositions.TICK_LABEL_COLOUR_R_POS] = (byte) (sensor.getTickLabelColour().getRed() * 255.0);
-            bytes[SensorDataPositions.TICK_LABEL_COLOUR_G_POS] = (byte) (sensor.getTickLabelColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.TICK_LABEL_COLOUR_B_POS] = (byte) (sensor.getTickLabelColour().getBlue() * 255.0);
+            bytes[SensorDataPositions.TICK_LABEL_COLOUR_R_POS] = (byte) (sensorGUI.getTickLabelColour().getRed() * 255.0);
+            bytes[SensorDataPositions.TICK_LABEL_COLOUR_G_POS] = (byte) (sensorGUI.getTickLabelColour().getGreen() * 255.0);
+            bytes[SensorDataPositions.TICK_LABEL_COLOUR_B_POS] = (byte) (sensorGUI.getTickLabelColour().getBlue() * 255.0);
         }
 
-        if (sensor.getTickMarkColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.TICK_MARK_COLOUR_SUPPORTED))
+        if (sensorGUI.getTickMarkColour() != null && SkinHelper.checkSupport(sensorGUI.getSkin(), Skin.TICK_MARK_COLOUR_SUPPORTED))
         {
-            bytes[SensorDataPositions.TICK_MARK_COLOUR_R_POS] = (byte) (sensor.getTickMarkColour().getRed() * 255.0);
-            bytes[SensorDataPositions.TICK_MARK_COLOUR_G_POS] = (byte) (sensor.getTickMarkColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.TICK_MARK_COLOUR_B_POS] = (byte) (sensor.getTickMarkColour().getBlue() * 255.0);
+            bytes[SensorDataPositions.TICK_MARK_COLOUR_R_POS] = (byte) (sensorGUI.getTickMarkColour().getRed() * 255.0);
+            bytes[SensorDataPositions.TICK_MARK_COLOUR_G_POS] = (byte) (sensorGUI.getTickMarkColour().getGreen() * 255.0);
+            bytes[SensorDataPositions.TICK_MARK_COLOUR_B_POS] = (byte) (sensorGUI.getTickMarkColour().getBlue() * 255.0);
         }
 
-        writeToMessage(bytes, SensorDataPositions.INITIAL_VALUE_POS, sensor.getValue());
-        writeStringToMessage(bytes, SensorDataPositions.TITLE_POS, sensor.getTitle(), NAME_STRING_NUM_BYTES);
+        writeToMessage(bytes, SensorDataPositions.INITIAL_VALUE_POS, sensorData.getValue());
+        writeStringToMessage(bytes, SensorDataPositions.TITLE_POS, sensorGUI.getTitle(), NAME_STRING_NUM_BYTES);
     }
 
     // take a Page type in the future

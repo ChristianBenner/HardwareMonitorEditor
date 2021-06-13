@@ -25,16 +25,19 @@ package com.bennero.client.config;
 
 import com.bennero.client.core.ApplicationCore;
 import com.bennero.client.core.CoreUtils;
+import com.bennero.client.core.SensorManager;
 import com.bennero.client.network.NetworkClient;
 import com.bennero.client.util.PageGenerator;
 import com.bennero.common.PageData;
-import com.bennero.common.Sensor;
+import com.bennero.common.SensorData;
+import com.bennero.common.SensorGUI;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextInputDialog;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -176,10 +179,16 @@ public class SaveManager
                 {
                     NetworkClient.getInstance().writePageMessage(pageData);
 
-                    // Send all sensors contained in the pages to the monitor
-                    for (Sensor sensor : pageData.getSensorList())
+                    List<SensorData> sensorDataList = SensorManager.getInstance().getSensorList();
+                    for(SensorData sensorData : sensorDataList)
                     {
-                        NetworkClient.getInstance().writeSensorMessage(sensor, (byte) pageData.getUniqueId());
+                        // Iterate through the GUI and send each to the monitor with reference to sensor data
+                        List<SensorGUI> sensorGuiList = sensorData.getSensorGuiList();
+                        for(SensorGUI sensorGUI : sensorGuiList)
+                        {
+                            NetworkClient.getInstance().writeSensorMessage(sensorData, sensorGUI,
+                                    (byte)pageData.getUniqueId());
+                        }
                     }
                 }
             }

@@ -23,8 +23,11 @@
 
 package com.bennero.client.config;
 
+import com.bennero.client.core.SensorManager;
 import com.bennero.common.PageData;
-import com.bennero.common.Sensor;
+import com.bennero.common.SensorData;
+import com.bennero.common.SensorGUI;
+import javafx.beans.value.ChangeListener;
 import javafx.scene.paint.Color;
 import org.xml.sax.Attributes;
 
@@ -32,6 +35,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.bennero.common.Constants.SENSOR_POLL_RATE_MS;
 
@@ -49,6 +53,16 @@ public class SaveData extends ConfigurationSaveHandler
     private static final String SAVE_ELEMENT_TAG = "save";
     private static final String SAVE_SENSOR_UPDATE_TIME_TAG = "sensorUpdateTimeMs";
     private static final String SAVE_SENSOR_ANIMATION_DURATION_TAG = "sensorAnimationDurationMs";
+
+    private static final String SENSOR_DATA_ELEMENT_TAG = "sensorData";
+    private static final String SENSOR_DATA_ID_ELEMENT_TAG = "id";
+    private static final String SENSOR_DATA_TYPE_ELEMENT_TAG = "type";
+    private static final String SENSOR_DATA_MAX_ELEMENT_TAG = "max";
+    private static final String SENSOR_DATA_THRESHOLD_ELEMENT_TAG = "threshold";
+    private static final String SENSOR_DATA_ORIGINAL_NAME_ELEMENT_TAG = "name";
+    private static final String SENSOR_DATA_HARDWARE_TYPE_ELEMENT_TAG = "hardwareType";
+    private static final String SENSOR_DATA_SENSOR_GUI_ELEMENT_TAG = "sensorGui";
+    private static final String SENSOR_DATA_SENSOR_GUI_ID_ELEMENT_TAG = "id";
 
     private static final String PAGE_ELEMENT_TAG = "page";
     private static final String PAGE_ID_ELEMENT_TAG = "id";
@@ -72,11 +86,7 @@ public class SaveData extends ConfigurationSaveHandler
     private static final String SENSOR_ID_ELEMENT_TAG = "id";
     private static final String SENSOR_ROW_ELEMENT_TAG = "row";
     private static final String SENSOR_COLUMN_ELEMENT_TAG = "column";
-    private static final String SENSOR_TYPE_ELEMENT_TAG = "type";
     private static final String SENSOR_SKIN_ELEMENT_TAG = "skin";
-    private static final String SENSOR_MAX_ELEMENT_TAG = "max";
-    private static final String SENSOR_THRESHOLD_ELEMENT_TAG = "threshold";
-    private static final String SENSOR_ORIGINAL_NAME_ELEMENT_TAG = "originalName";
     private static final String SENSOR_TITLE_ELEMENT_TAG = "title";
     private static final String SENSOR_HARDWARE_TYPE_ELEMENT_TAG = "hardwareType";
     private static final String SENSOR_AVERAGE_ENABLED_ELEMENT_TAG = "averageEnabled";
@@ -99,7 +109,7 @@ public class SaveData extends ConfigurationSaveHandler
     private int sensorUpdateTime;
     private int sensorAnimationDuration;
     private ArrayList<PageData> pageDataList;
-    private PageData currentPageData;
+    private SensorData currentSensorData;
 
     public SaveData(File file)
     {
@@ -107,7 +117,7 @@ public class SaveData extends ConfigurationSaveHandler
         sensorUpdateTime = SENSOR_POLL_RATE_MS;
         sensorAnimationDuration = 1000;
         pageDataList = new ArrayList<>();
-        currentPageData = null;
+        currentSensorData = null;
         super.read();
     }
 
@@ -164,11 +174,21 @@ public class SaveData extends ConfigurationSaveHandler
             case SAVE_ELEMENT_TAG:
                 parseSaveData(attributes);
                 break;
+            case SENSOR_DATA_ELEMENT_TAG:
+                parseSensorData(attributes);
+                break;
             case PAGE_ELEMENT_TAG:
                 parsePageData(attributes);
                 break;
             case SENSOR_ELEMENT_TAG:
-                parseSensorData(attributes);
+                if(currentSensorData != null)
+                {
+                    parseSensorGuiData(attributes);
+                }
+                else
+                {
+                    System.err.println("SENSOR_ELEMENT_TAG for SensorGUI element in incorrect position within save file");
+                }
                 break;
         }
     }
@@ -230,26 +250,47 @@ public class SaveData extends ConfigurationSaveHandler
             streamWriter.writeAttribute(PAGE_SUBTITLE_ELEMENT_TAG, temp.getSubtitle());
             streamWriter.writeAttribute(PAGE_SUBTITLE_ENABLED_ELEMENT_TAG, Boolean.toString(temp.isSubtitleEnabled()));
             streamWriter.writeAttribute(PAGE_SUBTITLE_ALIGNMENT_ELEMENT_TAG, Integer.toString(temp.getSubtitleAlignment()));
+            streamWriter.writeEndElement();
 
-            if (!temp.getSensorList().isEmpty())
+            if (p == pageDataList.size() - 1)
+            {
+                depth--;
+            }
+
+            writeIndentation(streamWriter, depth, true);
+        }
+
+        // Save the sensor data that has been located by SensorManager
+        SensorManager sensorManager = SensorManager.getInstance();
+        List<SensorData> sensorDataList = sensorManager.getSensorList();
+        for(int sd = 0; sd < sensorDataList.size(); sd++)
+        {
+            SensorData sensorData = sensorDataList.get(sd);
+            streamWriter.writeStartElement(SENSOR_DATA_ELEMENT_TAG);
+            streamWriter.writeAttribute(SENSOR_DATA_ID_ELEMENT_TAG, Integer.toString(sensorData.getUniqueId()));
+            streamWriter.writeAttribute(SENSOR_DATA_TYPE_ELEMENT_TAG, Byte.toString(sensorData.getType()));
+            streamWriter.writeAttribute(SENSOR_DATA_MAX_ELEMENT_TAG, Float.toString(sensorData.getMax()));
+            streamWriter.writeAttribute(SENSOR_DATA_THRESHOLD_ELEMENT_TAG, Float.toString(sensorData.getThreshold()));
+            streamWriter.writeAttribute(SENSOR_DATA_ORIGINAL_NAME_ELEMENT_TAG, sensorData.getOriginalName());
+            streamWriter.writeAttribute(SENSOR_DATA_HARDWARE_TYPE_ELEMENT_TAG, sensorData.getHardwareType());
+
+            // Now write the sensor GUI list
+            ArrayList<SensorGUI> sensorGuiList = sensorData.getSensorGuiList();
+            if (!sensorGuiList.isEmpty())
             {
                 writeIndentation(streamWriter, ++depth, true);
             }
 
-            // Write sensor data
-            for (int s = 0; s < temp.getSensorList().size(); s++)
+            // Write sensor GUI data
+            for (int s = 0; s < sensorGuiList.size(); s++)
             {
-                Sensor sensor = temp.getSensorList().get(s);
+                SensorGUI sensor = sensorGuiList.get(s);
 
                 streamWriter.writeStartElement(SENSOR_ELEMENT_TAG);
                 streamWriter.writeAttribute(SENSOR_ID_ELEMENT_TAG, Integer.toString(sensor.getUniqueId()));
                 streamWriter.writeAttribute(SENSOR_ROW_ELEMENT_TAG, Integer.toString(sensor.getRow()));
                 streamWriter.writeAttribute(SENSOR_COLUMN_ELEMENT_TAG, Integer.toString(sensor.getColumn()));
-                streamWriter.writeAttribute(SENSOR_TYPE_ELEMENT_TAG, Integer.toString(sensor.getType()));
                 streamWriter.writeAttribute(SENSOR_SKIN_ELEMENT_TAG, Byte.toString(sensor.getSkin()));
-                streamWriter.writeAttribute(SENSOR_MAX_ELEMENT_TAG, Float.toString(sensor.getMax()));
-                streamWriter.writeAttribute(SENSOR_THRESHOLD_ELEMENT_TAG, Float.toString(sensor.getThreshold()));
-                streamWriter.writeAttribute(SENSOR_ORIGINAL_NAME_ELEMENT_TAG, sensor.getOriginalName());
                 streamWriter.writeAttribute(SENSOR_TITLE_ELEMENT_TAG, sensor.getTitle());
                 streamWriter.writeAttribute(SENSOR_HARDWARE_TYPE_ELEMENT_TAG, sensor.getHardwareType());
                 streamWriter.writeAttribute(SENSOR_AVERAGE_ENABLED_ELEMENT_TAG, Boolean.toString(sensor.isAverageEnabled()));
@@ -319,7 +360,7 @@ public class SaveData extends ConfigurationSaveHandler
 
                 streamWriter.writeEndElement();
 
-                if (s == temp.getSensorList().size() - 1)
+                if (s == sensorGuiList.size() - 1)
                 {
                     depth--;
                 }
@@ -327,14 +368,14 @@ public class SaveData extends ConfigurationSaveHandler
                 writeIndentation(streamWriter, depth, true);
             }
 
-
+            // End XML element
             streamWriter.writeEndElement();
 
-            if (p == pageDataList.size() - 1)
+            // Write indentation
+            if (sd == sensorDataList.size() - 1)
             {
                 depth--;
             }
-
             writeIndentation(streamWriter, depth, true);
         }
 
@@ -437,233 +478,267 @@ public class SaveData extends ConfigurationSaveHandler
             }
         }
 
-        currentPageData = new PageData(id, backgroundColour, titleColour, subtitleColour, rows, columns, nextPageId,
+        PageData pageData = new PageData(id, backgroundColour, titleColour, subtitleColour, rows, columns, nextPageId,
                 transitionId, transitionTime, durationMs, title, titleEnabled, titleAlignment, subtitle,
                 subtitleEnabled, subtitleAlignment);
-        pageDataList.add(currentPageData);
+        pageDataList.add(pageData);
 
         System.out.println();
     }
 
     public void parseSensorData(Attributes attributes)
     {
-        if (currentPageData != null)
+        int id = 0;
+        byte type = 0;
+        float max = 0.0f;
+        float threshold = 0.0f;
+        String originalName = null;
+        String hardwareType = null;
+        ArrayList<SensorGUI> sensors = new ArrayList<>();
+
+        System.out.print("\tSensorData:");
+        for (int i = 0; i < attributes.getLength(); i++)
         {
-            int id = 0;
-            int row = 0;
-            int column = 0;
-            int type = 0;
-            byte skin = 0;
-            float max = 0.0f;
-            float threshold = 0.0f;
-            String originalName = null;
-            String title = null;
-            String hardwareType = null;
-            boolean averageEnabled = false;
-            int averagingPeriod = 10000;
-            int rowSpan = 1;
-            int columnSpan = 1;
+            System.out.print(" '" + attributes.getQName(i) + "':" + attributes.getValue(i));
+            String attributeName = attributes.getQName(i);
+            String attributeValue = attributes.getValue(i);
+            System.out.print(" '" + attributeName + "':" + attributeValue);
 
-            Color averageColour = null;
-            Color needleColour = null;
-            Color valueColour = null;
-            Color unitColour = null;
-            Color knobColour = null;
-            Color barColour = null;
-            Color thresholdColour = null;
-            Color titleColour = null;
-            Color barBackgroundColour = null;
-            Color foregroundColour = null;
-            Color tickLabelColour = null;
-            Color tickMarkColour = null;
-
-            System.out.print("\tSensor:");
-            for (int i = 0; i < attributes.getLength(); i++)
+            // Parse attributes
+            if (attributeName.compareTo(SENSOR_DATA_ID_ELEMENT_TAG) == 0)
             {
-                System.out.print(" '" + attributes.getQName(i) + "':" + attributes.getValue(i));
-
-                String attributeName = attributes.getQName(i);
-                String attributeValue = attributes.getValue(i);
-                System.out.print(" '" + attributeName + "':" + attributeValue);
-
-                // Parse attributes
-                if (attributeName.compareTo(SENSOR_ID_ELEMENT_TAG) == 0)
-                {
-                    id = Integer.parseInt(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_ROW_ELEMENT_TAG) == 0)
-                {
-                    row = Integer.parseInt(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_COLUMN_ELEMENT_TAG) == 0)
-                {
-                    column = Integer.parseInt(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_TYPE_ELEMENT_TAG) == 0)
-                {
-                    type = Integer.parseInt(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_SKIN_ELEMENT_TAG) == 0)
-                {
-                    skin = Byte.parseByte(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_MAX_ELEMENT_TAG) == 0)
-                {
-                    max = Float.parseFloat(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_THRESHOLD_ELEMENT_TAG) == 0)
-                {
-                    threshold = Float.parseFloat(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_ORIGINAL_NAME_ELEMENT_TAG) == 0)
-                {
-                    originalName = attributeValue;
-                }
-                else if (attributeName.compareTo(SENSOR_TITLE_ELEMENT_TAG) == 0)
-                {
-                    title = attributeValue;
-                }
-                else if (attributeName.compareTo(SENSOR_HARDWARE_TYPE_ELEMENT_TAG) == 0)
-                {
-                    hardwareType = attributeValue;
-                }
-                else if (attributeName.compareTo(SENSOR_AVERAGE_ENABLED_ELEMENT_TAG) == 0)
-                {
-                    averageEnabled = Boolean.parseBoolean(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_AVERAGING_PERIOD_ELEMENT_TAG) == 0)
-                {
-                    averagingPeriod = Integer.parseInt(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_ROW_SPAN_ELEMENT_TAG) == 0)
-                {
-                    rowSpan = Integer.parseInt(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_COLUMN_SPAN_ELEMENT_TAG) == 0)
-                {
-                    columnSpan = Integer.parseInt(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_AVERAGE_COLOUR_ELEMENT_TAG) == 0)
-                {
-                    averageColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_NEEDLE_COLOUR_ELEMENT_TAG) == 0)
-                {
-                    needleColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_VALUE_COLOUR_ELEMENT_TAG) == 0)
-                {
-                    valueColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_UNIT_COLOUR_ELEMENT_TAG) == 0)
-                {
-                    unitColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_KNOB_COLOUR_ELEMENT_TAG) == 0)
-                {
-                    knobColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_BAR_COLOUR_ELEMENT_TAG) == 0)
-                {
-                    barColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_THRESHOLD_COLOUR_ELEMENT_TAG) == 0)
-                {
-                    thresholdColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_TITLE_COLOUR_ELEMENT_TAG) == 0)
-                {
-                    titleColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_BAR_BACKGROUND_COLOUR_ELEMENT_TAG) == 0)
-                {
-                    barBackgroundColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_FOREGROUND_COLOUR_ELEMENT_TAG) == 0)
-                {
-                    foregroundColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_TICK_LABEL_COLOUR_ELEMENT_TAG) == 0)
-                {
-                    tickLabelColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_TICK_MARK_COLOUR_ELEMENT_TAG) == 0)
-                {
-                    tickMarkColour = Color.web(attributeValue);
-                }
+                id = Integer.parseInt(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_DATA_TYPE_ELEMENT_TAG) == 0)
+            {
+                type = Byte.parseByte(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_DATA_MAX_ELEMENT_TAG) == 0)
+            {
+                max = Float.parseFloat(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_DATA_THRESHOLD_ELEMENT_TAG) == 0)
+            {
+                threshold = Float.parseFloat(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_DATA_ORIGINAL_NAME_ELEMENT_TAG) == 0)
+            {
+                originalName = attributeValue;
+            }
+            else if (attributeName.compareTo(SENSOR_DATA_HARDWARE_TYPE_ELEMENT_TAG) == 0)
+            {
+                hardwareType = attributeValue;
             }
 
-            Sensor sensor = new Sensor(id, row, column, (byte) type, skin, max, threshold, originalName, title, averageEnabled,
-                    averagingPeriod, rowSpan, columnSpan);
-            sensor.setHardwareType(hardwareType);
-
-            if (foregroundColour != null)
-            {
-                sensor.setForegroundColour(foregroundColour);
-            }
-
-            if (averageColour != null)
-            {
-                sensor.setAverageColour(averageColour);
-            }
-
-            if (needleColour != null)
-            {
-                sensor.setNeedleColour(needleColour);
-            }
-
-            if (valueColour != null)
-            {
-                sensor.setValueColour(valueColour);
-            }
-
-            if (unitColour != null)
-            {
-                sensor.setUnitColour(unitColour);
-            }
-
-            if (knobColour != null)
-            {
-                sensor.setKnobColour(knobColour);
-            }
-
-            if (barColour != null)
-            {
-                sensor.setBarColour(barColour);
-            }
-
-            if (thresholdColour != null)
-            {
-                sensor.setThresholdColour(thresholdColour);
-            }
-
-            if (titleColour != null)
-            {
-                sensor.setTitleColour(titleColour);
-            }
-
-            if (barBackgroundColour != null)
-            {
-                sensor.setBarBackgroundColour(barBackgroundColour);
-            }
-
-            if (tickLabelColour != null)
-            {
-                sensor.setTickLabelColour(tickLabelColour);
-            }
-
-            if (tickMarkColour != null)
-            {
-                sensor.setTickMarkColour(tickMarkColour);
-            }
-
-            currentPageData.addSensor(sensor);
-
-            System.out.println();
+            // Create the sensor object
+            SensorData sensorData = new SensorData(id, type, max, threshold, originalName, hardwareType);
+            System.out.println("LOADED SENOR SAVE DATA: " + sensorData.getUniqueId() + ", " + sensorData.getOriginalName());
         }
-        else
+        System.out.println();
+    }
+
+    public void parseSensorGuiData(Attributes attributes)
+    {
+        int id = 0;
+        int row = 0;
+        int column = 0;
+        int type = 0;
+        byte skin = 0;
+        float max = 0.0f;
+        float threshold = 0.0f;
+        String originalName = null;
+        String title = null;
+        String hardwareType = null;
+        boolean averageEnabled = false;
+        int averagingPeriod = 10000;
+        int rowSpan = 1;
+        int columnSpan = 1;
+
+        Color averageColour = null;
+        Color needleColour = null;
+        Color valueColour = null;
+        Color unitColour = null;
+        Color knobColour = null;
+        Color barColour = null;
+        Color thresholdColour = null;
+        Color titleColour = null;
+        Color barBackgroundColour = null;
+        Color foregroundColour = null;
+        Color tickLabelColour = null;
+        Color tickMarkColour = null;
+
+        System.out.print("\tSensorGUI:");
+        for (int i = 0; i < attributes.getLength(); i++)
         {
-            System.err.println("Error reading save");
+            System.out.print(" '" + attributes.getQName(i) + "':" + attributes.getValue(i));
+
+            String attributeName = attributes.getQName(i);
+            String attributeValue = attributes.getValue(i);
+            System.out.print(" '" + attributeName + "':" + attributeValue);
+
+            // Parse attributes
+            if (attributeName.compareTo(SENSOR_ID_ELEMENT_TAG) == 0)
+            {
+                id = Integer.parseInt(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_ROW_ELEMENT_TAG) == 0)
+            {
+                row = Integer.parseInt(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_COLUMN_ELEMENT_TAG) == 0)
+            {
+                column = Integer.parseInt(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_SKIN_ELEMENT_TAG) == 0)
+            {
+                skin = Byte.parseByte(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_TITLE_ELEMENT_TAG) == 0)
+            {
+                title = attributeValue;
+            }
+            else if (attributeName.compareTo(SENSOR_HARDWARE_TYPE_ELEMENT_TAG) == 0)
+            {
+                hardwareType = attributeValue;
+            }
+            else if (attributeName.compareTo(SENSOR_AVERAGE_ENABLED_ELEMENT_TAG) == 0)
+            {
+                averageEnabled = Boolean.parseBoolean(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_AVERAGING_PERIOD_ELEMENT_TAG) == 0)
+            {
+                averagingPeriod = Integer.parseInt(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_ROW_SPAN_ELEMENT_TAG) == 0)
+            {
+                rowSpan = Integer.parseInt(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_COLUMN_SPAN_ELEMENT_TAG) == 0)
+            {
+                columnSpan = Integer.parseInt(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_AVERAGE_COLOUR_ELEMENT_TAG) == 0)
+            {
+                averageColour = Color.web(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_NEEDLE_COLOUR_ELEMENT_TAG) == 0)
+            {
+                needleColour = Color.web(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_VALUE_COLOUR_ELEMENT_TAG) == 0)
+            {
+                valueColour = Color.web(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_UNIT_COLOUR_ELEMENT_TAG) == 0)
+            {
+                unitColour = Color.web(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_KNOB_COLOUR_ELEMENT_TAG) == 0)
+            {
+                knobColour = Color.web(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_BAR_COLOUR_ELEMENT_TAG) == 0)
+            {
+                barColour = Color.web(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_THRESHOLD_COLOUR_ELEMENT_TAG) == 0)
+            {
+                thresholdColour = Color.web(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_TITLE_COLOUR_ELEMENT_TAG) == 0)
+            {
+                titleColour = Color.web(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_BAR_BACKGROUND_COLOUR_ELEMENT_TAG) == 0)
+            {
+                barBackgroundColour = Color.web(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_FOREGROUND_COLOUR_ELEMENT_TAG) == 0)
+            {
+                foregroundColour = Color.web(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_TICK_LABEL_COLOUR_ELEMENT_TAG) == 0)
+            {
+                tickLabelColour = Color.web(attributeValue);
+            }
+            else if (attributeName.compareTo(SENSOR_TICK_MARK_COLOUR_ELEMENT_TAG) == 0)
+            {
+                tickMarkColour = Color.web(attributeValue);
+            }
         }
+
+        SensorGUI sensor = currentSensorData.createGUI(id);
+        sensor.setPosition(row, column);
+        sensor.setSkin(skin);
+        sensor.setMax(max);
+        sensor.setThreshold(threshold);
+        sensor.setTitle(title);
+        sensor.setAverageEnabled(averageEnabled);
+        sensor.setAveragingPeriod(averagingPeriod);
+        sensor.setRowSpan(rowSpan);
+        sensor.setColumnSpan(columnSpan);
+        sensor.setHardwareType(hardwareType);
+
+        if (foregroundColour != null)
+        {
+            sensor.setForegroundColour(foregroundColour);
+        }
+
+        if (averageColour != null)
+        {
+            sensor.setAverageColour(averageColour);
+        }
+
+        if (needleColour != null)
+        {
+            sensor.setNeedleColour(needleColour);
+        }
+
+        if (valueColour != null)
+        {
+            sensor.setValueColour(valueColour);
+        }
+
+        if (unitColour != null)
+        {
+            sensor.setUnitColour(unitColour);
+        }
+
+        if (knobColour != null)
+        {
+            sensor.setKnobColour(knobColour);
+        }
+
+        if (barColour != null)
+        {
+            sensor.setBarColour(barColour);
+        }
+
+        if (thresholdColour != null)
+        {
+            sensor.setThresholdColour(thresholdColour);
+        }
+
+        if (titleColour != null)
+        {
+            sensor.setTitleColour(titleColour);
+        }
+
+        if (barBackgroundColour != null)
+        {
+            sensor.setBarBackgroundColour(barBackgroundColour);
+        }
+
+        if (tickLabelColour != null)
+        {
+            sensor.setTickLabelColour(tickLabelColour);
+        }
+
+        if (tickMarkColour != null)
+        {
+            sensor.setTickMarkColour(tickMarkColour);
+        }
+
+        System.out.println();
     }
 }

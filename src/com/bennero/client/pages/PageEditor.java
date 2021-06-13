@@ -32,7 +32,7 @@ import com.bennero.client.states.SensorEditorStateData;
 import com.bennero.client.states.SensorSelectionStateData;
 import com.bennero.client.ui.*;
 import com.bennero.common.PageData;
-import com.bennero.common.Sensor;
+import com.bennero.common.SensorGUI;
 import com.bennero.client.util.GridUtils;
 import javafx.collections.ObservableList;
 import javafx.event.Event;
@@ -71,7 +71,7 @@ public class PageEditor extends StackPane
     private Node[][] gridArray;
     private VBox headerPane;
     private BorderPane borderPane;
-    private ArrayList<Sensor> placedSensors;
+    private ArrayList<SensorGUI> placedSensors;
     private ArrayList<Button> addSensorButtons;
 
     private StackPane titleStackPane;
@@ -294,7 +294,7 @@ public class PageEditor extends StackPane
         Image moveIcon = new Image(getClass().getClassLoader().getResourceAsStream("move_icon.png"));
 
         // Add sensors to page
-        for (Sensor sensor : pageData.getSensorList())
+        for (SensorGUI sensor : pageData.getSensorList())
         {
             if (!GridUtils.isSpaceTaken(placedSensors, sensor))
             {
@@ -324,7 +324,7 @@ public class PageEditor extends StackPane
                         saveManager.getSaveData().save();
 
                         // Send network message to remove the sensor
-                        NetworkClient.getInstance().removeSensorMessage((byte) sensor.getUniqueId(), (byte) pageData.getUniqueId());
+                        NetworkClient.getInstance().removeSensorGUIMessage((byte) sensor.getUniqueId(), (byte) pageData.getUniqueId());
                     }
                 });
 
@@ -403,9 +403,9 @@ public class PageEditor extends StackPane
                     if(resized)
                     {
                         saveManager.getSaveData().save();
-                        NetworkClient.getInstance().removeSensorMessage((byte)sensor.getUniqueId(),
+                        NetworkClient.getInstance().removeSensorGUIMessage((byte)sensor.getUniqueId(),
                                 (byte)pageData.getUniqueId());
-                        NetworkClient.getInstance().writeSensorMessage(sensor,
+                        NetworkClient.getInstance().writeSensorRelocationMessage(sensor,
                                 (byte)pageData.getUniqueId());
                     }
                 });
@@ -515,12 +515,12 @@ public class PageEditor extends StackPane
     }
 
     // returns null if no sensor in space
-    private Sensor getSensorByLocation(int column, int row)
+    private SensorGUI getSensorByLocation(int column, int row)
     {
         // Check if a placed sensor spans across the column and row provided
 
         boolean taken = false;
-        Sensor placedSensor = null;
+        SensorGUI placedSensor = null;
 
         // Check that no other sensor has been placed at that position
         for (int i = 0; i < placedSensors.size() && !taken; i++)
@@ -586,7 +586,7 @@ public class PageEditor extends StackPane
     }
 
     // Returns true if the sensor has been resized
-    private boolean resizeRight(MouseEvent mouseEvent, Sensor sensor, EditableSensor editableSensor)
+    private boolean resizeRight(MouseEvent mouseEvent, SensorGUI sensor, EditableSensor editableSensor)
     {
         boolean resized = false;
 
@@ -644,7 +644,7 @@ public class PageEditor extends StackPane
     }
 
     // Returns true if the sensor has been resized
-    private boolean resizeBottom(MouseEvent mouseEvent, Sensor sensor, EditableSensor editableSensor)
+    private boolean resizeBottom(MouseEvent mouseEvent, SensorGUI sensor, EditableSensor editableSensor)
     {
         boolean resized = false;
 
@@ -703,7 +703,7 @@ public class PageEditor extends StackPane
     }
 
     // Returns true if the sensor has been resized
-    private boolean resizeLeft(MouseEvent mouseEvent, Sensor sensor, EditableSensor editableSensor)
+    private boolean resizeLeft(MouseEvent mouseEvent, SensorGUI sensor, EditableSensor editableSensor)
     {
         boolean resized = false;
 
@@ -777,7 +777,7 @@ public class PageEditor extends StackPane
     }
 
     // Returns true if the sensor has been resized
-    private boolean resizeTop(MouseEvent mouseEvent, Sensor sensor, EditableSensor editableSensor)
+    private boolean resizeTop(MouseEvent mouseEvent, SensorGUI sensor, EditableSensor editableSensor)
     {
         boolean resized = false;
 
@@ -851,7 +851,7 @@ public class PageEditor extends StackPane
         return resized;
     }
 
-    private void removeUnusedNodesAfterExpansion(Sensor sensor)
+    private void removeUnusedNodesAfterExpansion(SensorGUI sensor)
     {
         // Remove all nodes in area (except for the sensor itself)
         for(int y = sensor.getRow(); y < sensor.getRow() + sensor.getRowSpan(); y++)
