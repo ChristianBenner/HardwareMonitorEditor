@@ -217,7 +217,7 @@ public class NetworkClient
         }
     }
 
-    public void removePageMessage(byte pageId)
+    public void writeRemovePageMessage(byte pageId)
     {
         if (socket != null && socket.isConnected())
         {
@@ -235,7 +235,7 @@ public class NetworkClient
         }
     }
 
-    public void removeSensorMessage(byte sensorId, byte pageId)
+    public void writeRemoveSensorMessage(byte sensorId, byte pageId)
     {
         if (socket != null && socket.isConnected())
         {
@@ -285,6 +285,31 @@ public class NetworkClient
         {
             Logger.log(LogLevel.ERROR, LOGGER_TAG,
                     "Failed to send Sensor set-up Message because socket is not connected");
+        }
+    }
+
+    public void writeSensorTransformationMessage(Sensor sensor, byte pageId)
+    {
+        if (socket != null && socket.isConnected())
+        {
+            byte[] message = new byte[MESSAGE_NUM_BYTES];
+
+            message[MESSAGE_TYPE_POS] = MessageType.SENSOR_TRANSFORMATION_MESSAGE;
+            message[SensorTransformationPositions.ID_POS] = (byte)sensor.getUniqueId();
+            message[SensorTransformationPositions.PAGE_ID_POS] = pageId;
+            message[SensorTransformationPositions.ROW_POS] = (byte)sensor.getRow();
+            message[SensorTransformationPositions.COLUMN_POS] = (byte)sensor.getColumn();
+            message[SensorTransformationPositions.ROW_SPAN_POS] = (byte)sensor.getRowSpan();
+            message[SensorTransformationPositions.COLUMN_SPAN_POS] = (byte)sensor.getColumnSpan();
+            sendMessage(message, 0, MESSAGE_NUM_BYTES);
+
+            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent Sensor Transformation Message: [ID: " +
+                    sensor.getUniqueId() + "], [TITLE: " + sensor.getTitle() + "]");
+        }
+        else
+        {
+            Logger.log(LogLevel.ERROR, LOGGER_TAG,
+                    "Failed to send Sensor Transformation Message because socket is not connected");
         }
     }
 

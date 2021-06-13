@@ -164,7 +164,7 @@ public class PageOptions extends Stage
             alert.showAndWait();
             if (alert.getResult() == ButtonType.YES)
             {
-                NetworkClient.getInstance().removePageMessage((byte) pageData.getUniqueId());
+                NetworkClient.getInstance().writeRemovePageMessage((byte) pageData.getUniqueId());
                 hide();
                 deletePage.handle(actionEvent);
             }

@@ -324,7 +324,7 @@ public class PageEditor extends StackPane
                         saveManager.getSaveData().save();
 
                         // Send network message to remove the sensor
-                        NetworkClient.getInstance().removeSensorMessage((byte) sensor.getUniqueId(), (byte) pageData.getUniqueId());
+                        NetworkClient.getInstance().writeRemoveSensorMessage((byte) sensor.getUniqueId(), (byte) pageData.getUniqueId());
                     }
                 });
 
@@ -370,6 +370,12 @@ public class PageEditor extends StackPane
                                 newRow, newRow + sensor.getRowSpan(),
                                 newCol,
                                 newCol + sensor.getColumnSpan());
+
+                        saveManager.getSaveData().save();
+
+                        // Send network message to remove the sensor
+                        NetworkClient.getInstance().writeSensorTransformationMessage(sensor,
+                                (byte) pageData.getUniqueId());
                     }
                 });
 
@@ -403,10 +409,10 @@ public class PageEditor extends StackPane
                     if(resized)
                     {
                         saveManager.getSaveData().save();
-                        NetworkClient.getInstance().removeSensorMessage((byte)sensor.getUniqueId(),
-                                (byte)pageData.getUniqueId());
-                        NetworkClient.getInstance().writeSensorMessage(sensor,
-                                (byte)pageData.getUniqueId());
+
+                        // Send network message to remove the sensor
+                        NetworkClient.getInstance().writeSensorTransformationMessage(sensor,
+                                (byte) pageData.getUniqueId());
                     }
                 });
 

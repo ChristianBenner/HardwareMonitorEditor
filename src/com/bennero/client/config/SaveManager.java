@@ -136,7 +136,7 @@ public class SaveManager
             final ArrayList<PageData> pageData = saveData.getPageDataList();
             for (int i = 0; i < pageData.size(); i++)
             {
-                networkClient.removePageMessage((byte) pageData.get(i).getUniqueId());
+                networkClient.writeRemovePageMessage((byte) pageData.get(i).getUniqueId());
             }
         }
     }
