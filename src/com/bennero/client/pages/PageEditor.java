@@ -63,6 +63,7 @@ public class PageEditor extends StackPane
 {
     private final static Insets PAGE_PADDING = new Insets(10, 10, 10, 10);
     private final Background HOVER_BACKGROUND;
+    private final Color HIGHLIGHT_COLOUR_TRANSPARENT;
     private final Color HIGHLIGHT_COLOUR;
 
     private PageData pageData;
@@ -91,7 +92,9 @@ public class PageEditor extends StackPane
 
         HIGHLIGHT_COLOUR = Color.color(pageData.getTitleColour().getRed(), pageData.getTitleColour().getGreen(),
                 pageData.getTitleColour().getBlue());
-        HOVER_BACKGROUND = new Background(new BackgroundFill(HIGHLIGHT_COLOUR, new CornerRadii(20), Insets.EMPTY));
+        HIGHLIGHT_COLOUR_TRANSPARENT = Color.color(pageData.getTitleColour().getRed(), pageData.getTitleColour().getGreen(),
+                pageData.getTitleColour().getBlue(), 0.2);
+        HOVER_BACKGROUND = new Background(new BackgroundFill(HIGHLIGHT_COLOUR_TRANSPARENT, new CornerRadii(20), Insets.EMPTY));
 
         super.setBackground(new Background(new BackgroundFill(pageData.getColour(), CornerRadii.EMPTY, Insets.EMPTY)));
 
