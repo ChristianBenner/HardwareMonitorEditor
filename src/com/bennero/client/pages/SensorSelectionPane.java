@@ -24,6 +24,8 @@
 package com.bennero.client.pages;
 
 import com.bennero.client.core.ApplicationCore;
+import com.bennero.client.core.SensorData;
+import com.bennero.client.core.SensorManager;
 import com.bennero.client.states.PageEditorStateData;
 import com.bennero.client.states.SensorEditorStateData;
 import com.bennero.client.states.SensorSelectionStateData;
@@ -59,7 +61,7 @@ import java.util.Map;
 public class SensorSelectionPane extends BorderPane
 {
     private PageData pageData;
-    private Map<String, List<Sensor>> sensorByHardwareType = new HashMap<>();
+    private Map<String, List<SensorData>> sensorByHardwareType = new HashMap<>();
     private BorderPane sensorOverview;
     private ComboBox<String> hardwareTypeComboBox;
     private ListView<SensorItem> sensorListView;
@@ -80,8 +82,8 @@ public class SensorSelectionPane extends BorderPane
         EventHandler<ActionEvent> event = actionEvent ->
         {
             sensorListView.getItems().clear();
-            List<Sensor> sensors = sensorByHardwareType.get(hardwareTypeComboBox.getValue());
-            for (Sensor sensor : sensors)
+            List<SensorData> sensors = sensorByHardwareType.get(hardwareTypeComboBox.getValue());
+            for (SensorData sensor : sensors)
             {
                 sensorListView.getItems().add(new SensorItem(sensor));
             }
@@ -118,11 +120,11 @@ public class SensorSelectionPane extends BorderPane
         {
             if (sensorListView.getSelectionModel().getSelectedItem() != null)
             {
-                Sensor theSensor = sensorListView.getSelectionModel().getSelectedItem().sensor;
-                theSensor.setPosition(row, column);
+                SensorData sensorData = sensorListView.getSelectionModel().getSelectedItem().sensorData;
+                Sensor sensor = SensorManager.getInstance().createSensorGui(sensorData, row, column);
 
-                ApplicationCore.s_setApplicationState(new SensorEditorStateData(pageData, theSensor,
-                        new SensorSelectionStateData(pageData, theSensor.getRow(), theSensor.getColumn())));
+                ApplicationCore.s_setApplicationState(new SensorEditorStateData(pageData, sensor,
+                        new SensorSelectionStateData(pageData, sensor.getRow(), sensor.getColumn())));
             }
         });
 
@@ -145,15 +147,15 @@ public class SensorSelectionPane extends BorderPane
         this.column = column;
     }
 
-    public void addSensors(List<Sensor> sensors)
+    public void addSensorData(List<SensorData> sensors)
     {
-        for (Sensor sensor : sensors)
+        for (SensorData sensorData : sensors)
         {
-            addSensor(sensor);
+            addSensorData(sensorData);
         }
     }
 
-    public void addSensor(Sensor sensor)
+    public void addSensorData(SensorData sensor)
     {
         // If the combo box does not contain the hardware type, add it
         if (!hardwareTypeComboBox.getItems().contains(sensor.getHardwareType()))
@@ -185,17 +187,17 @@ public class SensorSelectionPane extends BorderPane
 
     class SensorItem
     {
-        private Sensor sensor;
+        private SensorData sensorData;
 
-        public SensorItem(Sensor sensor)
+        public SensorItem(SensorData sensorData)
         {
-            this.sensor = sensor;
+            this.sensorData = sensorData;
         }
 
         @Override
         public String toString()
         {
-            return sensor.getTitle();
+            return sensorData.getName();
         }
     }
 }

@@ -60,7 +60,7 @@ public class SensorSelectionStateData extends StateData
     {
         SensorSelectionPane sensorSelectionPane = new SensorSelectionPane();
         sensorSelectionPane.setPage(pageData, row, column);
-        sensorSelectionPane.addSensors(SensorManager.getInstance().getSensorList());
+        sensorSelectionPane.addSensorData(SensorManager.getInstance().getSensorList());
         return sensorSelectionPane;
     }
 }

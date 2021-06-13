@@ -23,6 +23,7 @@
 
 package com.bennero.client.config;
 
+import com.bennero.client.core.SensorManager;
 import com.bennero.common.PageData;
 import com.bennero.common.Sensor;
 import javafx.scene.paint.Color;
@@ -596,6 +597,7 @@ public class SaveData extends ConfigurationSaveHandler
             Sensor sensor = new Sensor(id, row, column, (byte) type, skin, max, threshold, originalName, title, averageEnabled,
                     averagingPeriod, rowSpan, columnSpan);
             sensor.setHardwareType(hardwareType);
+            SensorManager.getInstance().registerExistingSensor(sensor);
 
             if (foregroundColour != null)
             {

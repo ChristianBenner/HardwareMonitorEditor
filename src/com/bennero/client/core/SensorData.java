@@ -21,40 +21,80 @@
  * =====================================================================================================================
  */
 
-package com.bennero.client.bootstrapper;
+package com.bennero.client.core;
 
-import com.bennero.client.core.SensorData;
-import com.bennero.client.core.SensorManager;
-import javafx.application.Platform;
+import com.bennero.common.Sensor;
+import com.bennero.common.SensorType;
 
-/**
- * SensorRequest is how to register a tracked hardware sensor to the application (not add to a page as a graphic). This
- * is used by the bootstrapper to provide and update hardware sensor information
- *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
- */
-public class SensorRequest
+import java.util.ArrayList;
+
+public class SensorData
 {
-    private final SensorData sensorData;
+    private final int id;
+    private final String name;
+    private final float max;
+    private final byte type;
+    private final String hardwareType;
+    private final float initialValue;
 
-    public SensorRequest(int id,
-                         String name,
-                         float max,
-                         byte sensorType,
-                         String hardwareType,
-                         float initialValue)
+    private ArrayList<Sensor> sensorList;
+
+    public SensorData(int id,
+                      String name,
+                      float max,
+                      byte type,
+                      String hardwareType,
+                      float initialValue)
     {
-        System.out.println("Received sensor request: [ID: " + id + "], [Name: " + name + "], [Max: " + max +
-                "], [SensorType: " + sensorType + "], [HardwareType: " + hardwareType + "], [InitialValue: " +
-                initialValue + "]");
-        this.sensorData = new SensorData(id, name, max, sensorType, hardwareType, initialValue);
-        SensorManager.getInstance().addSensorData(sensorData);
+        this.id = id;
+        this.name = name + " (" + SensorType.getSuffix(type) + ")";
+        this.max = max;
+        this.type = type;
+        this.hardwareType = hardwareType;
+        this.initialValue = initialValue;
+        sensorList = new ArrayList<>();
+    }
+
+    public int getId()
+    {
+        return id;
+    }
+
+    public String getName()
+    {
+        return name;
+    }
+
+    public float getMax()
+    {
+        return max;
+    }
+
+    public byte getType()
+    {
+        return type;
+    }
+
+    public String getHardwareType()
+    {
+        return hardwareType;
+    }
+
+    public float getInitialValue()
+    {
+        return initialValue;
+    }
+
+    public void addSensor(Sensor sensor)
+    {
+        this.sensorList.add(sensor);
     }
 
     public void setValue(float value)
     {
-        Platform.runLater(() -> sensorData.setValue(value));
+        for(int i = 0; i < sensorList.size(); i++)
+        {
+            sensorList.get(i).setValue(value);
+        }
     }
 }

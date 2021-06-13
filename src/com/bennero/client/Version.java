@@ -39,7 +39,7 @@ public class Version
 {
     public static final byte VERSION_MAJOR = 1;
     public static final byte VERSION_MINOR = 2;
-    public static final byte VERSION_PATCH = 0;
-    public static final boolean BOOTSTRAPPER_LAUNCH_REQUIRED = false;
+    public static final byte VERSION_PATCH = 1;
+    public static final boolean BOOTSTRAPPER_LAUNCH_REQUIRED = true;
     public static final boolean DEBUG_BOOTSTRAPPER = false;
 }
