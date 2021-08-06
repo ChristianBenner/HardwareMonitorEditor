@@ -1,0 +1,85 @@
+<!--
+  ~ ============================================ GNU GENERAL PUBLIC LICENSE =============================================
+  ~ Hardware Monitor for the remote monitoring of a systems hardware information
+  ~ Copyright (C) 2021  Christian Benner
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+  ~ License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
+  ~ version.
+  ~
+  ~ Additional terms included with this license are to:
+  ~ - Preserve legal notices and author attributions such as this one. Do not remove the original author license notices
+  ~   from the program
+  ~ - Preserve the donation button and its link to the original authors donation page (christianbenner35@gmail.com)
+  ~ - Only break the terms if given permission from the original author christianbenner35@gmail.com
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  ~ warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along with this program. If not, see
+  ~ <https://www.gnu.org/licenses/>.
+  ~ =====================================================================================================================
+  -->
+
+<project name="PostEditorBuildProcess" basedir=".">
+    <target name="deployJreAndAssets">
+        <!-- Prompt for a version to be entered so it can be used to structure the release area -->
+        <input message="Enter version for the release (format: x.x.x): " addproperty="version.name"/>
+        <echo message="Version entered: ${version.name}"/>
+
+        <!-- Copy the JAR application to the Releases binaries folder as some users may just want a JAR -->
+        <exec dir="${basedir}" executable="cmd">
+            <arg value="/c"/>
+            <!-- Script to run -->
+            <arg value="deployScript.bat"/>
+            <!-- File to copy -->
+            <arg value="out\artifacts\HardwareMonitorEditor\HardwareMonitorEditor.jar"/>
+            <!-- Output dir -->
+            <arg value="..\Releases\${version.name}\Binaries"/>
+        </exec>
+
+        <exec dir="${basedir}" executable="cmd">
+            <arg value="/c"/>
+            <arg value="buildJre.bat"/>
+            <!-- The JRE deploy location -->
+            <arg value="..\HardwareMonitorClientBootstrapper\deploy\jre"/>
+            <!-- Optional jLink location argument -->
+            <arg value="C:\Program Files\Java\jdk-16.0.2\bin\jlink"/>
+        </exec>
+
+        <exec dir="${basedir}" executable="cmd">
+            <arg value="/c"/>
+            <arg value="deployBootstrapperAssets.bat"/>
+            <arg value="..\HardwareMonitorClientBootstrapper\deploy"/>
+        </exec>
+
+        <exec dir="${basedir}" executable="cmd">
+            <arg value="/c"/>
+            <arg value="compileBootstrapper.bat"/>
+            <arg value="..\HardwareMonitorClientBootstrapper\HardwareMonitorClientBootstrapper.sln"/>
+        </exec>
+
+        <!-- Copy the editor to the release folder -->
+        <exec dir="${basedir}" executable="cmd">
+            <arg value="/c"/>
+            <!-- Script to run -->
+            <arg value="deployFolderScript.bat"/>
+            <!-- File to copy -->
+            <arg value="..\HardwareMonitorClientBootstrapper\deploy\editor"/>
+            <!-- Output dir -->
+            <arg value="..\Releases\${version.name}\Binaries\Editor"/>
+        </exec>
+
+        <!-- Copy the installer to the release folder -->
+        <exec dir="${basedir}" executable="cmd">
+            <arg value="/c"/>
+            <!-- Script to run -->
+            <arg value="deployFolderScript.bat"/>
+            <!-- File to copy -->
+            <arg value="..\HardwareMonitorClientBootstrapper\deploy\editorinstaller"/>
+            <!-- Output dir -->
+            <arg value="..\Releases\${version.name}\Installers"/>
+        </exec>
+
+    </target>
+</project>

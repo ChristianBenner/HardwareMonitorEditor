@@ -1,24 +1,36 @@
-set BOOTSTRAPPER_DEPLOY_FOLDER=..\HardwareMonitorClientBootstrapper\deploy
+@echo off
+set DEPLOY_FOLDER="..\HardwareMonitorClientBootstrapper\deploy\jre"
+set JLINK_LOC="C:\Program Files\Java\jdk-16.0.2\bin\jlink"
+set MEDUSA_LIB_LOC="lib\Medusa-11.5.jar"
+set JMODS_LOC="lib\jmods"
 
 if [%1]==[] (
-echo "Using default deploy folder %BOOTSTRAPPER_DEPLOY_FOLDER%"
-) ELSE (
-set BOOTSTRAPPER_DEPLOY_FOLDER=%1
-echo "Deploy folder set to %1"
+	echo Using default deploy folder %DEPLOY_FOLDER%
+) else (
+	set DEPLOY_FOLDER= %1
+	echo Deploy folder set to %DEPLOY_FOLDER%
 )
 
-IF NOT EXIST %BOOTSTRAPPER_DEPLOY_FOLDER% (
-	echo "Bootstrapper Deploy Folder not found at '%BOOTSTRAPPER_DEPLOY_FOLDER%'"
+if exist %DEPLOY_FOLDER% (
+	echo JRE folder exists at %DEPLOY_FOLDER%, removing and generating new JRE
+	rd /q /s %DEPLOY_FOLDER%
+)
+
+if [%2]==[] (
+	echo Using default jLink path %JLINK_LOC%
+) else (
+	set JLINK_LOC=%2
+)
+
+if not exist %MEDUSA_LIB_LOC% (
+	echo Error: Medusa library not found at location %MEDUSA_LIB_LOC%
 	Exit /b
 )
 
-set JRE_FOLDER_NAME=jre
-set JRE_FOLDER_PATH=%BOOTSTRAPPER_DEPLOY_FOLDER%\%JRE_FOLDER_NAME%
-
-if EXIST %JRE_FOLDER_PATH% (
-	echo "JRE folder exists at %JRE_FOLDER_PATH%, removing and generating new JRE"
-	rd /q /s %JRE_FOLDER_PATH%
+if not exist %JMODS_LOC% (
+	echo Error: jmods not found at location %JMODS_LOC%
+	Exit /b
 )
 
-"C:\Program Files\Java\jdk-14.0.1\bin\jlink" --module-path lib\Medusa-11.5.jar;lib\jmods; --strip-debug --no-man-pages --add-modules javafx.controls,javafx.base,javafx.graphics,javafx.media,javafx.web,eu.hansolo.medusa --output %JRE_FOLDER_PATH%
-echo "Created new JRE using jlink at location %JRE_FOLDER_PATH%
+%JLINK_LOC% --module-path %MEDUSA_LIB_LOC%;%JMODS_LOC%; --strip-debug --no-man-pages --add-modules javafx.controls,javafx.base,javafx.graphics,javafx.media,javafx.web,eu.hansolo.medusa --output %DEPLOY_FOLDER%
+echo Created new JRE using jlink %JLINK_LOC% at location %DEPLOY_FOLDER%

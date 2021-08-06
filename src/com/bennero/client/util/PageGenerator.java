@@ -183,7 +183,7 @@ public class PageGenerator
         final int columns = random.nextInt(3) + 1;
 
         return new PageData(s_id++, PAGE_BACKGROUND_COLOURS[randomIndex], PAGE_FOREGROUND_COLOURS[randomIndex],
-                PAGE_FOREGROUND_COLOURS[randomIndex].darker(), rows, columns, s_id,
+                PAGE_FOREGROUND_COLOURS[randomIndex], rows, columns, s_id,
                 TransitionType.getRandomTransition(random), 1000, 10000, pageTitle,
                 true, Constants.TEXT_ALIGNMENT_CENTER, "Subheading", false,
                 Constants.TEXT_ALIGNMENT_CENTER);

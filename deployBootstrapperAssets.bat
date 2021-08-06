@@ -1,3 +1,4 @@
+@echo off
 set BOOTSTRAPPER_DEPLOY_FOLDER=..\HardwareMonitorClientBootstrapper\deploy
 
 if [%1]==[] (
