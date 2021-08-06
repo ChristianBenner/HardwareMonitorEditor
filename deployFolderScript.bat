@@ -1,5 +1,5 @@
 @echo off
-set DEPLOY_FOLDER=Releases\Unversioned\Binaries
+set RELEASE_FOLDER=Releases\Unversioned\Binaries
 
 set DEPLOY_FILE=%1
 echo "File path set to %DEPLOY_FILE%"
@@ -9,13 +9,13 @@ if not exist "%DEPLOY_FILE%" (
 )
 
 if [%2]==[] (
-	echo "Using default deploy folder %DEPLOY_FOLDER%"
+	echo "Using default deploy folder %RELEASE_FOLDER%"
 ) else (
-	set DEPLOY_FOLDER=%2
+	set RELEASE_FOLDER=%2
 	echo "Deploy folder set to %2"
 )
 
-if not exist "%DEPLOY_FOLDER%" mkdir %DEPLOY_FOLDER%
+if not exist "%RELEASE_FOLDER%" mkdir %RELEASE_FOLDER%
 
-echo "Copying display application '%DEPLOY_FILE%' to deploy folder '%DEPLOY_FOLDER%'
-xcopy %DEPLOY_FILE% %DEPLOY_FOLDER% /e /y /i /r
+echo "Copying editor installer '%DEPLOY_FILE%' to release folder '%RELEASE_FOLDER%'
+xcopy %DEPLOY_FILE% %RELEASE_FOLDER% /e /y /i /r
