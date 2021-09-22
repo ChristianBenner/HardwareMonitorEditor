@@ -25,6 +25,7 @@ package com.bennero.client.core;
 
 import com.bennero.client.states.StateData;
 import com.bennero.common.TransitionType;
+import com.bennero.common.logging.Logger;
 import javafx.animation.Transition;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleProperty;
@@ -92,7 +93,16 @@ public class Window
             }
 
             stage.setScene(uiScene);
-            stage.setOnCloseRequest(windowEvent -> destroyGui());
+
+            // If system tray is supported, destroy GUI and minimize, otherwise exit the application
+            if(SystemTrayManager.isSupported())
+            {
+                stage.setOnCloseRequest(windowEvent -> destroyGui());
+            }
+            else
+            {
+                stage.setOnCloseRequest(windowEvent -> System.exit(0));
+            }
         }
     }
 

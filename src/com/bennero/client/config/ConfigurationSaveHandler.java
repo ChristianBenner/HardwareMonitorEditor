@@ -23,6 +23,8 @@
 
 package com.bennero.client.config;
 
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -44,6 +46,9 @@ import java.io.*;
  */
 public abstract class ConfigurationSaveHandler extends DefaultHandler
 {
+    // Class name for logging
+    private static String CLASS_NAME = ConfigurationSaveHandler.class.getSimpleName();
+
     private final File file;
 
     private SAXParserFactory factory;
@@ -52,6 +57,8 @@ public abstract class ConfigurationSaveHandler extends DefaultHandler
     {
         this.file = file;
         factory = SAXParserFactory.newInstance();
+
+        Logger.log(LogLevel.INFO, CLASS_NAME, "Using configuration file '" + file.getAbsolutePath() + "'");
     }
 
     protected abstract void read(String uri, String localName, String qName, Attributes attributes);
@@ -85,7 +92,7 @@ public abstract class ConfigurationSaveHandler extends DefaultHandler
     {
         try
         {
-            System.out.println("Saving configuration data");
+            Logger.log(LogLevel.INFO, CLASS_NAME, "Saving configuration data");
             XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
             Writer writer = new OutputStreamWriter(new FileOutputStream(file), "UTF-8");
             XMLStreamWriter streamWriter = outputFactory.createXMLStreamWriter(writer);

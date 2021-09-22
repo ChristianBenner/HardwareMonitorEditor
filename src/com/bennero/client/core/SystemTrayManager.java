@@ -24,6 +24,8 @@
 package com.bennero.client.core;
 
 import com.bennero.client.util.SystemTrayUtils;
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
 import javafx.application.Platform;
 
 import javax.imageio.ImageIO;
@@ -34,6 +36,9 @@ import java.io.IOException;
 
 public class SystemTrayManager
 {
+    // Tag for logging
+    private static final String TAG = SystemTrayManager.class.getSimpleName();
+
     private static SystemTrayManager instance = null;
 
     private TrayIcon trayIcon;
@@ -65,7 +70,7 @@ public class SystemTrayManager
         // Check if system tray is supported
         if (!SystemTray.isSupported())
         {
-            System.err.println("System Tray not supported");
+            Logger.log(LogLevel.WARNING, TAG, "System tray not supported");
         }
         else
         {
@@ -108,12 +113,12 @@ public class SystemTrayManager
             }
             catch (IOException ioException)
             {
-                System.err.println("Failed to load system tray icon");
+                Logger.log(LogLevel.ERROR, TAG, "Failed to load system tray icon");
                 ioException.printStackTrace();
             }
             catch (AWTException systemTrayException)
             {
-                System.err.println("Failed to add application to system tray");
+                Logger.log(LogLevel.ERROR, TAG, "Failed to add application to system tray");
                 systemTrayException.printStackTrace();
             }
         }
@@ -126,5 +131,10 @@ public class SystemTrayManager
             SystemTray systemTray = SystemTray.getSystemTray();
             systemTray.remove(trayIcon);
         }
+    }
+
+    public static boolean isSupported()
+    {
+        return SystemTray.isSupported();
     }
 }

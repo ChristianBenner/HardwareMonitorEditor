@@ -23,7 +23,11 @@
 
 package com.bennero.client.config;
 
+import com.bennero.client.core.ApplicationCore;
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
 import com.bennero.common.networking.ConnectionInformation;
+import com.bennero.common.osspecific.OSUtils;
 import org.xml.sax.Attributes;
 
 import javax.xml.stream.XMLStreamException;
@@ -44,7 +48,10 @@ import static com.bennero.common.networking.NetworkUtils.macAddressToString;
  */
 public class ProgramConfigManager extends ConfigurationSaveHandler
 {
-    private static final String CONFIG_FILE_PATH = System.getenv("APPDATA") + "\\BennerHardwareMonitor";
+    // Name for logging
+    private static final String CLASS_NAME = ProgramConfigManager.class.getSimpleName();
+
+    private static final String CONFIG_FILE_PATH = OSUtils.getApplicationDataDirectory();
     private static final String CONFIG_FILE_NAME = "config.xml";
     private static final String CONFIG_TAG = "config";
     private static final String FILE_AREA_PATH_TAG = "fileAreaPath";
@@ -78,13 +85,21 @@ public class ProgramConfigManager extends ConfigurationSaveHandler
 
     private ProgramConfigManager()
     {
-        super(new File(CONFIG_FILE_PATH + "\\" + CONFIG_FILE_NAME));
+        // Configuration file (Uses File.separator for OS compatibility)
+        super(new File(CONFIG_FILE_PATH + File.separator + CONFIG_FILE_NAME));
 
         // Create save location folder
         File saveLocationFile = new File(CONFIG_FILE_PATH);
         if (!saveLocationFile.exists())
         {
             saveLocationFile.mkdirs();
+            Logger.log(LogLevel.INFO, CLASS_NAME, "Created new program data directories in " +
+                    new File(saveLocationFile.getParent()).getAbsolutePath());
+        }
+        else
+        {
+            Logger.log(LogLevel.INFO, CLASS_NAME, "Located configuration data file " +
+                    saveLocationFile.getAbsolutePath());
         }
 
         fileAreaPathAvailable = false;

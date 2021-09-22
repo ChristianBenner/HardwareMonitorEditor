@@ -182,6 +182,12 @@ public class ApplicationCore extends Application
             System.out.println("Program Configuration contains all necessary data, attempting to connect to " +
                     "previously used Hardware Monitor");
             startNetworkClient(true);
+
+            // If the system tray is not supported then show the window
+            if(!SystemTrayManager.isSupported())
+            {
+                window.show();
+            }
         }
 
         // Add the sensors to the application and start the thread that updates them
