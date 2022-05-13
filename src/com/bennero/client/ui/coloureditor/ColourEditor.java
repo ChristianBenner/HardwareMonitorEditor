@@ -40,17 +40,16 @@ import javafx.stage.Stage;
  * - Preset Colours
  * - RGB Sliders
  * - HSV Sliders
- *
+ * <p>
  * todo: HEX value entry tab
  * todo: Text field entries on the RGB and HSV tabs
  *
- * @see         Stage
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see Stage
+ * @since 1.0
  */
-public class ColourEditor extends Stage
-{
+public class ColourEditor extends Stage {
     private PresetTab presetsTab;
     private RGBTab rgbTab;
     private HSVTab hsvTab;
@@ -58,8 +57,7 @@ public class ColourEditor extends Stage
     private Color colourIn;
     private ChangeListener<Color> handler;
 
-    public ColourEditor()
-    {
+    public ColourEditor() {
         super.setTitle("Colour Editor");
         super.initModality(Modality.APPLICATION_MODAL);
         super.setOnCloseRequest(windowEvent -> close(false));
@@ -77,8 +75,7 @@ public class ColourEditor extends Stage
         tabPane.getSelectionModel().selectedItemProperty().addListener(
                 (ov, t, t1) ->
                 {
-                    if (handler != null && colourIn != null)
-                    {
+                    if (handler != null && colourIn != null) {
                         handler.changed(null, null, colourIn);
                         presetsTab.setColourData(colourIn);
                         rgbTab.setColourData(colourIn);
@@ -110,8 +107,7 @@ public class ColourEditor extends Stage
         super.setScene(dialogScene);
     }
 
-    public void setHandler(Color colourIn, ChangeListener<Color> handler)
-    {
+    public void setHandler(Color colourIn, ChangeListener<Color> handler) {
         this.colourIn = colourIn;
         this.handler = handler;
 
@@ -121,11 +117,9 @@ public class ColourEditor extends Stage
         super.show();
     }
 
-    public void close(boolean done)
-    {
+    public void close(boolean done) {
         // Revert colour back if not done
-        if (!done)
-        {
+        if (!done) {
             handler.changed(null, null, colourIn);
             presetsTab.setColourData(colourIn);
             rgbTab.setColourData(colourIn);

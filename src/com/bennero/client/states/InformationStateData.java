@@ -34,14 +34,13 @@ import javafx.scene.Node;
  * user interface does not have to be loaded into memory if it is not in use - it can be loaded or destroyed at any
  * time)
  *
- * @see         InformationPage
- * @see         StateData
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see InformationPage
+ * @see StateData
+ * @since 1.0
  */
-public class InformationStateData extends StateData
-{
+public class InformationStateData extends StateData {
     private static final String NAME = "INFORMATION";
 
     private final String title;
@@ -49,8 +48,7 @@ public class InformationStateData extends StateData
     private final String buttonText;
     private final EventHandler buttonEvent;
 
-    public InformationStateData(String title, String info, String buttonText, EventHandler buttonEvent)
-    {
+    public InformationStateData(String title, String info, String buttonText, EventHandler buttonEvent) {
         super(NAME, TransitionType.FADE);
         this.title = title;
         this.info = info;
@@ -59,8 +57,7 @@ public class InformationStateData extends StateData
     }
 
     @Override
-    public Node createGUI()
-    {
+    public Node createGUI() {
         return new InformationPage(title, info, buttonText, buttonEvent);
     }
 }

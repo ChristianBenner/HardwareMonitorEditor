@@ -27,19 +27,15 @@ import com.bennero.common.Sensor;
 
 import java.util.ArrayList;
 
-public class GridUtils
-{
-    public static boolean isSpaceTaken(ArrayList<Sensor> placedSensors, Sensor sensor)
-    {
+public class GridUtils {
+    public static boolean isSpaceTaken(ArrayList<Sensor> placedSensors, Sensor sensor) {
         boolean taken = false;
 
         // Check that no other sensor has been placed at that position
-        for (int i = 0; i < placedSensors.size() && !taken; i++)
-        {
+        for (int i = 0; i < placedSensors.size() && !taken; i++) {
             Sensor placedSensor = placedSensors.get(i);
 
-            if (placedSensor != sensor)
-            {
+            if (placedSensor != sensor) {
                 int startColumn = sensor.getColumn();
                 int endColumn = startColumn + sensor.getColumnSpan();
                 int startRow = sensor.getRow();
@@ -55,8 +51,7 @@ public class GridUtils
                 boolean withinColumn = (startColumn >= placedStartColumn && startColumn < placedEndColumn) ||
                         (endColumn > placedStartColumn && endColumn <= placedEndColumn);
 
-                if (withinRow && withinColumn)
-                {
+                if (withinRow && withinColumn) {
                     taken = true;
                 }
             }
@@ -66,16 +61,14 @@ public class GridUtils
     }
 
     public static boolean isSpaceTaken(ArrayList<Sensor> placedSensors,
-                                 int column,
-                                 int row,
-                                 int columnSpan,
-                                 int rowSpan)
-    {
+                                       int column,
+                                       int row,
+                                       int columnSpan,
+                                       int rowSpan) {
         boolean taken = false;
 
         // Check that no other sensor has been placed at that position
-        for (int i = 0; i < placedSensors.size() && !taken; i++)
-        {
+        for (int i = 0; i < placedSensors.size() && !taken; i++) {
             Sensor placedSensor = placedSensors.get(i);
 
             int endColumn = column + columnSpan;
@@ -90,8 +83,7 @@ public class GridUtils
             boolean withinColumn = (column >= placedStartColumn && column < placedEndColumn) ||
                     (endColumn > placedStartColumn && endColumn <= placedEndColumn);
 
-            if (withinRow && withinColumn)
-            {
+            if (withinRow && withinColumn) {
                 taken = true;
             }
         }
@@ -101,21 +93,18 @@ public class GridUtils
 
     // Exclude a given sensor from the checks
     public static boolean isSpaceTaken(ArrayList<Sensor> placedSensors,
-                                 int column,
-                                 int row,
-                                 int columnSpan,
-                                 int rowSpan,
-                                 Sensor excludedSensor)
-    {
+                                       int column,
+                                       int row,
+                                       int columnSpan,
+                                       int rowSpan,
+                                       Sensor excludedSensor) {
         boolean taken = false;
 
         // Check that no other sensor has been placed at that position
-        for (int i = 0; i < placedSensors.size() && !taken; i++)
-        {
+        for (int i = 0; i < placedSensors.size() && !taken; i++) {
             Sensor placedSensor = placedSensors.get(i);
 
-            if(placedSensor != excludedSensor)
-            {
+            if (placedSensor != excludedSensor) {
                 int endColumn = column + columnSpan;
                 int endRow = row + rowSpan;
                 int placedStartColumn = placedSensor.getColumn();
@@ -128,8 +117,7 @@ public class GridUtils
                 boolean withinColumn = (column >= placedStartColumn && column < placedEndColumn) ||
                         (endColumn > placedStartColumn && endColumn <= placedEndColumn);
 
-                if (withinRow && withinColumn)
-                {
+                if (withinRow && withinColumn) {
                     taken = true;
                 }
             }
@@ -141,20 +129,18 @@ public class GridUtils
     // Check if a space is taken, if the space is taken within the excluded area then it would be treated as if it was
     // available
     public static boolean isSpaceTaken(ArrayList<Sensor> placedSensors,
-                                 int column,
-                                 int row,
-                                 int columnSpan,
-                                 int rowSpan,
-                                 int excludeColumn,
-                                 int excludeRow,
-                                 int excludeColumnSpan,
-                                 int excludeRowSpan)
-    {
+                                       int column,
+                                       int row,
+                                       int columnSpan,
+                                       int rowSpan,
+                                       int excludeColumn,
+                                       int excludeRow,
+                                       int excludeColumnSpan,
+                                       int excludeRowSpan) {
         boolean taken = false;
 
         // Check that no other sensor has been placed at that position
-        for (int i = 0; i < placedSensors.size() && !taken; i++)
-        {
+        for (int i = 0; i < placedSensors.size() && !taken; i++) {
             Sensor placedSensor = placedSensors.get(i);
 
             int endColumn = column + columnSpan;
@@ -169,8 +155,7 @@ public class GridUtils
             boolean withinColumn = (column >= placedStartColumn && column < placedEndColumn) ||
                     (endColumn > placedStartColumn && endColumn <= placedEndColumn);
 
-            if (withinRow && withinColumn)
-            {
+            if (withinRow && withinColumn) {
                 int endExcludedColumn = excludeColumn + excludeColumnSpan;
                 int endExcludedRow = excludeRow + excludeRowSpan;
 
@@ -181,8 +166,7 @@ public class GridUtils
                         (endColumn > excludeColumn && endColumn <= endExcludedColumn);
 
                 // if within the excluded space then it is not taken
-                if(!(withinExcludedRow && withinExcludedColumn))
-                {
+                if (!(withinExcludedRow && withinExcludedColumn)) {
                     taken = true;
                 }
             }
@@ -192,16 +176,14 @@ public class GridUtils
     }
 
     public static boolean isRegionTaken(ArrayList<Sensor> placedSensors,
-                                  int column,
-                                  int row,
-                                  int endColumn,
-                                  int endRow)
-    {
+                                        int column,
+                                        int row,
+                                        int endColumn,
+                                        int endRow) {
         boolean taken = false;
 
         // Check that no other sensor has been placed at that position
-        for (int i = 0; i < placedSensors.size() && !taken; i++)
-        {
+        for (int i = 0; i < placedSensors.size() && !taken; i++) {
             Sensor placedSensor = placedSensors.get(i);
 
             int placedStartColumn = placedSensor.getColumn();
@@ -214,8 +196,7 @@ public class GridUtils
             boolean withinColumn = (column >= placedStartColumn && column < placedEndColumn) ||
                     (endColumn > placedStartColumn && endColumn <= placedEndColumn);
 
-            if (withinRow && withinColumn)
-            {
+            if (withinRow && withinColumn) {
                 taken = true;
             }
         }

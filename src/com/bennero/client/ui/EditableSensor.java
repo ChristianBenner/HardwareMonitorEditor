@@ -25,7 +25,6 @@ package com.bennero.client.ui;
 
 import com.bennero.client.core.SensorManager;
 import com.bennero.common.Sensor;
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -39,8 +38,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 
-public class EditableSensor extends StackPane
-{
+public class EditableSensor extends StackPane {
     private final Border HOVER_BORDER;
 
     private DragButton topLeftDragButton;
@@ -53,89 +51,6 @@ public class EditableSensor extends StackPane
     private DragButton leftDragButton;
     private Group hoverButtonGroup;
     private boolean mouseInside;
-
-    public class DragEvent extends Event
-    {
-        private MouseEvent mouseEvent;
-        private boolean topExpansion;
-        private boolean rightExpansion;
-        private boolean bottomExpansion;
-        private boolean leftExpansion;
-
-        public DragEvent(MouseEvent mouseEvent, boolean topExpansion, boolean rightExpansion, boolean bottomExpansion,
-                         boolean leftExpansion)
-        {
-            super(null);
-            this.mouseEvent = mouseEvent;
-            this.topExpansion = topExpansion;
-            this.rightExpansion = rightExpansion;
-            this.bottomExpansion = bottomExpansion;
-            this.leftExpansion = leftExpansion;
-        }
-
-        public MouseEvent getMouseEvent()
-        {
-            return mouseEvent;
-        }
-
-        public boolean isTopExpandable()
-        {
-            return topExpansion;
-        }
-
-        public boolean isRightExpandable()
-        {
-            return rightExpansion;
-        }
-
-        public boolean isBottomExpandable()
-        {
-            return bottomExpansion;
-        }
-
-        public boolean isLeftExpandable()
-        {
-            return leftExpansion;
-        }
-    }
-
-    public class MoveEvent extends Event
-    {
-        private int newColumn;
-        private int newRow;
-        private int previousColumn;
-        private int previousRow;
-
-        public MoveEvent(int newColumn, int newRow, int previousColumn, int previousRow)
-        {
-            super(null);
-            this.newColumn = newColumn;
-            this.newRow = newRow;
-            this.previousColumn = previousColumn;
-            this.previousRow = previousRow;
-        }
-
-        public int getNewColumn()
-        {
-            return newColumn;
-        }
-
-        public int getNewRow()
-        {
-            return newRow;
-        }
-
-        public int getPreviousColumn()
-        {
-            return previousColumn;
-        }
-
-        public int getPreviousRow()
-        {
-            return previousRow;
-        }
-    }
-
     private EventHandler<DragEvent> dragEvent;
     private EventHandler<MoveEvent> moveButtonDragEvent;
 
@@ -145,17 +60,13 @@ public class EditableSensor extends StackPane
                           Image moveIcon,
                           Sensor sensor,
                           EventHandler<ActionEvent> editEvent,
-                          EventHandler<ActionEvent> removeEvent)
-    {
+                          EventHandler<ActionEvent> removeEvent) {
         mouseInside = false;
 
         // Check if the sensor manager has the sensor we are trying to add
-        if(SensorManager.getInstance().isAvailable(sensor))
-        {
+        if (SensorManager.getInstance().isAvailable(sensor)) {
             super.getChildren().add(sensor);
-        }
-        else
-        {
+        } else {
             // Put a warning sign because the sensor was not found in the list provided by bootstrapper
             super.getChildren().add(new NoSensor(sensor.getOriginalName()));
         }
@@ -167,8 +78,7 @@ public class EditableSensor extends StackPane
         topLeftDragButton = new ResizeSensorButton(Pos.TOP_LEFT, highlightColour, Cursor.NW_RESIZE,
                 mouseEvent -> dragEvent.handle(new DragEvent(mouseEvent, true, false, false, true)),
                 mouseEvent -> {
-                    if(!mouseInside)
-                    {
+                    if (!mouseInside) {
                         hideEditUI();
                     }
                 });
@@ -176,8 +86,7 @@ public class EditableSensor extends StackPane
         topDragButton = new ResizeSensorButton(Pos.TOP_CENTER, highlightColour, Cursor.N_RESIZE,
                 mouseEvent -> dragEvent.handle(new DragEvent(mouseEvent, true, false, false, false)),
                 mouseEvent -> {
-                    if(!mouseInside)
-                    {
+                    if (!mouseInside) {
                         hideEditUI();
                     }
                 });
@@ -185,8 +94,7 @@ public class EditableSensor extends StackPane
         topRightDragButton = new ResizeSensorButton(Pos.TOP_RIGHT, highlightColour, Cursor.NE_RESIZE,
                 mouseEvent -> dragEvent.handle(new DragEvent(mouseEvent, true, true, false, false)),
                 mouseEvent -> {
-                    if(!mouseInside)
-                    {
+                    if (!mouseInside) {
                         hideEditUI();
                     }
                 });
@@ -194,8 +102,7 @@ public class EditableSensor extends StackPane
         rightDragButton = new ResizeSensorButton(Pos.CENTER_RIGHT, highlightColour, Cursor.E_RESIZE,
                 mouseEvent -> dragEvent.handle(new DragEvent(mouseEvent, false, true, false, false)),
                 mouseEvent -> {
-                    if(!mouseInside)
-                    {
+                    if (!mouseInside) {
                         hideEditUI();
                     }
                 });
@@ -203,8 +110,7 @@ public class EditableSensor extends StackPane
         bottomRightDragButton = new ResizeSensorButton(Pos.BOTTOM_RIGHT, highlightColour, Cursor.SE_RESIZE,
                 mouseEvent -> dragEvent.handle(new DragEvent(mouseEvent, false, true, true, false)),
                 mouseEvent -> {
-                    if(!mouseInside)
-                    {
+                    if (!mouseInside) {
                         hideEditUI();
                     }
                 });
@@ -212,8 +118,7 @@ public class EditableSensor extends StackPane
         bottomDragButton = new ResizeSensorButton(Pos.BOTTOM_CENTER, highlightColour, Cursor.S_RESIZE,
                 mouseEvent -> dragEvent.handle(new DragEvent(mouseEvent, false, false, true, false)),
                 mouseEvent -> {
-                    if(!mouseInside)
-                    {
+                    if (!mouseInside) {
                         hideEditUI();
                     }
                 });
@@ -221,8 +126,7 @@ public class EditableSensor extends StackPane
         bottomLeftDragButton = new ResizeSensorButton(Pos.BOTTOM_LEFT, highlightColour, Cursor.SW_RESIZE,
                 mouseEvent -> dragEvent.handle(new DragEvent(mouseEvent, false, false, true, true)),
                 mouseEvent -> {
-                    if(!mouseInside)
-                    {
+                    if (!mouseInside) {
                         hideEditUI();
                     }
                 });
@@ -230,8 +134,7 @@ public class EditableSensor extends StackPane
         leftDragButton = new ResizeSensorButton(Pos.CENTER_LEFT, highlightColour, Cursor.W_RESIZE,
                 mouseEvent -> dragEvent.handle(new DragEvent(mouseEvent, false, false, false, true)),
                 mouseEvent -> {
-                    if(!mouseInside)
-                    {
+                    if (!mouseInside) {
                         hideEditUI();
                     }
                 });
@@ -260,8 +163,7 @@ public class EditableSensor extends StackPane
                     topRightDragButton.isDragging() || rightDragButton.isDragging() ||
                     bottomRightDragButton.isDragging() || bottomDragButton.isDragging() ||
                     bottomLeftDragButton.isDragging() || leftDragButton.isDragging();
-            if(!isDragging)
-            {
+            if (!isDragging) {
                 hideEditUI();
             }
         });
@@ -289,40 +191,39 @@ public class EditableSensor extends StackPane
 
         // Create a move icon that allows to the user to drag the sensor to a new location on the page
         DragButton move = new DragButton(Cursor.HAND,
-            dragEvent ->
-            {
-                Bounds sensorBounds = this.localToScene(this.getBoundsInLocal());
-                double mouseX = dragEvent.getSceneX();
-                double mouseY = dragEvent.getSceneY();
-                double sensorX = sensorBounds.getMinX();
-                double sensorY = sensorBounds.getMinY();
-                double sensorWidth = sensorBounds.getWidth();
-                double sensorHeight = sensorBounds.getHeight();
-                double sensorCenterX = sensorX + (sensorWidth / 2.0);
-                double sensorCenterY = sensorY + (sensorHeight / 2.0);
-                int sensorColumnSpan = sensor.getColumnSpan();
-                int sensorRowSpan = sensor.getRowSpan();
-                double sensorColumnWidth = sensorWidth / sensorColumnSpan;
-                double sensorRowHeight = sensorHeight / sensorRowSpan;
-                double mouseRelativeToSensorX = mouseX - sensorCenterX;
-                double mouseRelativeToSensorY = mouseY - sensorCenterY;
-                double columnDragOffset = mouseRelativeToSensorX / sensorColumnWidth;
-                double rowDragOffset = mouseRelativeToSensorY / sensorRowHeight;
-                double columnDragTotal = columnDragOffset;
-                double rowDragTotal = rowDragOffset;
-                int columnMove = (int) columnDragTotal;
-                int rowMove = (int) rowDragTotal;
-                int currentCol = sensor.getColumn();
-                int currentRow = sensor.getRow();
-                int newCol = currentCol + columnMove;
-                int newRow = currentRow + rowMove;
-
-                // Find what column/row we are hovering over
-                if (newRow != currentRow || newCol != currentCol)
+                dragEvent ->
                 {
-                    moveButtonDragEvent.handle(new MoveEvent(newCol, newRow, currentCol, currentRow));
-                }
-            });
+                    Bounds sensorBounds = this.localToScene(this.getBoundsInLocal());
+                    double mouseX = dragEvent.getSceneX();
+                    double mouseY = dragEvent.getSceneY();
+                    double sensorX = sensorBounds.getMinX();
+                    double sensorY = sensorBounds.getMinY();
+                    double sensorWidth = sensorBounds.getWidth();
+                    double sensorHeight = sensorBounds.getHeight();
+                    double sensorCenterX = sensorX + (sensorWidth / 2.0);
+                    double sensorCenterY = sensorY + (sensorHeight / 2.0);
+                    int sensorColumnSpan = sensor.getColumnSpan();
+                    int sensorRowSpan = sensor.getRowSpan();
+                    double sensorColumnWidth = sensorWidth / sensorColumnSpan;
+                    double sensorRowHeight = sensorHeight / sensorRowSpan;
+                    double mouseRelativeToSensorX = mouseX - sensorCenterX;
+                    double mouseRelativeToSensorY = mouseY - sensorCenterY;
+                    double columnDragOffset = mouseRelativeToSensorX / sensorColumnWidth;
+                    double rowDragOffset = mouseRelativeToSensorY / sensorRowHeight;
+                    double columnDragTotal = columnDragOffset;
+                    double rowDragTotal = rowDragOffset;
+                    int columnMove = (int) columnDragTotal;
+                    int rowMove = (int) rowDragTotal;
+                    int currentCol = sensor.getColumn();
+                    int currentRow = sensor.getRow();
+                    int newCol = currentCol + columnMove;
+                    int newRow = currentRow + rowMove;
+
+                    // Find what column/row we are hovering over
+                    if (newRow != currentRow || newCol != currentCol) {
+                        moveButtonDragEvent.handle(new MoveEvent(newCol, newRow, currentCol, currentRow));
+                    }
+                });
 
         move.setCursor(Cursor.HAND);
         move.setPrefSize(32, 32);
@@ -334,18 +235,15 @@ public class EditableSensor extends StackPane
         super.getChildren().add(hoverButtonGroup);
     }
 
-    public void setDragEvent(EventHandler<DragEvent> dragEvent)
-    {
+    public void setDragEvent(EventHandler<DragEvent> dragEvent) {
         this.dragEvent = dragEvent;
     }
 
-    public void setMoveButtonDragEvent(EventHandler<MoveEvent> moveEvent)
-    {
+    public void setMoveButtonDragEvent(EventHandler<MoveEvent> moveEvent) {
         this.moveButtonDragEvent = moveEvent;
     }
 
-    public void showEditUI()
-    {
+    public void showEditUI() {
         hoverButtonGroup.setVisible(true);
         topLeftDragButton.setVisible(true);
         topDragButton.setVisible(true);
@@ -358,8 +256,7 @@ public class EditableSensor extends StackPane
         super.setBorder(HOVER_BORDER);
     }
 
-    public void hideEditUI()
-    {
+    public void hideEditUI() {
         hoverButtonGroup.setVisible(false);
         hoverButtonGroup.setVisible(false);
         topLeftDragButton.setVisible(false);
@@ -371,5 +268,74 @@ public class EditableSensor extends StackPane
         bottomLeftDragButton.setVisible(false);
         leftDragButton.setVisible(false);
         super.setBorder(Border.EMPTY);
+    }
+
+    public class DragEvent extends Event {
+        private MouseEvent mouseEvent;
+        private boolean topExpansion;
+        private boolean rightExpansion;
+        private boolean bottomExpansion;
+        private boolean leftExpansion;
+
+        public DragEvent(MouseEvent mouseEvent, boolean topExpansion, boolean rightExpansion, boolean bottomExpansion,
+                         boolean leftExpansion) {
+            super(null);
+            this.mouseEvent = mouseEvent;
+            this.topExpansion = topExpansion;
+            this.rightExpansion = rightExpansion;
+            this.bottomExpansion = bottomExpansion;
+            this.leftExpansion = leftExpansion;
+        }
+
+        public MouseEvent getMouseEvent() {
+            return mouseEvent;
+        }
+
+        public boolean isTopExpandable() {
+            return topExpansion;
+        }
+
+        public boolean isRightExpandable() {
+            return rightExpansion;
+        }
+
+        public boolean isBottomExpandable() {
+            return bottomExpansion;
+        }
+
+        public boolean isLeftExpandable() {
+            return leftExpansion;
+        }
+    }
+
+    public class MoveEvent extends Event {
+        private int newColumn;
+        private int newRow;
+        private int previousColumn;
+        private int previousRow;
+
+        public MoveEvent(int newColumn, int newRow, int previousColumn, int previousRow) {
+            super(null);
+            this.newColumn = newColumn;
+            this.newRow = newRow;
+            this.previousColumn = previousColumn;
+            this.previousRow = previousRow;
+        }
+
+        public int getNewColumn() {
+            return newColumn;
+        }
+
+        public int getNewRow() {
+            return newRow;
+        }
+
+        public int getPreviousColumn() {
+            return previousColumn;
+        }
+
+        public int getPreviousRow() {
+            return previousRow;
+        }
     }
 }

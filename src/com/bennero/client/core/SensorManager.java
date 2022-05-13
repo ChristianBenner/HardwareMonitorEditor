@@ -37,6 +37,7 @@ import javafx.scene.control.Alert;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import static com.bennero.common.Constants.*;
 
@@ -44,14 +45,13 @@ import static com.bennero.common.Constants.*;
  * A singleton that stores all of the sensors that have been created (not GUI gauges but Sensor objects that hold
  * information on each hardware sensor). The SensorManager can process SensorRequests.
  *
- * @see         SensorData
- * @see         Sensor
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see SensorData
+ * @see Sensor
+ * @since 1.0
  */
-public class SensorManager
-{
+public class SensorManager {
     private static final String LOGGER_TAG = SensorManager.class.getSimpleName();
 
     private static SensorManager instance = null;
@@ -59,78 +59,73 @@ public class SensorManager
 
     private List<SensorData> sensorList;
 
-    public static SensorManager getInstance()
-    {
-        if (instance == null)
-        {
+    private List<SensorRequest> debugSensors;
+    private boolean usingDebugSensors;
+    private Random debugSensorRandom;
+
+    private SensorManager() {
+        sensorList = new ArrayList<>();
+    }
+
+    public static SensorManager getInstance() {
+        if (instance == null) {
             instance = new SensorManager();
         }
 
         return instance;
     }
 
-    private SensorManager()
-    {
-        sensorList = new ArrayList<>();
-    }
-
-    public List<SensorData> getSensorList()
-    {
+    public List<SensorData> getSensorList() {
         return sensorList;
     }
 
-    public void addSensorData(SensorData sensorData)
-    {
+    public void clearSensorList() {
+        sensorList.clear();
+    }
+
+    public void addSensorData(SensorData sensorData) {
         final String name = sensorData.getName();
-        final int id = sensorData.getId();
 
         boolean exists = false;
         // Try to identify if the sensor already exists before adding it
-        for (int i = 0; i < sensorList.size() & !exists; i++)
-        {
+        for (int i = 0; i < sensorList.size() & !exists; i++) {
             SensorData existingSensor = sensorList.get(i);
-            if (compareSensorData(existingSensor, sensorData))
-            {
-                System.out.println("Sensor Exists: " + name);
+            if (compareSensorData(existingSensor, sensorData)) {
+                Logger.log(LogLevel.WARNING, LOGGER_TAG, "Failed to add sensor because it already exists");
                 exists = true;
             }
         }
 
-        if(!exists)
-        {
+        if (!exists) {
             Platform.runLater(() ->
             {
-                System.out.println("Adding Sensor Data: " + name + ", ID: " + id);
+                Logger.log(LogLevel.INFO, LOGGER_TAG, "Adding Sensor Data: " + name + ", Hardware Type: " +
+                        sensorData.getHardwareType());
                 sensorList.add(sensorData);
             });
         }
     }
 
-    public boolean compareSensorData(SensorData lhs, SensorData rhs)
-    {
+    public boolean compareSensorData(SensorData lhs, SensorData rhs) {
         if (lhs.getName().compareTo(rhs.getName()) == 0 && lhs.getType() == rhs.getType() &&
-                lhs.getHardwareType().compareTo(rhs.getHardwareType()) == 0)
-        {
+                lhs.getHardwareType().compareTo(rhs.getHardwareType()) == 0) {
             return true;
         }
 
         return false;
     }
 
-    public boolean compareSensorGuiToData(SensorData sensorData, Sensor sensorGui)
-    {
-        if(sensorData.getName().compareTo(sensorGui.getOriginalName()) == 0 &&
+    public boolean compareSensorGuiToData(SensorData sensorData, Sensor sensorGui) {
+        if (sensorData.getName().compareTo(sensorGui.getOriginalName()) == 0 &&
                 sensorData.getType() == sensorGui.getType() &&
-                sensorData.getHardwareType().compareTo(sensorGui.getHardwareType()) == 0)
-        {
+                sensorData.getHardwareType().compareTo(sensorGui.getHardwareType()) == 0) {
             return true;
         }
 
         return false;
     }
 
-    public int getAvailableId()
-    {
+    public int getAvailableId() {
         return ++sensorGuiId;
     }
 
@@ -143,8 +138,7 @@ public class SensorManager
                                   boolean averagingEnabled,
                                   int averagingPeriod,
                                   int rowSpan,
-                                  int columnSpan)
-    {
+                                  int columnSpan) {
         Sensor sensor = new Sensor(getAvailableId(), row, column, sensorData.getType(), skin, sensorData.getMax(),
                 threshold, sensorData.getName(), title, averagingEnabled, averagingPeriod, rowSpan, columnSpan);
         sensor.setHardwareType(sensorData.getHardwareType());
@@ -153,14 +147,12 @@ public class SensorManager
         return sensor;
     }
 
-    public Sensor createSensorGui(SensorData sensorData, int row, int column)
-    {
+    public Sensor createSensorGui(SensorData sensorData, int row, int column) {
         return createSensorGui(sensorData, row, column, Skin.SPACE, sensorData.getMax() * 0.9f,
                 sensorData.getName(), false, 10000, 1, 1);
     }
 
-    public void registerSensor(Sensor sensor, SensorData sensorData)
-    {
+    public void registerSensor(Sensor sensor, SensorData sensorData) {
         sensor.setValueChangeListener((observableValue, aFloat, t1) -> NetworkClient.getInstance().
                 writeSensorValueMessage(sensor.getUniqueId(), t1));
         sensorData.addSensor(sensor);
@@ -168,19 +160,15 @@ public class SensorManager
                 "], [SENSOR_DATA_ID: " + sensorData.getId() + "], [NAME: " + sensor.getTitle() + "]");
     }
 
-    public void registerExistingSensor(Sensor sensor)
-    {
+    public void registerExistingSensor(Sensor sensor) {
         boolean foundSensorData = false;
 
         // Locate the sensor data in the list
         List<SensorData> sensorList = getSensorList();
-        for(int i = 0; !foundSensorData && i < sensorList.size(); i++)
-        {
-            if (compareSensorGuiToData(sensorList.get(i), sensor))
-            {
+        for (int i = 0; !foundSensorData && i < sensorList.size(); i++) {
+            if (compareSensorGuiToData(sensorList.get(i), sensor)) {
                 registerSensor(sensor, sensorList.get(i));
-                if(sensorGuiId < sensor.getUniqueId())
-                {
+                if (sensorGuiId < sensor.getUniqueId()) {
                     sensorGuiId = sensor.getUniqueId();
                 }
                 foundSensorData = true;
@@ -188,15 +176,12 @@ public class SensorManager
         }
     }
 
-    public boolean isAvailable(SensorData sensorData)
-    {
+    public boolean isAvailable(SensorData sensorData) {
         boolean foundSensor = false;
         List<SensorData> sensorList = getSensorList();
         // Check to see if the sensor exists in the list of found sensors
-        for(int i = 0; !foundSensor && i < sensorList.size(); i++)
-        {
-            if(compareSensorData(sensorList.get(i), sensorData))
-            {
+        for (int i = 0; !foundSensor && i < sensorList.size(); i++) {
+            if (compareSensorData(sensorList.get(i), sensorData)) {
                 foundSensor = true;
             }
         }
@@ -204,17 +189,14 @@ public class SensorManager
         return foundSensor;
     }
 
-    public boolean isAvailable(Sensor sensor)
-    {
+    public boolean isAvailable(Sensor sensor) {
         // Locate the sensor data
         boolean foundSensorData = false;
 
         List<SensorData> sensorList = getSensorList();
         // Check to see if the sensor exists in the list of found sensors
-        for(int i = 0; !foundSensorData && i < sensorList.size(); i++)
-        {
-            if(compareSensorGuiToData(sensorList.get(i), sensor))
-            {
+        for (int i = 0; !foundSensorData && i < sensorList.size(); i++) {
+            if (compareSensorGuiToData(sensorList.get(i), sensor)) {
                 foundSensorData = true;
             }
         }
@@ -222,17 +204,12 @@ public class SensorManager
         return foundSensorData;
     }
 
-    public void addNativeSensors()
-    {
-        try
-        {
+    public void addNativeSensors() {
+        try {
             Native.addSensors();
-        }
-        catch (UnsatisfiedLinkError e)
-        {
-            if (Version.BOOTSTRAPPER_LAUNCH_REQUIRED)
-            {
-                System.err.println("No NativeAddSensors method. System not launched with the bootstrapper");
+        } catch (UnsatisfiedLinkError e) {
+            if (Version.BOOTSTRAPPER_LAUNCH_REQUIRED) {
+                Logger.log(LogLevel.ERROR, LOGGER_TAG, "No NativeAddSensors method. System not launched with the bootstrapper");
                 e.printStackTrace();
 
                 Alert alert = new Alert(Alert.AlertType.ERROR, "Failed to retrieve sensor data");
@@ -245,9 +222,9 @@ public class SensorManager
                 alert.showAndWait();
 
                 System.exit(EXIT_ERROR_CODE_NATIVE_GET_SENSOR_FAILED);
-            }
-            else
-            {
+            } else {
+                usingDebugSensors = true;
+
                 // Bootstrapper has not been found but we are in debug mode so this is not an error, we should instead
                 // add some example/debug sensors so that the programmer can use some fake sensors
                 addDebugSensors();
@@ -255,34 +232,29 @@ public class SensorManager
         }
     }
 
-    public void startSensorUpdateThread()
-    {
+    public void startSensorUpdateThread() {
         Thread thread = new Thread(() ->
         {
-            try
-            {
-                while (true)
-                {
+            try {
+                while (true) {
                     Thread.sleep(SENSOR_POLL_RATE_MS);
 
                     Platform.runLater(() ->
                     {
-                        if (NetworkClient.getInstance().isConnected())
-                        {
-                            Native.updateSensors();
+                        if (usingDebugSensors) {
+                            updateDebugSensors();
+                        } else {
+                            if (NetworkClient.getInstance().isConnected()) {
+                                Native.updateSensors();
+                            }
                         }
                     });
                 }
-            }
-            catch (InterruptedException e)
-            {
+            } catch (InterruptedException e) {
                 e.printStackTrace();
-            }
-            catch (Exception e)
-            {
-                if (Version.BOOTSTRAPPER_LAUNCH_REQUIRED)
-                {
-                    System.err.println("No NativeAddSensors method. System not launched with the bootstrapper");
+            } catch (Exception e) {
+                if (Version.BOOTSTRAPPER_LAUNCH_REQUIRED) {
+                    Logger.log(LogLevel.ERROR, LOGGER_TAG, "No NativeAddSensors method. System not launched with the bootstrapper");
                     e.printStackTrace();
 
                     Alert alert = new Alert(Alert.AlertType.ERROR, "Failed to update sensors");
@@ -293,21 +265,16 @@ public class SensorManager
                             EXIT_ERROR_CODE_NATIVE_SENSOR_UPDATE_FAILED + ")");
                     alert.showAndWait();
                     System.exit(EXIT_ERROR_CODE_NATIVE_SENSOR_UPDATE_FAILED);
-                }
-                else
-                {
+                } else {
                     e.printStackTrace();
-                    System.err.println("Failed to update sensors. Native interface not working correctly");
+                    Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to update sensors. Native interface not working correctly");
                 }
             }
         });
 
-        if (Version.BOOTSTRAPPER_LAUNCH_REQUIRED)
-        {
-            thread.start();
-        }
-        else
-        {
+        thread.start();
+
+        if (!Version.BOOTSTRAPPER_LAUNCH_REQUIRED) {
             Alert alert = new Alert(Alert.AlertType.WARNING, "No bootstrapper enabled");
             alert.setTitle("Hardware Monitor Warning");
             alert.setHeaderText("No bootstrapper enabled");
@@ -319,22 +286,60 @@ public class SensorManager
         }
     }
 
-    private void addDebugSensors()
-    {
-        // Add debug sensors
-        for (int i = 0; i < 6; i++)
-        {
-            new SensorRequest(i, "Core #" + i + " Temp", 100.0f, SensorType.TEMPERATURE,
-                    "DEBUG_CPU", 25.0f);
+    private void updateDebugSensors() {
+        if(debugSensors == null || debugSensorRandom == null) {
+            return;
         }
 
-        new SensorRequest(6, "Core Clock", 1800.0f, SensorType.CLOCK,
-                "DEBUG_CPU", 25.0f);
-        new SensorRequest(7, "Memory Clock", 1250.0f, SensorType.CLOCK,
-                "DEBUG_CPU", 1105.0f);
-        new SensorRequest(8, "Core Utilisation", 100.0f, SensorType.LOAD,
-                "DEBUG_CPU", 53.0f);
-        new SensorRequest(9, "Power Draw", 300.0f, SensorType.POWER,
-                "DEBUG_CPU", 125.0f);
+        // Update all sensors with random values between there min and max
+        for (SensorRequest sensorRequest : debugSensors) {
+            float max = sensorRequest.getMax();
+            float randomVal = debugSensorRandom.nextFloat() * max;
+            sensorRequest.setValue(randomVal);
+        }
+    }
+
+    private void addDebugSensors() {
+        usingDebugSensors = true;
+        debugSensorRandom = new Random();
+        debugSensors = new ArrayList<>();
+
+        // Add debug CPU sensors
+        int id = 0;
+        for (int cpuI = 0; cpuI < 6; cpuI++) {
+            debugSensors.add(new SensorRequest(id, "Core #" + id + " Temp", 100.0f, SensorType.TEMPERATURE,
+                    "DEBUG_CPU", 25.0f));
+            id++;
+        }
+
+        debugSensors.add(new SensorRequest(id++, "Core Clock", 4000.0f, SensorType.CLOCK,
+                "DEBUG_CPU", 25.0f));
+        debugSensors.add(new SensorRequest(id++, "Memory Clock", 1250.0f, SensorType.CLOCK,
+                "DEBUG_CPU", 1105.0f));
+        debugSensors.add(new SensorRequest(id++, "Core Utilisation", 100.0f, SensorType.LOAD,
+                "DEBUG_CPU", 53.0f));
+        debugSensors.add(new SensorRequest(id++, "Power Draw", 90.0f, SensorType.POWER,
+                "DEBUG_CPU", 40.0f));
+
+        // Add debug GPU sensors
+        for (int gpuI = 0; gpuI < 6; gpuI++) {
+            debugSensors.add(new SensorRequest(id, "Temp", 100.0f, SensorType.TEMPERATURE,
+                    "DEBUG_GPU", 25.0f));
+            id++;
+        }
+
+        debugSensors.add(new SensorRequest(id++, "Core Clock", 1800.0f, SensorType.CLOCK,
+                "DEBUG_GPU", 25.0f));
+        debugSensors.add(new SensorRequest(id++, "Memory Clock", 1250.0f, SensorType.CLOCK,
+                "DEBUG_GPU", 20.0f));
+        debugSensors.add(new SensorRequest(id++, "Core Utilisation", 100.0f, SensorType.LOAD,
+                "DEBUG_GPU", 15.0f));
+        debugSensors.add(new SensorRequest(id++, "Power Draw", 330.0f, SensorType.POWER,
+                "DEBUG_GPU", 120.0f));
+
+        // Add debug RAM sensors
+        debugSensors.add(new SensorRequest(id++, "Capacity", 100.0f, SensorType.LOAD,
+                "DEBUG_MEMORY", 67.0f));
+
     }
 }

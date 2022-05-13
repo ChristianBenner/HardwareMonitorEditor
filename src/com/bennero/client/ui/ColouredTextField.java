@@ -38,17 +38,15 @@ import javafx.scene.text.Font;
  * a Color object. The class extends TextField from JavaFX which does not come with methods for specifically setting the
  * text colour, instead it has to be applied as a CSS style which this class provides.
  *
- * @see         Color
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see Color
+ * @since 1.0
  */
-public class ColouredTextField extends TextField
-{
+public class ColouredTextField extends TextField {
     private Color colour;
 
-    public ColouredTextField(Font font, String text, int alignment, Color textColour)
-    {
+    public ColouredTextField(Font font, String text, int alignment, Color textColour) {
         super(text);
         setColour(textColour);
         super.setFont(font);
@@ -57,8 +55,7 @@ public class ColouredTextField extends TextField
         super.setPadding(new Insets(0));
 
         // Align the text
-        switch (alignment)
-        {
+        switch (alignment) {
             case Constants.TEXT_ALIGNMENT_LEFT:
                 super.setAlignment(Pos.CENTER_LEFT);
                 break;
@@ -71,13 +68,11 @@ public class ColouredTextField extends TextField
         }
     }
 
-    public Color getColour()
-    {
+    public Color getColour() {
         return colour;
     }
 
-    public void setColour(Color colour)
-    {
+    public void setColour(Color colour) {
         String textColourString = "#" + colour.toString().substring(2);
         super.setStyle("-fx-text-inner-color: " + textColourString + ";");
         this.colour = colour;

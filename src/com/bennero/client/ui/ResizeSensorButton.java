@@ -31,13 +31,11 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 
-public class ResizeSensorButton extends DragButton
-{
+public class ResizeSensorButton extends DragButton {
     private final double RESIZE_BUTTON_SIZE = 15.0;
 
     public ResizeSensorButton(Pos alignment, Color colour, Cursor cursor, EventHandler<MouseEvent> dragEvent,
-                              EventHandler<MouseEvent> finishDrag)
-    {
+                              EventHandler<MouseEvent> finishDrag) {
         super(cursor, dragEvent, finishDrag);
 
         setBorder(Border.EMPTY);

@@ -35,12 +35,11 @@ import javafx.scene.text.Font;
  * one). It is used on the PageOverview page so that the user can easily differentiate pages before selecting one to
  * edit.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class PageInfo extends StackPane
-{
+public class PageInfo extends StackPane {
     private static final Font TEXT_FONT = new Font(18.0);
     private static final Font SUBHEADING_TEXT_FONT = new Font(12.0);
     private static final CornerRadii BACKGROUND_CORNER_RADII = new CornerRadii(15.0);
@@ -51,8 +50,7 @@ public class PageInfo extends StackPane
     private Label title;
     private Label subheading;
 
-    public PageInfo(final PageData pageData, final int width, final int height)
-    {
+    public PageInfo(final PageData pageData, final int width, final int height) {
         this.pageData = pageData;
         super.setMinSize(width, height);
 
@@ -63,15 +61,12 @@ public class PageInfo extends StackPane
         init();
     }
 
-    public void init()
-    {
-        if (title != null)
-        {
+    public void init() {
+        if (title != null) {
             textBox.getChildren().remove(title);
         }
 
-        if (subheading != null)
-        {
+        if (subheading != null) {
             textBox.getChildren().remove(subheading);
         }
 
@@ -82,8 +77,7 @@ public class PageInfo extends StackPane
         title.setTextFill(pageData.getTitleColour());
         textBox.getChildren().add(title);
 
-        if (pageData.isSubtitleEnabled())
-        {
+        if (pageData.isSubtitleEnabled()) {
             subheading = new Label(pageData.getSubtitle());
             subheading.setFont(SUBHEADING_TEXT_FONT);
             subheading.setTextFill(pageData.getSubtitleColour());

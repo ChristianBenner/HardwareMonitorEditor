@@ -28,12 +28,11 @@ package com.bennero.client.bootstrapper;
  * JNI (Java Native Interface). In the context of the hardware monitor this is to be accomplished by the bootstrapper
  * project.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class Native
-{
+public class Native {
     public static native void addSensors();
 
     public static native void updateSensors();

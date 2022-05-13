@@ -36,16 +36,14 @@ import java.util.Collection;
 /**
  * Provides some commonly used static functions associated to user interface.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class UIHelper
-{
+public class UIHelper {
     public static BorderPane createColourOption(ColourEditor colourEditor,
                                                 String text, Color startColor,
-                                                ChangeListener<Color> changeListener)
-    {
+                                                ChangeListener<Color> changeListener) {
         Label label = new Label(text + ":");
         label.setId("sensor-editor-label");
 
@@ -82,8 +80,7 @@ public class UIHelper
 
     public static BorderPane createCheckboxOption(String text,
                                                   boolean checkedStartState,
-                                                  ChangeListener<Boolean> changeListener)
-    {
+                                                  ChangeListener<Boolean> changeListener) {
         Label label = new Label(text + ":");
         label.setId("sensor-editor-label");
 
@@ -105,8 +102,7 @@ public class UIHelper
                                                     int startValue,
                                                     int minVal,
                                                     int maxVal,
-                                                    ChangeListener<Integer> changeListener)
-    {
+                                                    ChangeListener<Integer> changeListener) {
         return createIntSpinnerOption(text, startValue, minVal, maxVal, 1, changeListener);
     }
 
@@ -115,8 +111,7 @@ public class UIHelper
                                                     int minVal,
                                                     int maxVal,
                                                     int changeAmount,
-                                                    ChangeListener<Integer> changeListener)
-    {
+                                                    ChangeListener<Integer> changeListener) {
         Label label = new Label(text + ":");
         label.setId("sensor-editor-label");
 
@@ -127,27 +122,18 @@ public class UIHelper
         // Listener that prevents anything but numbers to be entered into the spinner
         spinner.getEditor().textProperty().addListener((observableValue, s, t1) ->
         {
-            if (!t1.matches("\\d*"))
-            {
+            if (!t1.matches("\\d*")) {
                 spinner.getEditor().setText(t1.replaceAll("[^\\d]", ""));
             }
 
-            if (t1.isEmpty() || t1 == null)
-            {
+            if (t1.isEmpty() || t1 == null) {
                 changeListener.changed(null, null, minVal);
-            }
-            else
-            {
-                if (Integer.parseInt(t1) < minVal)
-                {
+            } else {
+                if (Integer.parseInt(t1) < minVal) {
                     changeListener.changed(null, null, minVal);
-                }
-                else if (Integer.parseInt(t1) > maxVal)
-                {
+                } else if (Integer.parseInt(t1) > maxVal) {
                     changeListener.changed(null, null, maxVal);
-                }
-                else
-                {
+                } else {
                     changeListener.changed(null, null, Integer.parseInt(t1));
                 }
             }
@@ -165,8 +151,7 @@ public class UIHelper
     public static BorderPane createComboBoxOption(String text,
                                                   String selected,
                                                   Collection<String> objectCollection,
-                                                  ChangeListener<String> changeListener)
-    {
+                                                  ChangeListener<String> changeListener) {
         Label label = new Label(text + ":");
         label.setId("sensor-editor-label");
 
@@ -187,8 +172,7 @@ public class UIHelper
     public static <E> BorderPane createComboBoxOption(String text,
                                                       E selected,
                                                       Collection<E> objectCollection,
-                                                      ChangeListener<E> changeListener)
-    {
+                                                      ChangeListener<E> changeListener) {
         Label label = new Label(text + ":");
         label.setId("sensor-editor-label");
 

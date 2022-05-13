@@ -39,14 +39,13 @@ import javafx.scene.text.Font;
  * This means that the user can control the amount of Red, Green or Blue in the colour independently. The tab also
  * displays the colour that represents the channel values so that the user can configure their desired colour easier.
  *
- * @see         ColourTab
- * @see         Tab
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see ColourTab
+ * @see Tab
+ * @since 1.0
  */
-public class RGBTab extends Tab implements ColourTab
-{
+public class RGBTab extends Tab implements ColourTab {
     private static final Font SLIDER_FONT = new Font(12);
 
     private Slider redSlider;
@@ -55,8 +54,7 @@ public class RGBTab extends Tab implements ColourTab
     private HBox colourBox;
     private ChangeListener listener;
 
-    public RGBTab()
-    {
+    public RGBTab() {
         super("RGB");
 
         GridPane rgbPane = new GridPane();
@@ -134,16 +132,12 @@ public class RGBTab extends Tab implements ColourTab
     }
 
     @Override
-    public void setColourData(Color colour)
-    {
-        if (colour != null)
-        {
+    public void setColourData(Color colour) {
+        if (colour != null) {
             redSlider.setValue((int) (colour.getRed() * 255.0));
             greenSlider.setValue((int) (colour.getGreen() * 255.0));
             blueSlider.setValue((int) (colour.getBlue() * 255.0));
-        }
-        else
-        {
+        } else {
             redSlider.setValue(0);
             greenSlider.setValue(0);
             blueSlider.setValue(0);
@@ -151,8 +145,7 @@ public class RGBTab extends Tab implements ColourTab
     }
 
     @Override
-    public void setHandler(ChangeListener<Color> handler, Color colourIn)
-    {
+    public void setHandler(ChangeListener<Color> handler, Color colourIn) {
         setColourData(colourIn);
 
         listener = (observableValue, o, t1) -> handler.changed(null, null,
@@ -161,10 +154,8 @@ public class RGBTab extends Tab implements ColourTab
     }
 
     @Override
-    public void removeHandler()
-    {
-        if (listener != null)
-        {
+    public void removeHandler() {
+        if (listener != null) {
             colourBox.backgroundProperty().removeListener(listener);
         }
     }

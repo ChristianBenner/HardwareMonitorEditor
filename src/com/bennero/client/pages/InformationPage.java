@@ -35,19 +35,16 @@ import javafx.scene.text.TextAlignment;
  * A page for displaying basic information such as a title and subtitle. A programmable button is also included to allow
  * navigation away from the page
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class InformationPage extends StackPane
-{
-    public InformationPage(String title, String info, String buttonText, EventHandler buttonEvent)
-    {
+public class InformationPage extends StackPane {
+    public InformationPage(String title, String info, String buttonText, EventHandler buttonEvent) {
         init(title, info, buttonText, buttonEvent);
     }
 
-    private void init(String title, String info, String buttonText, EventHandler buttonEvent)
-    {
+    private void init(String title, String info, String buttonText, EventHandler buttonEvent) {
         super.setId("standard-pane");
 
         VBox slide = new VBox();

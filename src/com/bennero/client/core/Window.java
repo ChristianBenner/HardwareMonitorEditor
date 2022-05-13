@@ -25,6 +25,7 @@ package com.bennero.client.core;
 
 import com.bennero.client.states.StateData;
 import com.bennero.common.TransitionType;
+import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
 import javafx.animation.Transition;
 import javafx.application.Platform;
@@ -40,12 +41,12 @@ import static com.bennero.client.Version.*;
  * Window handles the GUI components of the application. It is responsible for displaying the correct GUI for the
  * applications current state when the window is visible.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class Window
-{
+public class Window {
+    private static final String CLASS_NAME = Window.class.getSimpleName();
     public static final int WINDOW_WIDTH_PX = 800;
     public static final int WINDOW_HEIGHT_PX = 480;
     private static final String WINDOW_TITLE = "Hardware Monitor Editor v" + VERSION_MAJOR + "." + VERSION_MINOR + "." +
@@ -56,8 +57,7 @@ public class Window
     private Node currentPage;
     private String titleSaveString;
 
-    public Window(Stage stage)
-    {
+    public Window(Stage stage) {
         this.stage = stage;
         titleSaveString = "";
     }
@@ -66,55 +66,44 @@ public class Window
      * Method designed to launch the application natively using JavaFX base class methods. This provides a way for the
      * native C# bootstrapper to request to start the program.
      *
-     * @since   1.0
+     * @since 1.0
      */
-    public void updateWindowTitle(String saveString)
-    {
+    public void updateWindowTitle(String saveString) {
         titleSaveString = saveString;
         stage.setTitle(WINDOW_TITLE + ": " + saveString);
     }
 
-    public void initGui()
-    {
-        if (basePane == null)
-        {
+    public void initGui() {
+        if (basePane == null) {
             basePane = new StackPane();
             Scene uiScene = new Scene(basePane, WINDOW_WIDTH_PX, WINDOW_HEIGHT_PX);
             uiScene.getStylesheets().add("stylesheet.css");
             basePane.setId("standard-pane");
 
-            if (!titleSaveString.isEmpty())
-            {
+            if (!titleSaveString.isEmpty()) {
                 stage.setTitle(WINDOW_TITLE + ": " + titleSaveString);
-            }
-            else
-            {
+            } else {
                 stage.setTitle(WINDOW_TITLE);
             }
 
             stage.setScene(uiScene);
 
             // If system tray is supported, destroy GUI and minimize, otherwise exit the application
-            if(SystemTrayManager.isSupported())
-            {
+            if (SystemTrayManager.isSupported()) {
                 stage.setOnCloseRequest(windowEvent -> destroyGui());
-            }
-            else
-            {
+            } else {
                 stage.setOnCloseRequest(windowEvent -> System.exit(0));
             }
         }
     }
 
-    public void destroyGui()
-    {
+    public void destroyGui() {
         stage.hide();
         currentPage = null;
         basePane = null;
     }
 
-    public void changeGuiState(StateData newStateData)
-    {
+    public void changeGuiState(StateData newStateData) {
         initGui();
 
         Node newPage = newStateData.createGUI();
@@ -130,39 +119,32 @@ public class Window
         transition.play();
     }
 
-    public void show()
-    {
+    public void show() {
         Platform.runLater(() ->
         {
             StateData currentState = ApplicationCore.s_getApplicationState();
-            if (currentState != null)
-            {
+            if (currentState != null) {
                 initGui();
 
                 // Load GUI that is associated to the current application state
                 basePane.getChildren().clear();
                 basePane.getChildren().add(currentState.createGUI());
                 stage.show();
-            }
-            else
-            {
-                System.err.println("ERROR: No current state data available, cannot show display");
+            } else {
+                Logger.log(LogLevel.ERROR, CLASS_NAME, "No current state data available, cannot show display");
             }
         });
     }
 
-    public ReadOnlyDoubleProperty getWidthProperty()
-    {
+    public ReadOnlyDoubleProperty getWidthProperty() {
         return stage.widthProperty();
     }
 
-    public Stage getStage()
-    {
+    public Stage getStage() {
         return this.stage;
     }
 
-    public boolean isShowing()
-    {
+    public boolean isShowing() {
         return stage.isShowing();
     }
 }

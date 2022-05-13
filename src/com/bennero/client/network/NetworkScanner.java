@@ -56,13 +56,12 @@ import static com.bennero.common.networking.NetworkUtils.writeToMessage;
  * this broadcast message. It is then the role of a hardware monitor to reply to the message revealing its connection
  * info such as IP4 and MAC addresses so that it can be listed in the results and selected by the user.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class NetworkScanner
-{
-    private static final String LOGGER_TAG = NetworkScanner.class.getName();
+public class NetworkScanner {
+    private static final String LOGGER_TAG = NetworkScanner.class.getSimpleName();
     private static final int MS_PER_SECOND = 1000;
     private static final int BROADCAST_POLL_HZ = 1;
     private static final int BROADCAST_POLL_SLEEP_PERIOD = MS_PER_SECOND / BROADCAST_POLL_HZ;
@@ -72,8 +71,18 @@ public class NetworkScanner
     private boolean sendBroadcastMessages;
     private List<InetAddress> addresses;
 
-    public static void handleScan()
-    {
+    public NetworkScanner() {
+        try {
+            addresses = discoverBroadcastAddresses();
+        } catch (SocketException e) {
+            addresses = new ArrayList<>();
+            e.printStackTrace();
+        }
+    }
+
+    public static void handleScan() {
+        Logger.log(LogLevel.INFO, LOGGER_TAG, "Scanning network for Hardware Monitors");
+
         // Now scan the network for devices
         List<ConnectionInformation> availableConnections = new ArrayList<>();
 
@@ -88,36 +97,29 @@ public class NetworkScanner
             // MAC address already exists. This is so when multiple broadcast messages are sent out,
             // only one of the same device will show up in the connections list
             boolean found = false;
-            for (int i = 0; i < availableConnections.size(); i++)
-            {
+            for (int i = 0; i < availableConnections.size(); i++) {
                 if (NetworkUtils.doAddressesMatch(availableConnections.get(i).getMacAddress(),
-                        scanReplyMessage.getMacAddress()))
-                {
+                        scanReplyMessage.getMacAddress())) {
                     found = true;
                 }
             }
 
-            if (!found)
-            {
+            if (!found) {
+                Logger.log(LogLevel.INFO, LOGGER_TAG,
+                        "Received a broadcast reply message from a hardware monitor: VERSION[" +
+                                scanReplyMessage.getMajorVersion() + "." + scanReplyMessage.getMinorVersion() + "." +
+                                scanReplyMessage.getPatchVersion() + "] IP4[" +
+                                NetworkUtils.ip4AddressToString(scanReplyMessage.getIp4Address()) + "], MAC[" +
+                                NetworkUtils.macAddressToString(scanReplyMessage.getMacAddress()) + "], HOSTNAME[" +
+                                scanReplyMessage.getHostname() + "]");
                 availableConnections.add(scanReplyMessage);
             }
         }, event ->
         {
-            if (NetworkClient.getInstance().isConnected())
-            {
-                System.out.println("END SCAN: CONNECTED!");
-            }
-            else
-            {
-                System.out.println("END SCAN: NOT CONNECTED!");
-            }
-
-            if (!NetworkClient.getInstance().isConnected())
-            {
+            if (!NetworkClient.getInstance().isConnected()) {
                 ApplicationCore.s_setApplicationState(new ConnectionListStateData(availableConnections));
 
-                if (availableConnections.isEmpty())
-                {
+                if (availableConnections.isEmpty()) {
                     // Message pop-up that no connections have been found
                     Alert alert = new Alert(Alert.AlertType.WARNING, "No Hardware Monitors Found", ButtonType.OK);
                     alert.setContentText("Scanning the network revealed no hardware monitors, please make sure that hardware monitor devices are online and running and then attempt a scan");
@@ -127,21 +129,7 @@ public class NetworkScanner
         });
     }
 
-    public NetworkScanner()
-    {
-        try
-        {
-            addresses = discoverBroadcastAddresses();
-        }
-        catch (SocketException e)
-        {
-            addresses = new ArrayList<>();
-            e.printStackTrace();
-        }
-    }
-
-    public void scan(int seconds, EventHandler<ConnectionInformation> broadcastReplyDataEventHandler, EventHandler endScan)
-    {
+    public void scan(int seconds, EventHandler<ConnectionInformation> broadcastReplyDataEventHandler, EventHandler endScan) {
         broadcastReplyThread = new BroadcastReplyReceiver(broadcastReplyDataEventHandler, endScan);
         broadcastReplyThread.start();
 
@@ -152,26 +140,19 @@ public class NetworkScanner
             long timeStart = System.currentTimeMillis();
 
             while (sendBroadcastMessages &&
-                    (seconds == 0 || ((timeStart + (seconds * MS_PER_SECOND)) > System.currentTimeMillis())))
-            {
+                    (seconds == 0 || ((timeStart + (seconds * MS_PER_SECOND)) > System.currentTimeMillis()))) {
                 sendBroadcastMessages();
-                try
-                {
+                try {
                     Thread.sleep(BROADCAST_POLL_SLEEP_PERIOD);
-                }
-                catch (InterruptedException e)
-                {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
 
-            try
-            {
+            try {
                 broadcastReplyThread.stopThread();
                 broadcastReplyThread.join();
-            }
-            catch (InterruptedException e)
-            {
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
@@ -181,38 +162,29 @@ public class NetworkScanner
         broadcastSenderThread.start();
     }
 
-    public void stopScanning()
-    {
+    public void stopScanning() {
         sendBroadcastMessages = false;
     }
 
-    private void sendBroadcastMessages()
-    {
-        try
-        {
+    private void sendBroadcastMessages() {
+        try {
             sendBroadcastMessage(InetAddress.getByName("255.255.255.255"));
-            for (int i = 0; i < addresses.size(); i++)
-            {
+            for (int i = 0; i < addresses.size(); i++) {
                 sendBroadcastMessage(addresses.get(i));
             }
-        }
-        catch (UnknownHostException e)
-        {
+        } catch (UnknownHostException e) {
             e.printStackTrace();
         }
     }
 
     // Get the broadcast addresses of other network devices found on the network
-    private List<InetAddress> discoverBroadcastAddresses() throws SocketException
-    {
+    private List<InetAddress> discoverBroadcastAddresses() throws SocketException {
         List<InetAddress> broadcastAddressList = new ArrayList<>();
         Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
 
-        while (networkInterfaces.hasMoreElements())
-        {
+        while (networkInterfaces.hasMoreElements()) {
             final NetworkInterface temp = networkInterfaces.nextElement();
-            if (temp.isLoopback() || !temp.isUp())
-            {
+            if (temp.isLoopback() || !temp.isUp()) {
                 continue;
             }
 
@@ -222,10 +194,8 @@ public class NetworkScanner
         return broadcastAddressList;
     }
 
-    private void sendBroadcastMessage(InetAddress inetAddress)
-    {
-        try
-        {
+    private void sendBroadcastMessage(InetAddress inetAddress) {
+        try {
             DatagramSocket broadcastSocket = new DatagramSocket();
             broadcastSocket.setBroadcast(true);
 
@@ -241,9 +211,7 @@ public class NetworkScanner
             broadcastSocket.close();
             Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent broadcastAvailability message on: " +
                     inetAddress.getHostAddress());
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

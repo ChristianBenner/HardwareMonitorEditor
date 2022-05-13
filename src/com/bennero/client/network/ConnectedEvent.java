@@ -30,12 +30,11 @@ import javafx.event.Event;
  * A ConnectedEvent contains connection information and is created when connection has been established with a hardware
  * monitor. It includes some further information such as the status of the connection and the version of the monitor.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class ConnectedEvent extends Event
-{
+public class ConnectedEvent extends Event {
     private final ConnectionInformation connectionInformation;
     private final ConnectionStatus connectionStatus;
     private String currentlyConnectedHostname;
@@ -44,67 +43,55 @@ public class ConnectedEvent extends Event
     private int patchServerVersion;
 
     public ConnectedEvent(final ConnectionInformation connectionInformation,
-                          final ConnectionStatus connectionStatus)
-    {
+                          final ConnectionStatus connectionStatus) {
         super(connectionStatus, null, null);
         this.connectionInformation = connectionInformation;
         this.connectionStatus = connectionStatus;
     }
 
-    public ConnectionStatus getConnectionStatus()
-    {
+    public ConnectionStatus getConnectionStatus() {
         return connectionStatus;
     }
 
-    public ConnectionInformation getConnectionInformation()
-    {
+    public ConnectionInformation getConnectionInformation() {
         return connectionInformation;
     }
 
-    public String getCurrentlyConnectedHostname()
-    {
+    public String getCurrentlyConnectedHostname() {
         return currentlyConnectedHostname;
     }
 
-    public void setCurrentlyConnectedHostname(String currentlyConnectedHostname)
-    {
+    public void setCurrentlyConnectedHostname(String currentlyConnectedHostname) {
         this.currentlyConnectedHostname = currentlyConnectedHostname;
     }
 
-    public void setServerVersion(int major, int minor, int patch)
-    {
+    public void setServerVersion(int major, int minor, int patch) {
         setMajorServerVersion(major);
         setMinorServerVersion(minor);
         setPatchServerVersion(patch);
     }
 
-    public int getMajorServerVersion()
-    {
+    public int getMajorServerVersion() {
         return majorServerVersion;
     }
 
-    public void setMajorServerVersion(int majorServerVersion)
-    {
+    public void setMajorServerVersion(int majorServerVersion) {
         this.majorServerVersion = majorServerVersion;
     }
 
-    public int getMinorServerVersion()
-    {
+    public int getMinorServerVersion() {
         return minorServerVersion;
     }
 
-    public void setMinorServerVersion(int minorServerVersion)
-    {
+    public void setMinorServerVersion(int minorServerVersion) {
         this.minorServerVersion = minorServerVersion;
     }
 
-    public int getPatchServerVersion()
-    {
+    public int getPatchServerVersion() {
         return patchServerVersion;
     }
 
-    public void setPatchServerVersion(int patchServerVersion)
-    {
+    public void setPatchServerVersion(int patchServerVersion) {
         this.patchServerVersion = patchServerVersion;
     }
 }

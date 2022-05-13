@@ -29,13 +29,12 @@ import javafx.scene.paint.Color;
 /**
  * Defines some methods that all tabs are required to have on the ColourEditor pop-up.
  *
- * @see         ColourEditor
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see ColourEditor
+ * @since 1.0
  */
-public interface ColourTab
-{
+public interface ColourTab {
     void setColourData(Color colourData);
 
     void setHandler(ChangeListener<Color> handler, Color colourIn);

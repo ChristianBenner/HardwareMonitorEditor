@@ -41,12 +41,11 @@ import javafx.scene.paint.Color;
  * tools include: Text alignment, colour and text field removal. It is to be shown above a text field on mouse hover and
  * therefor has a semi-transparent background.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class TextFieldEditPane extends StackPane
-{
+public class TextFieldEditPane extends StackPane {
     private final static int ALIGNMENT_BUTTON_WIDTH = 32;
     private final static int ALIGNMENT_BUTTON_HEIGHT = 32;
 
@@ -60,8 +59,7 @@ public class TextFieldEditPane extends StackPane
                              EventHandler<ActionEvent> deleteEvent,
                              ChangeListener<Integer> alignmentHandler,
                              ChangeListener<Color> colourHandler,
-                             ChangeListener<String> textHandler)
-    {
+                             ChangeListener<String> textHandler) {
         this.colour = textField.getColour();
 
         Image alignLeftIcon = new Image(getClass().getClassLoader().getResourceAsStream("align_left_icon.png"));
@@ -161,8 +159,7 @@ public class TextFieldEditPane extends StackPane
 
 
         // Align the text
-        switch (alignment)
-        {
+        switch (alignment) {
             case Constants.TEXT_ALIGNMENT_LEFT:
                 textField.setAlignment(Pos.CENTER_LEFT);
                 StackPane.setAlignment(optionsGroup, Pos.CENTER_RIGHT);
@@ -182,8 +179,7 @@ public class TextFieldEditPane extends StackPane
         super.getChildren().add(optionsGroup);
     }
 
-    public void setColour(Color colour)
-    {
+    public void setColour(Color colour) {
         String textColourString = "#" + colour.toString().substring(2);
         textField.setStyle("-fx-text-inner-color: " + textColourString + ";");
         this.colour = colour;

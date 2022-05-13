@@ -41,14 +41,13 @@ import java.text.DecimalFormat;
  * three sliders for configuring the HSV values of a colour. It also displays the colour that represents the values of
  * the sliders.
  *
- * @see         ColourTab
- * @see         Tab
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see ColourTab
+ * @see Tab
+ * @since 1.0
  */
-public class HSVTab extends Tab implements ColourTab
-{
+public class HSVTab extends Tab implements ColourTab {
     private static final Font SLIDER_FONT = new Font(12);
 
     private Slider hueSlider;
@@ -57,8 +56,7 @@ public class HSVTab extends Tab implements ColourTab
     private HBox colourBox;
     private ChangeListener listener;
 
-    public HSVTab()
-    {
+    public HSVTab() {
         super("HSV");
 
         GridPane hsvPane = new GridPane();
@@ -137,16 +135,12 @@ public class HSVTab extends Tab implements ColourTab
     }
 
     @Override
-    public void setColourData(Color colour)
-    {
-        if (colour != null)
-        {
+    public void setColourData(Color colour) {
+        if (colour != null) {
             hueSlider.setValue(colour.getHue());
             saturationSlider.setValue(colour.getSaturation());
             brightnessSlider.setValue(colour.getBrightness());
-        }
-        else
-        {
+        } else {
             hueSlider.setValue(0);
             saturationSlider.setValue(0);
             brightnessSlider.setValue(0);
@@ -154,8 +148,7 @@ public class HSVTab extends Tab implements ColourTab
     }
 
     @Override
-    public void setHandler(ChangeListener<Color> handler, Color colourIn)
-    {
+    public void setHandler(ChangeListener<Color> handler, Color colourIn) {
         setColourData(colourIn);
 
         listener = (observableValue, o, t1) -> handler.changed(null, null,
@@ -164,10 +157,8 @@ public class HSVTab extends Tab implements ColourTab
     }
 
     @Override
-    public void removeHandler()
-    {
-        if (listener != null)
-        {
+    public void removeHandler() {
+        if (listener != null) {
             colourBox.backgroundProperty().removeListener(listener);
         }
     }

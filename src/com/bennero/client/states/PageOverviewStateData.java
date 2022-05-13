@@ -33,23 +33,20 @@ import javafx.scene.Node;
  * graphical user interface does not have to be loaded into memory if it is not in use - it can be loaded or destroyed
  * at any time)
  *
- * @see         StateData
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see StateData
+ * @since 1.0
  */
-public class PageOverviewStateData extends StateData
-{
+public class PageOverviewStateData extends StateData {
     private static final String NAME = "PAGE_OVERVIEW";
 
-    public PageOverviewStateData()
-    {
+    public PageOverviewStateData() {
         super(NAME, TransitionType.FADE);
     }
 
     @Override
-    public Node createGUI()
-    {
+    public Node createGUI() {
         return new PageOverview();
     }
 }

@@ -34,25 +34,22 @@ import javafx.scene.Node;
  * user interface does not have to be loaded into memory if it is not in use - it can be loaded or destroyed at any
  * time)
  *
- * @see         StateData
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see StateData
+ * @since 1.0
  */
-public class PageEditorStateData extends StateData
-{
+public class PageEditorStateData extends StateData {
     private static final String NAME = "PAGE_EDITOR";
     private final PageData pageData;
 
-    public PageEditorStateData(PageData pageData)
-    {
+    public PageEditorStateData(PageData pageData) {
         super(NAME, TransitionType.FADE);
         this.pageData = pageData;
     }
 
     @Override
-    public Node createGUI()
-    {
+    public Node createGUI() {
         return new PageEditor(pageData);
     }
 }

@@ -28,15 +28,13 @@ import javafx.scene.Cursor;
 import javafx.scene.control.Button;
 import javafx.scene.input.MouseEvent;
 
-public class DragButton extends Button
-{
+public class DragButton extends Button {
     private boolean dragging;
 
     public DragButton(Cursor cursor,
                       EventHandler<MouseEvent> mousePressedEvent,
                       EventHandler<MouseEvent> dragEvent,
-                      EventHandler<MouseEvent> finishDrag)
-    {
+                      EventHandler<MouseEvent> finishDrag) {
         dragging = false;
 
         setOnMousePressed(mouseEvent ->
@@ -44,16 +42,14 @@ public class DragButton extends Button
             dragging = true;
             setCursor(cursor);
 
-            if(mousePressedEvent != null)
-            {
+            if (mousePressedEvent != null) {
                 mousePressedEvent.handle(mouseEvent);
             }
         });
 
         setOnMouseDragged(mouseEvent ->
         {
-            if(dragging && dragEvent != null)
-            {
+            if (dragging && dragEvent != null) {
                 dragEvent.handle(mouseEvent);
             }
         });
@@ -63,8 +59,7 @@ public class DragButton extends Button
             dragging = false;
             setCursor(Cursor.DEFAULT);
 
-            if(finishDrag != null)
-            {
+            if (finishDrag != null) {
                 finishDrag.handle(mouseEvent);
             }
         });
@@ -72,8 +67,7 @@ public class DragButton extends Button
 
     public DragButton(Cursor cursor,
                       EventHandler<MouseEvent> dragEvent,
-                      EventHandler<MouseEvent> finishDrag)
-    {
+                      EventHandler<MouseEvent> finishDrag) {
         this(cursor,
                 null,
                 dragEvent,
@@ -81,16 +75,14 @@ public class DragButton extends Button
     }
 
     public DragButton(Cursor cursor,
-                      EventHandler<MouseEvent> dragEvent)
-    {
+                      EventHandler<MouseEvent> dragEvent) {
         this(cursor,
                 null,
                 dragEvent,
                 null);
     }
 
-    public boolean isDragging()
-    {
+    public boolean isDragging() {
         return dragging;
     }
 }

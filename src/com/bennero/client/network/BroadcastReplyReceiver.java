@@ -45,36 +45,29 @@ import static com.bennero.common.networking.NetworkUtils.*;
  * editor to identify and connect to the monitor, for example MAC address and IP address. This thread is a sub-system to
  * the network scanner.
  *
- * @see         NetworkScanner
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see NetworkScanner
+ * @since 1.0
  */
-public class BroadcastReplyReceiver extends Thread
-{
+public class BroadcastReplyReceiver extends Thread {
     private EventHandler<ConnectionInformation> receivedBroadcastReply;
     private EventHandler endScan;
     private boolean run;
     private ServerSocketChannel serverSocketChannel;
 
-    public BroadcastReplyReceiver(EventHandler<ConnectionInformation> receivedBroadcastReply, EventHandler endScan)
-    {
+    public BroadcastReplyReceiver(EventHandler<ConnectionInformation> receivedBroadcastReply, EventHandler endScan) {
         this.receivedBroadcastReply = receivedBroadcastReply;
         this.endScan = endScan;
         this.run = false;
     }
 
-    public void stopThread()
-    {
-        if(serverSocketChannel != null)
-        {
-            try
-            {
+    public void stopThread() {
+        if (serverSocketChannel != null) {
+            try {
                 serverSocketChannel.socket().close();
                 serverSocketChannel.close();
-            }
-            catch (IOException e)
-            {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
@@ -83,18 +76,15 @@ public class BroadcastReplyReceiver extends Thread
     }
 
     @Override
-    public void run()
-    {
-        try
-        {
+    public void run() {
+        try {
             serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.configureBlocking(true);
             serverSocketChannel.socket().setReceiveBufferSize(MESSAGE_NUM_BYTES);
             serverSocketChannel.socket().bind(new InetSocketAddress(BROADCAST_REPLY_PORT));
             this.run = true;
 
-            while (run)
-            {
+            while (run) {
                 // Build to accept multiple connections
                 SocketChannel socketChannel = serverSocketChannel.accept();
                 InputStream is = socketChannel.socket().getInputStream();
@@ -109,23 +99,18 @@ public class BroadcastReplyReceiver extends Thread
 
             serverSocketChannel.close();
             endScan.handle(new Event(null));
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void readMessage(byte[] bytes)
-    {
-        if (bytes[MESSAGE_TYPE_POS] == MessageType.BROADCAST_REPLY_MESSAGE)
-        {
+    public void readMessage(byte[] bytes) {
+        if (bytes[MESSAGE_TYPE_POS] == MessageType.BROADCAST_REPLY_MESSAGE) {
             final long hwMonitorSystemUniqueConnectionId = readLong(bytes,
                     BroadcastReplyDataPositions.HW_SYSTEM_IDENTIFIER_POS);
 
             // Ensures that the message came from a hardware monitor and not a random device on the network
-            if (hwMonitorSystemUniqueConnectionId == HW_MONITOR_SYSTEM_UNIQUE_CONNECTION_ID)
-            {
+            if (hwMonitorSystemUniqueConnectionId == HW_MONITOR_SYSTEM_UNIQUE_CONNECTION_ID) {
                 final byte majorVersion = bytes[BroadcastReplyDataPositions.MAJOR_VERSION_POS];
                 final byte minorVersion = bytes[BroadcastReplyDataPositions.MINOR_VERSION_POS];
                 final byte patchVersion = bytes[BroadcastReplyDataPositions.PATCH_VERSION_POS];
@@ -134,11 +119,6 @@ public class BroadcastReplyReceiver extends Thread
                 final byte[] ip4Address = readBytes(bytes, BroadcastReplyDataPositions.IP4_ADDRESS_POS,
                         IP4_ADDRESS_NUM_BYTES);
                 String hostName = readString(bytes, BroadcastReplyDataPositions.HOSTNAME_POS, NAME_STRING_NUM_BYTES);
-                
-                System.out.println("Received a broadcast reply message from a hardware monitor: VERSION[" +
-                        majorVersion + "." + minorVersion + "." + patchVersion + "] IP4[" +
-                        NetworkUtils.ip4AddressToString(ip4Address) + "], MAC[" +
-                        NetworkUtils.macAddressToString(macAddress) + "], HOSTNAME[" + hostName + "]");
 
                 receivedBroadcastReply.handle(new ConnectionInformation(majorVersion, minorVersion, patchVersion,
                         macAddress, ip4Address, hostName));

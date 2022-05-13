@@ -36,26 +36,23 @@ import java.util.List;
  * graphical user interface does not have to be loaded into memory if it is not in use - it can be loaded or destroyed
  * at any time)
  *
- * @see         ConnectionListPage
- * @see         StateData
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see ConnectionListPage
+ * @see StateData
+ * @since 1.0
  */
-public class ConnectionListStateData extends StateData
-{
+public class ConnectionListStateData extends StateData {
     private static final String NAME = "CONNECTION_LIST";
     private final List<ConnectionInformation> connections;
 
-    public ConnectionListStateData(List<ConnectionInformation> connections)
-    {
+    public ConnectionListStateData(List<ConnectionInformation> connections) {
         super(NAME, TransitionType.FADE);
         this.connections = connections;
     }
 
     @Override
-    public Node createGUI()
-    {
+    public Node createGUI() {
         ConnectionListPage connectionListPage = new ConnectionListPage();
         connectionListPage.setAvailableConnectionsList(connections);
         return connectionListPage;

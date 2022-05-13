@@ -40,12 +40,11 @@ import java.io.*;
  * ConfigurationSaveHandler is a base class that provides some basic methods for saving and reading configuration save
  * data files.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public abstract class ConfigurationSaveHandler extends DefaultHandler
-{
+public abstract class ConfigurationSaveHandler extends DefaultHandler {
     // Class name for logging
     private static String CLASS_NAME = ConfigurationSaveHandler.class.getSimpleName();
 
@@ -53,8 +52,7 @@ public abstract class ConfigurationSaveHandler extends DefaultHandler
 
     private SAXParserFactory factory;
 
-    public ConfigurationSaveHandler(final File file)
-    {
+    public ConfigurationSaveHandler(final File file) {
         this.file = file;
         factory = SAXParserFactory.newInstance();
 
@@ -65,33 +63,22 @@ public abstract class ConfigurationSaveHandler extends DefaultHandler
 
     protected abstract void save(XMLStreamWriter streamWriter) throws XMLStreamException;
 
-    protected void read()
-    {
-        if (doesFileExist())
-        {
-            try
-            {
+    protected void read() {
+        if (doesFileExist()) {
+            try {
                 factory.newSAXParser().parse(file, this);
-            }
-            catch (ParserConfigurationException e)
-            {
+            } catch (ParserConfigurationException e) {
                 e.printStackTrace();
-            }
-            catch (SAXException e)
-            {
+            } catch (SAXException e) {
                 e.printStackTrace();
-            }
-            catch (IOException e)
-            {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    public void save()
-    {
-        try
-        {
+    public void save() {
+        try {
             Logger.log(LogLevel.INFO, CLASS_NAME, "Saving configuration data");
             XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
             Writer writer = new OutputStreamWriter(new FileOutputStream(file), "UTF-8");
@@ -99,27 +86,20 @@ public abstract class ConfigurationSaveHandler extends DefaultHandler
             save(streamWriter);
             streamWriter.flush();
             streamWriter.close();
-        }
-        catch (XMLStreamException e)
-        {
+        } catch (XMLStreamException e) {
             e.printStackTrace();
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public boolean doesFileExist()
-    {
+    public boolean doesFileExist() {
         return file.exists();
     }
 
-    protected void writeIndentation(XMLStreamWriter streamWriter, int depth, boolean newLine) throws XMLStreamException
-    {
+    protected void writeIndentation(XMLStreamWriter streamWriter, int depth, boolean newLine) throws XMLStreamException {
         String indentation = newLine ? "\n" : "";
-        for (int i = 0; i < depth; i++)
-        {
+        for (int i = 0; i < depth; i++) {
             indentation += "\t";
         }
 
@@ -127,8 +107,7 @@ public abstract class ConfigurationSaveHandler extends DefaultHandler
     }
 
     @Override
-    public void startElement(String uri, String localName, String qName, Attributes attributes)
-    {
+    public void startElement(String uri, String localName, String qName, Attributes attributes) {
         read(uri, localName, qName, attributes);
     }
 }

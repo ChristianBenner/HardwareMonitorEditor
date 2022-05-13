@@ -34,12 +34,11 @@ package com.bennero.client.network;
  * HEARTBEAT_TIMEOUT:       No heartbeat has been received from the hardware monitor within the heartbeat timeout time
  * UNEXPECTED_DISCONNECT:   Unexpected loss in connection with a connected hardware monitor
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public enum ConnectionStatus
-{
+public enum ConnectionStatus {
     CONNECTING,
     CONNECTED,
     FAILED,

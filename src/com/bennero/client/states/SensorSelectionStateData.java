@@ -35,20 +35,18 @@ import javafx.scene.Node;
  * graphical user interface does not have to be loaded into memory if it is not in use - it can be loaded or destroyed
  * at any time)
  *
- * @see         StateData
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see StateData
+ * @since 1.0
  */
-public class SensorSelectionStateData extends StateData
-{
+public class SensorSelectionStateData extends StateData {
     private static final String NAME = "SENSOR_SELECTION";
     private final PageData pageData;
     private final int row;
     private final int column;
 
-    public SensorSelectionStateData(PageData pageData, int row, int column)
-    {
+    public SensorSelectionStateData(PageData pageData, int row, int column) {
         super(NAME, TransitionType.FADE);
         this.pageData = pageData;
         this.row = row;
@@ -56,8 +54,7 @@ public class SensorSelectionStateData extends StateData
     }
 
     @Override
-    public Node createGUI()
-    {
+    public Node createGUI() {
         SensorSelectionPane sensorSelectionPane = new SensorSelectionPane();
         sensorSelectionPane.setPage(pageData, row, column);
         sensorSelectionPane.addSensorData(SensorManager.getInstance().getSensorList());

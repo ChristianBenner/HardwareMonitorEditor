@@ -26,6 +26,8 @@ package com.bennero.client.config;
 import com.bennero.client.core.SensorManager;
 import com.bennero.common.PageData;
 import com.bennero.common.Sensor;
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
 import javafx.scene.paint.Color;
 import org.xml.sax.Attributes;
 
@@ -41,12 +43,13 @@ import static com.bennero.common.Constants.SENSOR_POLL_RATE_MS;
  * to provide a save system for the user created pages in the application. It saves the pages customised features such
  * as layout, colours, titles, sensors and transitions.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class SaveData extends ConfigurationSaveHandler
-{
+public class SaveData extends ConfigurationSaveHandler {
+    private static final String CLASS_NAME = SaveData.class.getSimpleName();
+
     private static final String SAVE_ELEMENT_TAG = "save";
     private static final String SAVE_SENSOR_UPDATE_TIME_TAG = "sensorUpdateTimeMs";
     private static final String SAVE_SENSOR_ANIMATION_DURATION_TAG = "sensorAnimationDurationMs";
@@ -102,8 +105,7 @@ public class SaveData extends ConfigurationSaveHandler
     private ArrayList<PageData> pageDataList;
     private PageData currentPageData;
 
-    public SaveData(File file)
-    {
+    public SaveData(File file) {
         super(file);
         sensorUpdateTime = SENSOR_POLL_RATE_MS;
         sensorAnimationDuration = 1000;
@@ -112,56 +114,46 @@ public class SaveData extends ConfigurationSaveHandler
         super.read();
     }
 
-    public int getSensorUpdateTime()
-    {
+    public int getSensorUpdateTime() {
         return sensorUpdateTime;
     }
 
-    public void setSensorUpdateTime(int sensorUpdateTime)
-    {
+    public void setSensorUpdateTime(int sensorUpdateTime) {
         this.sensorUpdateTime = sensorUpdateTime;
     }
 
-    public int getSensorAnimationDuration()
-    {
+    public int getSensorAnimationDuration() {
         return sensorAnimationDuration;
     }
 
-    public void setSensorAnimationDuration(int sensorAnimationDuration)
-    {
+    public void setSensorAnimationDuration(int sensorAnimationDuration) {
         this.sensorAnimationDuration = sensorAnimationDuration;
     }
 
-    public final ArrayList<PageData> getPageDataList()
-    {
+    public final ArrayList<PageData> getPageDataList() {
         return pageDataList;
     }
 
-    public void setPageDataList(ArrayList<PageData> pageDataList)
-    {
+    public void setPageDataList(ArrayList<PageData> pageDataList) {
         this.pageDataList = pageDataList;
         save();
     }
 
-    public void addPageData(PageData pageData)
-    {
+    public void addPageData(PageData pageData) {
         this.pageDataList.add(pageData);
         save();
     }
 
-    public void removePageData(PageData pageData)
-    {
+    public void removePageData(PageData pageData) {
         this.pageDataList.remove(pageData);
         save();
     }
 
     @Override
-    protected void read(String uri, String localName, String qName, Attributes attributes)
-    {
-        System.out.println("Start Element: " + qName);
+    protected void read(String uri, String localName, String qName, Attributes attributes) {
+        //System.out.println("Start Element: " + qName);
 
-        switch (qName)
-        {
+        switch (qName) {
             case SAVE_ELEMENT_TAG:
                 parseSaveData(attributes);
                 break;
@@ -174,32 +166,27 @@ public class SaveData extends ConfigurationSaveHandler
         }
     }
 
-    private void parseSaveData(Attributes attributes)
-    {
-        System.out.print("\tSave:");
-        for (int i = 0; i < attributes.getLength(); i++)
-        {
+    private void parseSaveData(Attributes attributes) {
+        //System.out.print("\tSave:");
+        for (int i = 0; i < attributes.getLength(); i++) {
             String attributeName = attributes.getQName(i);
             String attributeValue = attributes.getValue(i);
-            System.out.print(" '" + attributeName + "':" + attributeValue);
+            //System.out.print(" '" + attributeName + "':" + attributeValue);
 
             // Parse attributes
-            if (attributeName.compareTo(SAVE_SENSOR_UPDATE_TIME_TAG) == 0)
-            {
+            if (attributeName.compareTo(SAVE_SENSOR_UPDATE_TIME_TAG) == 0) {
                 sensorUpdateTime = Integer.parseInt(attributeValue);
             }
 
-            if (attributeName.compareTo(SAVE_SENSOR_ANIMATION_DURATION_TAG) == 0)
-            {
+            if (attributeName.compareTo(SAVE_SENSOR_ANIMATION_DURATION_TAG) == 0) {
                 sensorAnimationDuration = Integer.parseInt(attributeValue);
             }
         }
-        System.out.println();
+        //System.out.println();
     }
 
     @Override
-    protected void save(XMLStreamWriter streamWriter) throws XMLStreamException
-    {
+    protected void save(XMLStreamWriter streamWriter) throws XMLStreamException {
         int depth = 0;
         streamWriter.writeStartDocument("UTF-8", "1.0");
         writeIndentation(streamWriter, depth, true);
@@ -211,8 +198,7 @@ public class SaveData extends ConfigurationSaveHandler
         writeIndentation(streamWriter, ++depth, true);
 
         // Save all of the pages
-        for (int p = 0; p < pageDataList.size(); p++)
-        {
+        for (int p = 0; p < pageDataList.size(); p++) {
             PageData temp = pageDataList.get(p);
             streamWriter.writeStartElement(PAGE_ELEMENT_TAG);
             streamWriter.writeAttribute(PAGE_ID_ELEMENT_TAG, Integer.toString(temp.getUniqueId()));
@@ -232,14 +218,12 @@ public class SaveData extends ConfigurationSaveHandler
             streamWriter.writeAttribute(PAGE_SUBTITLE_ENABLED_ELEMENT_TAG, Boolean.toString(temp.isSubtitleEnabled()));
             streamWriter.writeAttribute(PAGE_SUBTITLE_ALIGNMENT_ELEMENT_TAG, Integer.toString(temp.getSubtitleAlignment()));
 
-            if (!temp.getSensorList().isEmpty())
-            {
+            if (!temp.getSensorList().isEmpty()) {
                 writeIndentation(streamWriter, ++depth, true);
             }
 
             // Write sensor data
-            for (int s = 0; s < temp.getSensorList().size(); s++)
-            {
+            for (int s = 0; s < temp.getSensorList().size(); s++) {
                 Sensor sensor = temp.getSensorList().get(s);
 
                 streamWriter.writeStartElement(SENSOR_ELEMENT_TAG);
@@ -258,70 +242,57 @@ public class SaveData extends ConfigurationSaveHandler
                 streamWriter.writeAttribute(SENSOR_ROW_SPAN_ELEMENT_TAG, Integer.toString(sensor.getRowSpan()));
                 streamWriter.writeAttribute(SENSOR_COLUMN_SPAN_ELEMENT_TAG, Integer.toString(sensor.getColumnSpan()));
 
-                if (sensor.getAverageColour() != null)
-                {
+                if (sensor.getAverageColour() != null) {
                     streamWriter.writeAttribute(SENSOR_AVERAGE_COLOUR_ELEMENT_TAG, sensor.getAverageColour().toString());
                 }
 
-                if (sensor.getNeedleColour() != null)
-                {
+                if (sensor.getNeedleColour() != null) {
                     streamWriter.writeAttribute(SENSOR_NEEDLE_COLOUR_ELEMENT_TAG, sensor.getNeedleColour().toString());
                 }
 
-                if (sensor.getValueColour() != null)
-                {
+                if (sensor.getValueColour() != null) {
                     streamWriter.writeAttribute(SENSOR_VALUE_COLOUR_ELEMENT_TAG, sensor.getValueColour().toString());
                 }
 
-                if (sensor.getUnitColour() != null)
-                {
+                if (sensor.getUnitColour() != null) {
                     streamWriter.writeAttribute(SENSOR_UNIT_COLOUR_ELEMENT_TAG, sensor.getUnitColour().toString());
                 }
 
-                if (sensor.getKnobColour() != null)
-                {
+                if (sensor.getKnobColour() != null) {
                     streamWriter.writeAttribute(SENSOR_KNOB_COLOUR_ELEMENT_TAG, sensor.getKnobColour().toString());
                 }
 
-                if (sensor.getBarColour() != null)
-                {
+                if (sensor.getBarColour() != null) {
                     streamWriter.writeAttribute(SENSOR_BAR_COLOUR_ELEMENT_TAG, sensor.getBarColour().toString());
                 }
 
-                if (sensor.getThresholdColour() != null)
-                {
+                if (sensor.getThresholdColour() != null) {
                     streamWriter.writeAttribute(SENSOR_THRESHOLD_COLOUR_ELEMENT_TAG, sensor.getThresholdColour().toString());
                 }
 
-                if (sensor.getTitleColour() != null)
-                {
+                if (sensor.getTitleColour() != null) {
                     streamWriter.writeAttribute(SENSOR_TITLE_COLOUR_ELEMENT_TAG, sensor.getTitleColour().toString());
                 }
 
-                if (sensor.getBarBackgroundColour() != null)
-                {
+                if (sensor.getBarBackgroundColour() != null) {
                     streamWriter.writeAttribute(SENSOR_BAR_BACKGROUND_COLOUR_ELEMENT_TAG, sensor.getBarBackgroundColour().toString());
                 }
 
-                if (sensor.getForegroundColour() != null)
-                {
+                if (sensor.getForegroundColour() != null) {
                     streamWriter.writeAttribute(SENSOR_FOREGROUND_COLOUR_ELEMENT_TAG, sensor.getForegroundColour().toString());
                 }
 
-                if (sensor.getTickLabelColour() != null)
-                {
+                if (sensor.getTickLabelColour() != null) {
                     streamWriter.writeAttribute(SENSOR_TICK_LABEL_COLOUR_ELEMENT_TAG, sensor.getTickLabelColour().toString());
                 }
 
-                if (sensor.getTickMarkColour() != null)
-                {
+                if (sensor.getTickMarkColour() != null) {
                     streamWriter.writeAttribute(SENSOR_TICK_MARK_COLOUR_ELEMENT_TAG, sensor.getTickMarkColour().toString());
                 }
 
                 streamWriter.writeEndElement();
 
-                if (s == temp.getSensorList().size() - 1)
-                {
+                if (s == temp.getSensorList().size() - 1) {
                     depth--;
                 }
 
@@ -331,8 +302,7 @@ public class SaveData extends ConfigurationSaveHandler
 
             streamWriter.writeEndElement();
 
-            if (p == pageDataList.size() - 1)
-            {
+            if (p == pageDataList.size() - 1) {
                 depth--;
             }
 
@@ -345,8 +315,7 @@ public class SaveData extends ConfigurationSaveHandler
         streamWriter.flush();
     }
 
-    private void parsePageData(Attributes attributes)
-    {
+    private void parsePageData(Attributes attributes) {
         int id = 0;
         Color backgroundColour = null;
         Color titleColour = null;
@@ -364,76 +333,44 @@ public class SaveData extends ConfigurationSaveHandler
         String subtitle = null;
         int subtitleAlignment = 0;
 
-        System.out.print("\tPage:");
-        for (int i = 0; i < attributes.getLength(); i++)
-        {
+        //System.out.print("\tPage:");
+        for (int i = 0; i < attributes.getLength(); i++) {
             String attributeName = attributes.getQName(i);
             String attributeValue = attributes.getValue(i);
-            System.out.print(" '" + attributeName + "':" + attributeValue);
+            //System.out.print(" '" + attributeName + "':" + attributeValue);
 
             // Parse attributes
-            if (attributeName.compareTo(PAGE_ID_ELEMENT_TAG) == 0)
-            {
+            if (attributeName.compareTo(PAGE_ID_ELEMENT_TAG) == 0) {
                 id = Integer.parseInt(attributeValue);
-            }
-            else if (attributeName.compareTo(PAGE_BACKGROUND_COLOUR_ELEMENT_TAG) == 0)
-            {
+            } else if (attributeName.compareTo(PAGE_BACKGROUND_COLOUR_ELEMENT_TAG) == 0) {
                 backgroundColour = Color.web(attributeValue);
-            }
-            else if (attributeName.compareTo(PAGE_TITLE_COLOUR_ELEMENT_TAG) == 0)
-            {
+            } else if (attributeName.compareTo(PAGE_TITLE_COLOUR_ELEMENT_TAG) == 0) {
                 titleColour = Color.web(attributeValue);
-            }
-            else if (attributeName.compareTo(PAGE_SUBTITLE_COLOUR_ELEMENT_TAG) == 0)
-            {
+            } else if (attributeName.compareTo(PAGE_SUBTITLE_COLOUR_ELEMENT_TAG) == 0) {
                 subtitleColour = Color.web(attributeValue);
-            }
-            else if (attributeName.compareTo(PAGE_ROWS_ELEMENT_TAG) == 0)
-            {
+            } else if (attributeName.compareTo(PAGE_ROWS_ELEMENT_TAG) == 0) {
                 rows = Integer.parseInt(attributeValue);
-            }
-            else if (attributeName.compareTo(PAGE_COLUMNS_ELEMENT_TAG) == 0)
-            {
+            } else if (attributeName.compareTo(PAGE_COLUMNS_ELEMENT_TAG) == 0) {
                 columns = Integer.parseInt(attributeValue);
-            }
-            else if (attributeName.compareTo(PAGE_NEXT_PAGE_ID_ELEMENT_TAG) == 0)
-            {
+            } else if (attributeName.compareTo(PAGE_NEXT_PAGE_ID_ELEMENT_TAG) == 0) {
                 nextPageId = Integer.parseInt(attributeValue);
-            }
-            else if (attributeName.compareTo(PAGE_TRANSITION_ID_ELEMENT_TAG) == 0)
-            {
+            } else if (attributeName.compareTo(PAGE_TRANSITION_ID_ELEMENT_TAG) == 0) {
                 transitionId = Integer.parseInt(attributeValue);
-            }
-            else if (attributeName.compareTo(PAGE_TRANSITION_TIME_ID_ELEMENT_TAG) == 0)
-            {
+            } else if (attributeName.compareTo(PAGE_TRANSITION_TIME_ID_ELEMENT_TAG) == 0) {
                 transitionTime = Integer.parseInt(attributeValue);
-            }
-            else if (attributeName.compareTo(PAGE_DURATION_MS_ELEMENT_TAG) == 0)
-            {
+            } else if (attributeName.compareTo(PAGE_DURATION_MS_ELEMENT_TAG) == 0) {
                 durationMs = Integer.parseInt(attributeValue);
-            }
-            else if (attributeName.compareTo(PAGE_TITLE_ELEMENT_TAG) == 0)
-            {
+            } else if (attributeName.compareTo(PAGE_TITLE_ELEMENT_TAG) == 0) {
                 title = attributeValue;
-            }
-            else if (attributeName.compareTo(PAGE_TITLE_ENABLED_ELEMENT_TAG) == 0)
-            {
+            } else if (attributeName.compareTo(PAGE_TITLE_ENABLED_ELEMENT_TAG) == 0) {
                 titleEnabled = Boolean.parseBoolean(attributeValue);
-            }
-            else if (attributeName.compareTo(PAGE_TITLE_ALIGNMENT_ELEMENT_TAG) == 0)
-            {
+            } else if (attributeName.compareTo(PAGE_TITLE_ALIGNMENT_ELEMENT_TAG) == 0) {
                 titleAlignment = Integer.parseInt(attributeValue);
-            }
-            else if (attributeName.compareTo(PAGE_SUBTITLE_ELEMENT_TAG) == 0)
-            {
+            } else if (attributeName.compareTo(PAGE_SUBTITLE_ELEMENT_TAG) == 0) {
                 subtitle = attributeValue;
-            }
-            else if (attributeName.compareTo(PAGE_SUBTITLE_ENABLED_ELEMENT_TAG) == 0)
-            {
+            } else if (attributeName.compareTo(PAGE_SUBTITLE_ENABLED_ELEMENT_TAG) == 0) {
                 subtitleEnabled = Boolean.parseBoolean(attributeValue);
-            }
-            else if (attributeName.compareTo(PAGE_SUBTITLE_ALIGNMENT_ELEMENT_TAG) == 0)
-            {
+            } else if (attributeName.compareTo(PAGE_SUBTITLE_ALIGNMENT_ELEMENT_TAG) == 0) {
                 subtitleAlignment = Integer.parseInt(attributeValue);
             }
         }
@@ -443,13 +380,11 @@ public class SaveData extends ConfigurationSaveHandler
                 subtitleEnabled, subtitleAlignment);
         pageDataList.add(currentPageData);
 
-        System.out.println();
+        //System.out.println();
     }
 
-    public void parseSensorData(Attributes attributes)
-    {
-        if (currentPageData != null)
-        {
+    public void parseSensorData(Attributes attributes) {
+        if (currentPageData != null) {
             int id = 0;
             int row = 0;
             int column = 0;
@@ -478,118 +413,66 @@ public class SaveData extends ConfigurationSaveHandler
             Color tickLabelColour = null;
             Color tickMarkColour = null;
 
-            System.out.print("\tSensor:");
-            for (int i = 0; i < attributes.getLength(); i++)
-            {
-                System.out.print(" '" + attributes.getQName(i) + "':" + attributes.getValue(i));
+            //System.out.print("\tSensor:");
+            for (int i = 0; i < attributes.getLength(); i++) {
+                //System.out.print(" '" + attributes.getQName(i) + "':" + attributes.getValue(i));
 
                 String attributeName = attributes.getQName(i);
                 String attributeValue = attributes.getValue(i);
-                System.out.print(" '" + attributeName + "':" + attributeValue);
+                //System.out.print(" '" + attributeName + "':" + attributeValue);
 
                 // Parse attributes
-                if (attributeName.compareTo(SENSOR_ID_ELEMENT_TAG) == 0)
-                {
+                if (attributeName.compareTo(SENSOR_ID_ELEMENT_TAG) == 0) {
                     id = Integer.parseInt(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_ROW_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_ROW_ELEMENT_TAG) == 0) {
                     row = Integer.parseInt(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_COLUMN_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_COLUMN_ELEMENT_TAG) == 0) {
                     column = Integer.parseInt(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_TYPE_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_TYPE_ELEMENT_TAG) == 0) {
                     type = Integer.parseInt(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_SKIN_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_SKIN_ELEMENT_TAG) == 0) {
                     skin = Byte.parseByte(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_MAX_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_MAX_ELEMENT_TAG) == 0) {
                     max = Float.parseFloat(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_THRESHOLD_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_THRESHOLD_ELEMENT_TAG) == 0) {
                     threshold = Float.parseFloat(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_ORIGINAL_NAME_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_ORIGINAL_NAME_ELEMENT_TAG) == 0) {
                     originalName = attributeValue;
-                }
-                else if (attributeName.compareTo(SENSOR_TITLE_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_TITLE_ELEMENT_TAG) == 0) {
                     title = attributeValue;
-                }
-                else if (attributeName.compareTo(SENSOR_HARDWARE_TYPE_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_HARDWARE_TYPE_ELEMENT_TAG) == 0) {
                     hardwareType = attributeValue;
-                }
-                else if (attributeName.compareTo(SENSOR_AVERAGE_ENABLED_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_AVERAGE_ENABLED_ELEMENT_TAG) == 0) {
                     averageEnabled = Boolean.parseBoolean(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_AVERAGING_PERIOD_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_AVERAGING_PERIOD_ELEMENT_TAG) == 0) {
                     averagingPeriod = Integer.parseInt(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_ROW_SPAN_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_ROW_SPAN_ELEMENT_TAG) == 0) {
                     rowSpan = Integer.parseInt(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_COLUMN_SPAN_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_COLUMN_SPAN_ELEMENT_TAG) == 0) {
                     columnSpan = Integer.parseInt(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_AVERAGE_COLOUR_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_AVERAGE_COLOUR_ELEMENT_TAG) == 0) {
                     averageColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_NEEDLE_COLOUR_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_NEEDLE_COLOUR_ELEMENT_TAG) == 0) {
                     needleColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_VALUE_COLOUR_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_VALUE_COLOUR_ELEMENT_TAG) == 0) {
                     valueColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_UNIT_COLOUR_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_UNIT_COLOUR_ELEMENT_TAG) == 0) {
                     unitColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_KNOB_COLOUR_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_KNOB_COLOUR_ELEMENT_TAG) == 0) {
                     knobColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_BAR_COLOUR_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_BAR_COLOUR_ELEMENT_TAG) == 0) {
                     barColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_THRESHOLD_COLOUR_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_THRESHOLD_COLOUR_ELEMENT_TAG) == 0) {
                     thresholdColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_TITLE_COLOUR_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_TITLE_COLOUR_ELEMENT_TAG) == 0) {
                     titleColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_BAR_BACKGROUND_COLOUR_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_BAR_BACKGROUND_COLOUR_ELEMENT_TAG) == 0) {
                     barBackgroundColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_FOREGROUND_COLOUR_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_FOREGROUND_COLOUR_ELEMENT_TAG) == 0) {
                     foregroundColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_TICK_LABEL_COLOUR_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_TICK_LABEL_COLOUR_ELEMENT_TAG) == 0) {
                     tickLabelColour = Color.web(attributeValue);
-                }
-                else if (attributeName.compareTo(SENSOR_TICK_MARK_COLOUR_ELEMENT_TAG) == 0)
-                {
+                } else if (attributeName.compareTo(SENSOR_TICK_MARK_COLOUR_ELEMENT_TAG) == 0) {
                     tickMarkColour = Color.web(attributeValue);
                 }
             }
@@ -599,73 +482,59 @@ public class SaveData extends ConfigurationSaveHandler
             sensor.setHardwareType(hardwareType);
             SensorManager.getInstance().registerExistingSensor(sensor);
 
-            if (foregroundColour != null)
-            {
+            if (foregroundColour != null) {
                 sensor.setForegroundColour(foregroundColour);
             }
 
-            if (averageColour != null)
-            {
+            if (averageColour != null) {
                 sensor.setAverageColour(averageColour);
             }
 
-            if (needleColour != null)
-            {
+            if (needleColour != null) {
                 sensor.setNeedleColour(needleColour);
             }
 
-            if (valueColour != null)
-            {
+            if (valueColour != null) {
                 sensor.setValueColour(valueColour);
             }
 
-            if (unitColour != null)
-            {
+            if (unitColour != null) {
                 sensor.setUnitColour(unitColour);
             }
 
-            if (knobColour != null)
-            {
+            if (knobColour != null) {
                 sensor.setKnobColour(knobColour);
             }
 
-            if (barColour != null)
-            {
+            if (barColour != null) {
                 sensor.setBarColour(barColour);
             }
 
-            if (thresholdColour != null)
-            {
+            if (thresholdColour != null) {
                 sensor.setThresholdColour(thresholdColour);
             }
 
-            if (titleColour != null)
-            {
+            if (titleColour != null) {
                 sensor.setTitleColour(titleColour);
             }
 
-            if (barBackgroundColour != null)
-            {
+            if (barBackgroundColour != null) {
                 sensor.setBarBackgroundColour(barBackgroundColour);
             }
 
-            if (tickLabelColour != null)
-            {
+            if (tickLabelColour != null) {
                 sensor.setTickLabelColour(tickLabelColour);
             }
 
-            if (tickMarkColour != null)
-            {
+            if (tickMarkColour != null) {
                 sensor.setTickMarkColour(tickMarkColour);
             }
 
             currentPageData.addSensor(sensor);
 
-            System.out.println();
-        }
-        else
-        {
-            System.err.println("Error reading save");
+            //System.out.println();
+        } else {
+            Logger.log(LogLevel.ERROR, CLASS_NAME, "Error reading save");
         }
     }
 }

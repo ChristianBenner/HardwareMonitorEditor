@@ -39,20 +39,18 @@ import javafx.stage.Stage;
  * A pop-up that displays all of the options available for the hardware monitor. This is global options that are applied
  * to all profiles and stored in the main config file such as sensor update interval and sensor animation duration.
  *
- * @see         Stage
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see Stage
+ * @since 1.0
  */
-public class ClientOptions extends Stage
-{
+public class ClientOptions extends Stage {
 
     public ClientOptions(int currentSensorUpdateInterval,
                          int currentSensorAnimationDuration,
                          ChangeListener<Integer> sensorUpdateIntervalMs,
                          ChangeListener<Integer> sensorAnimationDuration,
-                         EventHandler doneEditing)
-    {
+                         EventHandler doneEditing) {
         super.setTitle("Page Options");
         super.initModality(Modality.APPLICATION_MODAL);
         super.setOnCloseRequest(windowEvent -> hide());

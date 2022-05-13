@@ -54,12 +54,11 @@ import java.util.Map;
  * selecting a sensor from the list, it will take the user to the sensor editor page for customisation of the gauge
  * appearance.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class SensorSelectionPane extends BorderPane
-{
+public class SensorSelectionPane extends BorderPane {
     private PageData pageData;
     private Map<String, List<SensorData>> sensorByHardwareType = new HashMap<>();
     private BorderPane sensorOverview;
@@ -69,8 +68,7 @@ public class SensorSelectionPane extends BorderPane
     private int row;
     private int column;
 
-    public SensorSelectionPane()
-    {
+    public SensorSelectionPane() {
         super.setPadding(new Insets(10));
 
         sensorOverview = new BorderPane();
@@ -83,8 +81,7 @@ public class SensorSelectionPane extends BorderPane
         {
             sensorListView.getItems().clear();
             List<SensorData> sensors = sensorByHardwareType.get(hardwareTypeComboBox.getValue());
-            for (SensorData sensor : sensors)
-            {
+            for (SensorData sensor : sensors) {
                 sensorListView.getItems().add(new SensorItem(sensor));
             }
         };
@@ -118,8 +115,7 @@ public class SensorSelectionPane extends BorderPane
 
         selectButton.setOnMouseClicked(mouseEvent ->
         {
-            if (sensorListView.getSelectionModel().getSelectedItem() != null)
-            {
+            if (sensorListView.getSelectionModel().getSelectedItem() != null) {
                 SensorData sensorData = sensorListView.getSelectionModel().getSelectedItem().sensorData;
                 Sensor sensor = SensorManager.getInstance().createSensorGui(sensorData, row, column);
 
@@ -140,38 +136,31 @@ public class SensorSelectionPane extends BorderPane
     }
 
     // the page that we are editing the sensor on as well as its position on the page
-    public void setPage(PageData page, int row, int column)
-    {
+    public void setPage(PageData page, int row, int column) {
         this.pageData = page;
         this.row = row;
         this.column = column;
     }
 
-    public void addSensorData(List<SensorData> sensors)
-    {
-        for (SensorData sensorData : sensors)
-        {
+    public void addSensorData(List<SensorData> sensors) {
+        for (SensorData sensorData : sensors) {
             addSensorData(sensorData);
         }
     }
 
-    public void addSensorData(SensorData sensor)
-    {
+    public void addSensorData(SensorData sensor) {
         // If the combo box does not contain the hardware type, add it
-        if (!hardwareTypeComboBox.getItems().contains(sensor.getHardwareType()))
-        {
+        if (!hardwareTypeComboBox.getItems().contains(sensor.getHardwareType())) {
             hardwareTypeComboBox.getItems().add(sensor.getHardwareType());
 
             // If there is nothing selected, select the hardware type we just added
-            if (hardwareTypeComboBox.getSelectionModel().isEmpty())
-            {
+            if (hardwareTypeComboBox.getSelectionModel().isEmpty()) {
                 hardwareTypeComboBox.getSelectionModel().select(sensor.getHardwareType());
             }
         }
 
         // If the sensor by hardware type does not contain the hardware type, add it
-        if (!sensorByHardwareType.containsKey(sensor.getHardwareType()))
-        {
+        if (!sensorByHardwareType.containsKey(sensor.getHardwareType())) {
             sensorByHardwareType.put(sensor.getHardwareType(), new ArrayList<>());
         }
 
@@ -179,24 +168,20 @@ public class SensorSelectionPane extends BorderPane
         sensorByHardwareType.get(sensor.getHardwareType()).add(sensor);
 
         // If the currently selected hardware type is the same as the sensor, add the sensor to the UI list
-        if (hardwareTypeComboBox.getSelectionModel().getSelectedItem().compareTo(sensor.getHardwareType()) == 0)
-        {
+        if (hardwareTypeComboBox.getSelectionModel().getSelectedItem().compareTo(sensor.getHardwareType()) == 0) {
             sensorListView.getItems().add(new SensorItem(sensor));
         }
     }
 
-    class SensorItem
-    {
+    class SensorItem {
         private SensorData sensorData;
 
-        public SensorItem(SensorData sensorData)
-        {
+        public SensorItem(SensorData sensorData) {
             this.sensorData = sensorData;
         }
 
         @Override
-        public String toString()
-        {
+        public String toString() {
             return sensorData.getName();
         }
     }

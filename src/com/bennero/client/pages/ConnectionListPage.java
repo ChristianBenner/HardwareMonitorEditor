@@ -29,6 +29,8 @@ import com.bennero.client.network.NetworkScanner;
 import com.bennero.client.states.ConnectionListStateData;
 import com.bennero.client.states.InformationStateData;
 import com.bennero.client.states.LoadingStateData;
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
 import com.bennero.common.networking.ConnectionInformation;
 import com.bennero.common.networking.NetworkUtils;
 import javafx.geometry.Pos;
@@ -47,17 +49,18 @@ import static com.bennero.common.networking.NetworkUtils.ip4AddressToString;
  * Displays a list of connections that the user can select from in order to connect to a specific hardware monitor
  * device
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class ConnectionListPage extends StackPane
-{
+public class ConnectionListPage extends StackPane {
+    private static final String CLASS_NAME = ConnectionListPage.class.getSimpleName();
+    private static final String ENCRYPTION_WARNING = "Please note that hardware data (e.g. CPU temperature) is not sent to this device encrypted. If you are not on a private network, ensure you are happy exposing such data before continuing.";
+
     private ListView connectionListView;
     private List<ConnectionInformation> availableConnections;
 
-    public ConnectionListPage()
-    {
+    public ConnectionListPage() {
         super.setId("default-pane");
 
         availableConnections = new ArrayList<>();
@@ -83,35 +86,33 @@ public class ConnectionListPage extends StackPane
         connectionListView = new ListView<>();
         selectButton.setOnMouseClicked(mouseEvent ->
         {
-            if (connectionListView.getSelectionModel().getSelectedItem() != null)
-            {
+            if (connectionListView.getSelectionModel().getSelectedItem() != null) {
                 ConnectionInformation selectedConnectionInformation = (ConnectionInformation) connectionListView.
                         getSelectionModel().getSelectedItem();
                 NetworkUtils.Compatibility compatibility = NetworkUtils.isVersionCompatible(VERSION_MAJOR,
                         VERSION_MINOR, selectedConnectionInformation.getMajorVersion(),
                         selectedConnectionInformation.getMinorVersion());
-                if (compatibility == NetworkUtils.Compatibility.NEWER)
-                {
+                if (compatibility == NetworkUtils.Compatibility.NEWER) {
                     Alert alert = new Alert(Alert.AlertType.ERROR, "Incompatible Monitor Version",
                             ButtonType.OK);
                     alert.setContentText("Cannot connect to Hardware Monitor " + selectedConnectionInformation +
                             " because it is running an older software version than the editor");
                     alert.showAndWait();
-                }
-                else if (compatibility == NetworkUtils.Compatibility.OLDER)
-                {
+                } else if (compatibility == NetworkUtils.Compatibility.OLDER) {
                     Alert alert = new Alert(Alert.AlertType.ERROR, "Incompatible Monitor Version",
                             ButtonType.OK);
                     alert.setContentText("Cannot connect to Hardware Monitor " + selectedConnectionInformation +
                             " because it is running an newer software version than the editor");
                     alert.showAndWait();
-                }
-                else
-                {
+                } else {
+                    Alert info = new Alert(Alert.AlertType.CONFIRMATION, "Data Encryption",
+                            ButtonType.OK);
+                    info.setContentText(ENCRYPTION_WARNING);
+                    info.showAndWait();
+
                     NetworkClient.getInstance().connect(selectedConnectionInformation, connectedEvent ->
                     {
-                        switch (connectedEvent.getConnectionStatus())
-                        {
+                        switch (connectedEvent.getConnectionStatus()) {
                             case CONNECTED:
                                 ApplicationCore.getInstance().onConnected();
                                 break;
@@ -123,8 +124,8 @@ public class ConnectionListPage extends StackPane
                                                         getIp4Address()) + ")"));
                                 break;
                             case FAILED:
-                                System.err.println("Failed to connect to device " + connectedEvent.
-                                        getConnectionInformation().getHostname() + " (" +
+                                Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to connect to device " +
+                                        connectedEvent.getConnectionInformation().getHostname() + " (" +
                                         ip4AddressToString(connectedEvent.getConnectionInformation().getIp4Address()) +
                                         ") despite finding it on the network. It may be in use by another editor");
 
@@ -172,7 +173,7 @@ public class ConnectionListPage extends StackPane
                                 ApplicationCore.s_setApplicationState(new LoadingStateData(
                                         "Lost Communication", "No heartbeat message was received from " +
                                         connectedEvent.getConnectionInformation().getHostname() + " for " +
-                                                HEARTBEAT_TIMEOUT_MS + "ms. Attempting to reconnect",
+                                        HEARTBEAT_TIMEOUT_MS + "ms. Attempting to reconnect",
                                         "Device List",
                                         event -> ApplicationCore.s_setApplicationState(new ConnectionListStateData(
                                                 availableConnections))));
@@ -183,7 +184,7 @@ public class ConnectionListPage extends StackPane
                                         availableConnections));
                                 break;
                             case UNEXPECTED_DISCONNECT:
-                                System.out.println("LOST CONNECTION TO HARDWARE MONITOR");
+                                Logger.log(LogLevel.WARNING, CLASS_NAME, "Lost connection to the Hardware Monitor");
                                 ApplicationCore.s_setApplicationState(new LoadingStateData(
                                         "Lost Communication",
                                         connectedEvent.getConnectionInformation().getHostname() +
@@ -207,8 +208,7 @@ public class ConnectionListPage extends StackPane
         super.getChildren().add(pageOverview);
     }
 
-    public void setAvailableConnectionsList(List<ConnectionInformation> availableConnections)
-    {
+    public void setAvailableConnectionsList(List<ConnectionInformation> availableConnections) {
         this.availableConnections = availableConnections;
         connectionListView.getItems().addAll(availableConnections);
     }

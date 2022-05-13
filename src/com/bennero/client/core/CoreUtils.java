@@ -33,29 +33,24 @@ import java.io.File;
  * CoreUtils provides some utilities such as file selection windows and the ability to open the users default browser to
  * a specified URL
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class CoreUtils
-{
-    public static File showDirectorySelector()
-    {
+public class CoreUtils {
+    public static File showDirectorySelector() {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         return directoryChooser.showDialog(ApplicationCore.getInstance().getWindow().getStage());
     }
 
-    public static File showFileSelector()
-    {
+    public static File showFileSelector() {
         ProgramConfigManager programConfigManager = ProgramConfigManager.getInstance();
         FileChooser fileChooser = new FileChooser();
 
         // If the program config manager contains a file area path, open the file chooser window there
-        if (programConfigManager.isFileAreaPathAvailable())
-        {
+        if (programConfigManager.isFileAreaPathAvailable()) {
             File saveAreaFile = new File(programConfigManager.getFileAreaPath());
-            if (saveAreaFile.exists() && saveAreaFile.isDirectory())
-            {
+            if (saveAreaFile.exists() && saveAreaFile.isDirectory()) {
                 fileChooser.setInitialDirectory(saveAreaFile);
             }
         }
@@ -67,8 +62,7 @@ public class CoreUtils
         return fileChooser.showOpenDialog(ApplicationCore.getInstance().getWindow().getStage());
     }
 
-    public static void openBrowser(String url)
-    {
+    public static void openBrowser(String url) {
         ApplicationCore.getInstance().getHostServices().showDocument(url);
     }
 }

@@ -47,12 +47,11 @@ import java.util.List;
  * user to configure properties of the page such as its transition, title, subtitle, number of rows, number of columns
  * and colour. It is also where pages can be deleted.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class PageOptions extends Stage
-{
+public class PageOptions extends Stage {
     private BorderPane transitionTimeSpinner;
 
     public PageOptions(PageData pageData,
@@ -67,8 +66,7 @@ public class PageOptions extends Stage
                        ChangeListener<Integer> transitionTimeChange,
                        ChangeListener<Integer> durationChange,
                        EventHandler deletePage,
-                       EventHandler doneEditing)
-    {
+                       EventHandler doneEditing) {
         super.setTitle("Page Options");
         super.initModality(Modality.APPLICATION_MODAL);
         super.setOnCloseRequest(windowEvent -> hide());
@@ -99,36 +97,28 @@ public class PageOptions extends Stage
 
         // Discover next page from page ID
         boolean foundNextPage = false;
-        for (int i = 0; i < pages.size() && !foundNextPage; i++)
-        {
-            if (pages.get(i).getUniqueId() == pageData.getNextPageId())
-            {
+        for (int i = 0; i < pages.size() && !foundNextPage; i++) {
+            if (pages.get(i).getUniqueId() == pageData.getNextPageId()) {
                 foundNextPage = true;
                 optionsPane.getChildren().add(UIHelper.createComboBoxOption("Next Page", pages.get(i), pages, (observableValue, transitionTypeInfo, t1) -> nextPageChange.changed(null, null, t1.getUniqueId())));
             }
         }
 
-        if (!foundNextPage)
-        {
+        if (!foundNextPage) {
             optionsPane.getChildren().add(UIHelper.createComboBoxOption("Next Page", pageData, pages, (observableValue, transitionTypeInfo, t1) -> nextPageChange.changed(null, null, t1.getUniqueId())));
         }
 
         // Discover the transition type info
         boolean foundTransition = false;
-        for (int i = 0; i < transitionTypeInfos.size() && !foundTransition; i++)
-        {
-            if (transitionTypeInfos.get(i).id == pageData.getTransitionType())
-            {
+        for (int i = 0; i < transitionTypeInfos.size() && !foundTransition; i++) {
+            if (transitionTypeInfos.get(i).id == pageData.getTransitionType()) {
                 foundTransition = true;
                 optionsPane.getChildren().add(UIHelper.createComboBoxOption("Transition", transitionTypeInfos.get(i), transitionTypeInfos, (observableValue, transitionTypeInfo, t1) ->
                 {
-                    if (t1.id == TransitionType.CUT)
-                    {
+                    if (t1.id == TransitionType.CUT) {
                         // Disable the duration transition spinner
                         transitionTimeSpinner.setDisable(true);
-                    }
-                    else
-                    {
+                    } else {
                         transitionTimeSpinner.setDisable(false);
                     }
 
@@ -143,8 +133,7 @@ public class PageOptions extends Stage
 
         // Cut is the only type of transition that has no duration associated to it - so disable the spinner if it is
         // cut duration on the page data.
-        if (pageData.getTransitionType() == TransitionType.CUT)
-        {
+        if (pageData.getTransitionType() == TransitionType.CUT) {
             transitionTimeSpinner.setDisable(true);
         }
 
@@ -162,8 +151,7 @@ public class PageOptions extends Stage
             alert.setContentText("Are you sure you want to remove the page? You wont be able to get it back.");
 
             alert.showAndWait();
-            if (alert.getResult() == ButtonType.YES)
-            {
+            if (alert.getResult() == ButtonType.YES) {
                 NetworkClient.getInstance().writeRemovePageMessage((byte) pageData.getUniqueId());
                 hide();
                 deletePage.handle(actionEvent);
@@ -198,20 +186,17 @@ public class PageOptions extends Stage
         super.setScene(dialogScene);
     }
 
-    private class TransitionTypeInfo
-    {
+    private class TransitionTypeInfo {
         private String name;
         private int id;
 
-        public TransitionTypeInfo(String name, int id)
-        {
+        public TransitionTypeInfo(String name, int id) {
             this.name = name;
             this.id = id;
         }
 
         @Override
-        public String toString()
-        {
+        public String toString() {
             return name;
         }
     }

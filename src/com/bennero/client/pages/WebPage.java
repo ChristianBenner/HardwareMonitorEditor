@@ -30,14 +30,12 @@ import javafx.scene.web.WebView;
 /**
  * Display a web page
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class WebPage extends StackPane
-{
-    public WebPage(String link)
-    {
+public class WebPage extends StackPane {
+    public WebPage(String link) {
         WebView webView = new WebView();
         webView.getEngine().load(link);
 

@@ -23,7 +23,6 @@
 
 package com.bennero.client.config;
 
-import com.bennero.client.core.ApplicationCore;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
 import com.bennero.common.networking.ConnectionInformation;
@@ -42,12 +41,11 @@ import static com.bennero.common.networking.NetworkUtils.macAddressToString;
  * data. This includes data such as the last loaded save and information of the last connected device. Program wide save
  * data is necessary in providing automated connection to a hardware monitor upon log-on.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class ProgramConfigManager extends ConfigurationSaveHandler
-{
+public class ProgramConfigManager extends ConfigurationSaveHandler {
     // Name for logging
     private static final String CLASS_NAME = ProgramConfigManager.class.getSimpleName();
 
@@ -83,21 +81,17 @@ public class ProgramConfigManager extends ConfigurationSaveHandler
     private boolean lastConnectedMacAvailable;
     private boolean lastConnectedHostnameAvailable;
 
-    private ProgramConfigManager()
-    {
+    private ProgramConfigManager() {
         // Configuration file (Uses File.separator for OS compatibility)
         super(new File(CONFIG_FILE_PATH + File.separator + CONFIG_FILE_NAME));
 
         // Create save location folder
         File saveLocationFile = new File(CONFIG_FILE_PATH);
-        if (!saveLocationFile.exists())
-        {
+        if (!saveLocationFile.exists()) {
             saveLocationFile.mkdirs();
             Logger.log(LogLevel.INFO, CLASS_NAME, "Created new program data directories in " +
                     new File(saveLocationFile.getParent()).getAbsolutePath());
-        }
-        else
-        {
+        } else {
             Logger.log(LogLevel.INFO, CLASS_NAME, "Located configuration data file " +
                     saveLocationFile.getAbsolutePath());
         }
@@ -113,10 +107,8 @@ public class ProgramConfigManager extends ConfigurationSaveHandler
         super.read();
     }
 
-    public static ProgramConfigManager getInstance()
-    {
-        if (singletonInstance == null)
-        {
+    public static ProgramConfigManager getInstance() {
+        if (singletonInstance == null) {
             singletonInstance = new ProgramConfigManager();
         }
 
@@ -124,115 +116,88 @@ public class ProgramConfigManager extends ConfigurationSaveHandler
     }
 
     @Override
-    protected void read(String uri, String localName, String qName, Attributes attributes)
-    {
-        System.out.println("Start Element: " + qName);
+    protected void read(String uri, String localName, String qName, Attributes attributes) {
+        //System.out.println("Start Element: " + qName);
 
-        switch (qName)
-        {
+        switch (qName) {
             case CONFIG_TAG:
-                for (int i = 0; i < attributes.getLength(); i++)
-                {
+                for (int i = 0; i < attributes.getLength(); i++) {
                     String attributeName = attributes.getQName(i);
                     String attributeValue = attributes.getValue(i);
-                    System.out.print(" '" + attributeName + "':" + attributeValue);
+                    //System.out.print(" '" + attributeName + "':" + attributeValue);
 
                     // Parse attributes
-                    if (attributeName.compareTo(FILE_AREA_PATH_TAG) == 0)
-                    {
+                    if (attributeName.compareTo(FILE_AREA_PATH_TAG) == 0) {
                         fileAreaPath = attributeValue;
                         fileAreaPathAvailable = true;
-                    }
-                    else if (attributeName.compareTo(LAST_LOADED_FILE_PATH_TAG) == 0)
-                    {
+                    } else if (attributeName.compareTo(LAST_LOADED_FILE_PATH_TAG) == 0) {
                         lastLoadedFilePath = attributeValue;
                         lastLoadedFilePathAvailable = true;
-                    }
-                    else if (attributeName.compareTo(LAST_CONNECTED_MAJOR_VERSION_TAG) == 0)
-                    {
+                    } else if (attributeName.compareTo(LAST_CONNECTED_MAJOR_VERSION_TAG) == 0) {
                         lastConnectedMajorVersion = (byte) Integer.parseInt(attributeValue);
                         lastConnectedMajorVersionAvailable = true;
-                    }
-                    else if (attributeName.compareTo(LAST_CONNECTED_MINOR_VERSION_TAG) == 0)
-                    {
+                    } else if (attributeName.compareTo(LAST_CONNECTED_MINOR_VERSION_TAG) == 0) {
                         lastConnectedMinorVersion = (byte) Integer.parseInt(attributeValue);
                         lastConnectedMinorVersionAvailable = true;
-                    }
-                    else if (attributeName.compareTo(LAST_CONNECTED_PATCH_VERSION_TAG) == 0)
-                    {
+                    } else if (attributeName.compareTo(LAST_CONNECTED_PATCH_VERSION_TAG) == 0) {
                         lastConnectedPatchVersion = (byte) Integer.parseInt(attributeValue);
                         lastConnectedPatchVersionAvailable = true;
-                    }
-                    else if (attributeName.compareTo(LAST_CONNECTED_IP4_TAG) == 0)
-                    {
+                    } else if (attributeName.compareTo(LAST_CONNECTED_IP4_TAG) == 0) {
                         lastConnectedIp4 = attributeValue;
                         lastConnectedIp4Available = true;
-                    }
-                    else if (attributeName.compareTo(LAST_CONNECTED_MAC_TAG) == 0)
-                    {
+                    } else if (attributeName.compareTo(LAST_CONNECTED_MAC_TAG) == 0) {
                         lastConnectedMac = attributeValue;
                         lastConnectedMacAvailable = true;
-                    }
-                    else if (attributeName.compareTo(LAST_CONNECTED_HOSTNAME) == 0)
-                    {
+                    } else if (attributeName.compareTo(LAST_CONNECTED_HOSTNAME) == 0) {
                         lastConnectedHostname = attributeValue;
                         lastConnectedHostnameAvailable = true;
                     }
                 }
 
-                System.out.println();
+                //System.out.println();
                 break;
         }
     }
 
     @Override
-    protected void save(XMLStreamWriter streamWriter) throws XMLStreamException
-    {
+    protected void save(XMLStreamWriter streamWriter) throws XMLStreamException {
         int depth = 0;
         streamWriter.writeStartDocument();
         writeIndentation(streamWriter, depth, true);
         streamWriter.writeStartElement(CONFIG_TAG);
 
-        if (fileAreaPathAvailable)
-        {
+        if (fileAreaPathAvailable) {
             streamWriter.writeAttribute(FILE_AREA_PATH_TAG, fileAreaPath);
         }
 
-        if (lastLoadedFilePathAvailable)
-        {
+        if (lastLoadedFilePathAvailable) {
             streamWriter.writeAttribute(LAST_LOADED_FILE_PATH_TAG, lastLoadedFilePath);
         }
 
-        if (lastConnectedMajorVersionAvailable)
-        {
+        if (lastConnectedMajorVersionAvailable) {
             streamWriter.writeAttribute(LAST_CONNECTED_MAJOR_VERSION_TAG,
                     Integer.toString(lastConnectedMajorVersion & 0xFF));
         }
 
-        if (lastConnectedMinorVersionAvailable)
-        {
+        if (lastConnectedMinorVersionAvailable) {
             streamWriter.writeAttribute(LAST_CONNECTED_MINOR_VERSION_TAG,
                     Integer.toString(lastConnectedMinorVersion & 0xFF));
         }
 
-        if (lastConnectedPatchVersionAvailable)
-        {
+        if (lastConnectedPatchVersionAvailable) {
             streamWriter.writeAttribute(LAST_CONNECTED_PATCH_VERSION_TAG,
                     Integer.toString(lastConnectedPatchVersion & 0xFF));
         }
 
-        if (lastConnectedIp4Available)
-        {
+        if (lastConnectedIp4Available) {
             streamWriter.writeAttribute(LAST_CONNECTED_IP4_TAG, lastConnectedIp4);
         }
 
-        if (lastConnectedMacAvailable)
-        {
+        if (lastConnectedMacAvailable) {
             streamWriter.writeAttribute(LAST_CONNECTED_MAC_TAG, lastConnectedMac);
         }
 
-        if (lastConnectedHostnameAvailable)
-        {
+        if (lastConnectedHostnameAvailable) {
             streamWriter.writeAttribute(LAST_CONNECTED_HOSTNAME, lastConnectedHostname);
         }
 
@@ -241,89 +206,75 @@ public class ProgramConfigManager extends ConfigurationSaveHandler
         streamWriter.writeEndDocument();
     }
 
-    public String getFileAreaPath()
-    {
+    public String getFileAreaPath() {
         return fileAreaPath;
     }
 
-    public void setFileAreaPath(String fileAreaPath)
-    {
+    public void setFileAreaPath(String fileAreaPath) {
         this.fileAreaPath = fileAreaPath;
         this.fileAreaPathAvailable = true;
         super.save();
     }
 
-    public String getLastLoadedFilePath()
-    {
+    public String getLastLoadedFilePath() {
         return lastLoadedFilePath;
     }
 
-    public void setLastLoadedFilePath(String lastLoadedFilePath)
-    {
+    public void setLastLoadedFilePath(String lastLoadedFilePath) {
         this.lastLoadedFilePath = lastLoadedFilePath;
         this.lastLoadedFilePathAvailable = true;
         super.save();
     }
 
-    public String getLastConnectedIp4()
-    {
+    public String getLastConnectedIp4() {
         return lastConnectedIp4;
     }
 
-    public void setLastConnectedIp4(String lastConnectedIp4)
-    {
+    public void setLastConnectedIp4(String lastConnectedIp4) {
         this.lastConnectedIp4 = lastConnectedIp4;
         this.lastConnectedIp4Available = true;
         super.save();
     }
 
-    public void clearLastConnectedIp4()
-    {
+    public void clearLastConnectedIp4() {
         this.lastConnectedIp4 = null;
         this.lastConnectedIp4Available = false;
         super.save();
     }
 
-    public String getLastConnectedMac()
-    {
+    public String getLastConnectedMac() {
         return lastConnectedMac;
     }
 
-    public void setLastConnectedMac(String lastConnectedMac)
-    {
+    public void setLastConnectedMac(String lastConnectedMac) {
         this.lastConnectedMac = lastConnectedMac;
         this.lastConnectedMacAvailable = true;
         super.save();
     }
 
-    public void clearLastConnectedMac()
-    {
+    public void clearLastConnectedMac() {
         this.lastConnectedMac = null;
         this.lastConnectedMacAvailable = false;
         super.save();
     }
 
-    public String getLastConnectedHostname()
-    {
+    public String getLastConnectedHostname() {
         return lastConnectedHostname;
     }
 
-    public void setLastConnectedHostname(String lastConnectedHostname)
-    {
+    public void setLastConnectedHostname(String lastConnectedHostname) {
         this.lastConnectedHostname = lastConnectedHostname;
         this.lastConnectedHostnameAvailable = true;
         super.save();
     }
 
-    public void clearLastConnectedHostname()
-    {
+    public void clearLastConnectedHostname() {
         this.lastConnectedHostname = null;
         this.lastConnectedHostnameAvailable = false;
         super.save();
     }
 
-    public boolean containsCompleteConnectionInfo()
-    {
+    public boolean containsCompleteConnectionInfo() {
         return lastConnectedMajorVersionAvailable && lastConnectedMinorVersionAvailable &&
                 lastConnectedPatchVersionAvailable && lastConnectedIp4Available && lastConnectedMacAvailable &&
                 lastConnectedHostnameAvailable && lastConnectedIp4 != null && lastConnectedMac != null &&
@@ -331,8 +282,7 @@ public class ProgramConfigManager extends ConfigurationSaveHandler
                 !lastConnectedHostname.isEmpty();
     }
 
-    public void setConnectionData(ConnectionInformation connectionInformation)
-    {
+    public void setConnectionData(ConnectionInformation connectionInformation) {
         // Build IP4 address string
         final String macAddressStr = macAddressToString(connectionInformation.getMacAddress());
         final String ip4AddressStr = ip4AddressToString(connectionInformation.getIp4Address());
@@ -343,8 +293,7 @@ public class ProgramConfigManager extends ConfigurationSaveHandler
 
     public void setConnectionData(byte lastConnectedMajorVersion, byte lastConnectedMinorVersion,
                                   byte lastConnectedPatchVersion, String lastConnectedIp4,
-                                  String lastConnectedMac, String lastConnectedHostname)
-    {
+                                  String lastConnectedMac, String lastConnectedHostname) {
         this.lastConnectedMajorVersion = lastConnectedMajorVersion;
         this.lastConnectedMinorVersion = lastConnectedMinorVersion;
         this.lastConnectedPatchVersion = lastConnectedPatchVersion;
@@ -360,8 +309,7 @@ public class ProgramConfigManager extends ConfigurationSaveHandler
         super.save();
     }
 
-    public void clearConnectionData()
-    {
+    public void clearConnectionData() {
         this.lastConnectedIp4 = null;
         this.lastConnectedMac = null;
         this.lastConnectedHostname = null;
@@ -371,34 +319,28 @@ public class ProgramConfigManager extends ConfigurationSaveHandler
         super.save();
     }
 
-    public ConnectionInformation getConnectionInformation()
-    {
+    public ConnectionInformation getConnectionInformation() {
         return new ConnectionInformation(lastConnectedMajorVersion, lastConnectedMinorVersion,
                 lastConnectedPatchVersion, lastConnectedMac, lastConnectedIp4, lastConnectedHostname);
     }
 
-    public boolean isFileAreaPathAvailable()
-    {
+    public boolean isFileAreaPathAvailable() {
         return fileAreaPathAvailable;
     }
 
-    public boolean isLastLoadedFilePathAvailable()
-    {
+    public boolean isLastLoadedFilePathAvailable() {
         return lastLoadedFilePathAvailable;
     }
 
-    public boolean isLastConnectedIp4Available()
-    {
+    public boolean isLastConnectedIp4Available() {
         return lastConnectedIp4Available;
     }
 
-    public boolean isLastConnectedMacAvailable()
-    {
+    public boolean isLastConnectedMacAvailable() {
         return lastConnectedMacAvailable;
     }
 
-    public boolean isLastConnectedHostnameAvailable()
-    {
+    public boolean isLastConnectedHostnameAvailable() {
         return lastConnectedHostnameAvailable;
     }
 }

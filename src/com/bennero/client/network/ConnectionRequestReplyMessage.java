@@ -35,13 +35,12 @@ import static com.bennero.common.networking.NetworkUtils.readString;
  * contain useful information such as if the connection was rejected and why, alongside the version of the hardware
  * monitor. This is another step in ensuring that an editors cannot connect to incompatible monitors.
  *
- * @see         PageData
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see PageData
+ * @since 1.0
  */
-public class ConnectionRequestReplyMessage
-{
+public class ConnectionRequestReplyMessage {
     private final byte majorVersion;
     private final byte minorVersion;
     private final byte patchVersion;
@@ -56,8 +55,7 @@ public class ConnectionRequestReplyMessage
                                          final boolean connectionAccepted,
                                          final boolean versionMismatch,
                                          final boolean currentlyInUse,
-                                         final String currentClientHostname)
-    {
+                                         final String currentClientHostname) {
         this.majorVersion = majorVersion;
         this.minorVersion = minorVersion;
         this.patchVersion = patchVersion;
@@ -67,10 +65,7 @@ public class ConnectionRequestReplyMessage
         this.currentClientHostname = currentClientHostname;
     }
 
-    public static ConnectionRequestReplyMessage processConnectionRequestReplyMessageData(byte[] bytes)
-    {
-        System.out.println("Received connection request response");
-
+    public static ConnectionRequestReplyMessage processConnectionRequestReplyMessageData(byte[] bytes) {
         final byte majorVersion = bytes[ConnectionRequestReplyDataPositions.MAJOR_VERSION_POS];
         final byte minorVersion = bytes[ConnectionRequestReplyDataPositions.MINOR_VERSION_POS];
         final byte patchVersion = bytes[ConnectionRequestReplyDataPositions.PATCH_VERSION_POS];
@@ -79,63 +74,40 @@ public class ConnectionRequestReplyMessage
         final boolean currentlyInUse = bytes[ConnectionRequestReplyDataPositions.CURRENTLY_IN_USE] == 0x01;
         String currentClientHostname = null;
 
-        if (!connectionAccepted)
-        {
-            if (versionMismatch)
-            {
-                System.out.println("Hardware Monitor refused connection because of version mismatch: " + majorVersion +
-                        "" + minorVersion + "." + patchVersion);
-            }
-
-            if (currentlyInUse)
-            {
-                currentClientHostname = readString(bytes, ConnectionRequestReplyDataPositions.CURRENT_CLIENT_HOSTNAME,
-                        NAME_STRING_NUM_BYTES);
-                System.out.println("Hardware Monitor currently in use by '" + currentClientHostname + "'");
-            }
-        }
-        else
-        {
-            System.out.println("Server (v" + VERSION_MAJOR + "." + VERSION_MINOR + "." + VERSION_PATCH +
-                    ") accepted client connection");
+        if (!connectionAccepted && currentlyInUse) {
+            currentClientHostname = readString(bytes, ConnectionRequestReplyDataPositions.CURRENT_CLIENT_HOSTNAME,
+                    NAME_STRING_NUM_BYTES);
         }
 
         return new ConnectionRequestReplyMessage(majorVersion, minorVersion, patchVersion, connectionAccepted,
                 versionMismatch, currentlyInUse, currentClientHostname);
     }
 
-    public byte getMajorVersion()
-    {
+    public byte getMajorVersion() {
         return majorVersion;
     }
 
-    public byte getMinorVersion()
-    {
+    public byte getMinorVersion() {
         return minorVersion;
     }
 
-    public byte getPatchVersion()
-    {
+    public byte getPatchVersion() {
         return patchVersion;
     }
 
-    public boolean isConnectionAccepted()
-    {
+    public boolean isConnectionAccepted() {
         return connectionAccepted;
     }
 
-    public boolean isVersionMismatch()
-    {
+    public boolean isVersionMismatch() {
         return versionMismatch;
     }
 
-    public boolean isCurrentlyInUse()
-    {
+    public boolean isCurrentlyInUse() {
         return currentlyInUse;
     }
 
-    public String getCurrentClientHostname()
-    {
+    public String getCurrentClientHostname() {
         return currentClientHostname;
     }
 }

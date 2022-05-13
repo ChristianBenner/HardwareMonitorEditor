@@ -47,17 +47,15 @@ import java.util.Optional;
  * Welcome Page is a page shown to the user upon first starting the application. It consists of multiple
  * sub-pages/slides which guide the user through creating there first save file.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class WelcomePage extends StackPane
-{
+public class WelcomePage extends StackPane {
     private String selectedSaveDirectory = null;
     private ProgramConfigManager programConfigManager;
 
-    public WelcomePage()
-    {
+    public WelcomePage() {
         this.programConfigManager = ProgramConfigManager.getInstance();
         super.setId("standard-pane");
 
@@ -124,10 +122,8 @@ public class WelcomePage extends StackPane
         {
             File selectedDirectory = CoreUtils.showDirectorySelector();
 
-            if (selectedDirectory != null)
-            {
-                if (labelBox.getChildren().contains(selectedLocationLabel))
-                {
+            if (selectedDirectory != null) {
+                if (labelBox.getChildren().contains(selectedLocationLabel)) {
                     labelBox.getChildren().remove(selectedLocationLabel);
                 }
 
@@ -144,37 +140,29 @@ public class WelcomePage extends StackPane
 
         fileAreaSelectSlideContinueButton.setOnAction(actionEvent ->
         {
-            if (selectedSaveDirectory != null && !selectedSaveDirectory.isEmpty())
-            {
+            if (selectedSaveDirectory != null && !selectedSaveDirectory.isEmpty()) {
                 boolean success = false;
-                while (!success)
-                {
+                while (!success) {
                     TextInputDialog textInputDialog = new TextInputDialog();
                     textInputDialog.setTitle("Enter Layout Name");
                     textInputDialog.setHeaderText("Enter Layout Name");
                     textInputDialog.setContentText("Enter a name for your layout:");
 
                     Optional<String> result = textInputDialog.showAndWait();
-                    if (result.isPresent())
-                    {
-                        if (!result.get().isEmpty() && !result.get().replaceAll(" ", "").isEmpty())
-                        {
+                    if (result.isPresent()) {
+                        if (!result.get().isEmpty() && !result.get().replaceAll(" ", "").isEmpty()) {
                             String fileName = result.get();
-                            if (!fileName.endsWith(".bhwms"))
-                            {
+                            if (!fileName.endsWith(".bhwms")) {
                                 fileName += ".bhwms";
                             }
 
                             // Check if that already exists
-                            if (new File(selectedSaveDirectory + "\\" + fileName).exists())
-                            {
+                            if (new File(selectedSaveDirectory + "\\" + fileName).exists()) {
                                 // Error pop-up because it will not fit
                                 Alert alert = new Alert(Alert.AlertType.WARNING, "Save File Already Exists", ButtonType.OK);
                                 alert.setContentText("A save file with that name already exists in the directory, please use another name");
                                 alert.showAndWait();
-                            }
-                            else
-                            {
+                            } else {
                                 programConfigManager.setFileAreaPath(selectedSaveDirectory);
                                 programConfigManager.setLastLoadedFilePath(selectedSaveDirectory + "\\" + fileName);
                                 SaveManager.getInstance().newSave(new File(selectedSaveDirectory + "\\" + fileName));
@@ -182,9 +170,7 @@ public class WelcomePage extends StackPane
                                 success = true;
                             }
                         }
-                    }
-                    else
-                    {
+                    } else {
                         break;
                     }
                 }

@@ -34,8 +34,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 
-public class SystemTrayManager
-{
+public class SystemTrayManager {
     // Tag for logging
     private static final String TAG = SystemTrayManager.class.getSimpleName();
 
@@ -44,23 +43,23 @@ public class SystemTrayManager
     private TrayIcon trayIcon;
     private boolean addedToSystemTray;
 
-    public static SystemTrayManager getInstance()
-    {
-        if(instance == null)
-        {
+    private SystemTrayManager() {
+        addedToSystemTray = false;
+    }
+
+    public static SystemTrayManager getInstance() {
+        if (instance == null) {
             instance = new SystemTrayManager();
         }
 
         return instance;
     }
 
-    private SystemTrayManager()
-    {
-        addedToSystemTray = false;
+    public static boolean isSupported() {
+        return SystemTray.isSupported();
     }
 
-    public void addToSystemTray()
-    {
+    public void addToSystemTray() {
         // Make it so that the application process does not end on window close
         Platform.setImplicitExit(false);
 
@@ -68,12 +67,9 @@ public class SystemTrayManager
         Runtime.getRuntime().addShutdownHook(new Thread(() -> removeFromSystemTray()));
 
         // Check if system tray is supported
-        if (!SystemTray.isSupported())
-        {
+        if (!SystemTray.isSupported()) {
             Logger.log(LogLevel.WARNING, TAG, "System tray not supported");
-        }
-        else
-        {
+        } else {
             // 'Open' menu item
             MenuItem openMenuItem = new MenuItem("Open");
             openMenuItem.addActionListener(e -> ApplicationCore.getInstance().getWindow().show());
@@ -91,16 +87,13 @@ public class SystemTrayManager
             popupMenu.add(exitMenuItem);
 
             // Get and create system tray icon
-            try
-            {
+            try {
                 Image imageIcon = ImageIO.read(SystemTrayUtils.class.getClassLoader().getResourceAsStream("icon.png"));
                 trayIcon = new TrayIcon(imageIcon, "Hardware Monitor Editor", popupMenu);
                 trayIcon.setImageAutoSize(true);
-                trayIcon.addMouseListener(new MouseAdapter()
-                {
+                trayIcon.addMouseListener(new MouseAdapter() {
                     @Override
-                    public void mouseClicked(MouseEvent e)
-                    {
+                    public void mouseClicked(MouseEvent e) {
                         ApplicationCore.getInstance().getWindow().show();
                     }
                 });
@@ -110,31 +103,20 @@ public class SystemTrayManager
                 systemTray.add(trayIcon);
 
                 addedToSystemTray = true;
-            }
-            catch (IOException ioException)
-            {
+            } catch (IOException ioException) {
                 Logger.log(LogLevel.ERROR, TAG, "Failed to load system tray icon");
                 ioException.printStackTrace();
-            }
-            catch (AWTException systemTrayException)
-            {
+            } catch (AWTException systemTrayException) {
                 Logger.log(LogLevel.ERROR, TAG, "Failed to add application to system tray");
                 systemTrayException.printStackTrace();
             }
         }
     }
 
-    public void removeFromSystemTray()
-    {
-        if (trayIcon != null && addedToSystemTray == true)
-        {
+    public void removeFromSystemTray() {
+        if (trayIcon != null && addedToSystemTray == true) {
             SystemTray systemTray = SystemTray.getSystemTray();
             systemTray.remove(trayIcon);
         }
-    }
-
-    public static boolean isSupported()
-    {
-        return SystemTray.isSupported();
     }
 }

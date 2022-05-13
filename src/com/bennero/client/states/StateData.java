@@ -31,37 +31,32 @@ import javafx.scene.Node;
  * demand. This was to reduce CPU and memory usage when the GUI is minimised (which will likely be the most frequent
  * state of the application after the user has set up their custom layouts and hardware monitor).
  *
- * @see         StateData
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see StateData
+ * @since 1.0
  */
-public abstract class StateData
-{
+public abstract class StateData {
     private final String name;
     private final byte transitionType;
 
-    public StateData(String name, byte transitionType)
-    {
+    public StateData(String name, byte transitionType) {
         this.name = name;
         this.transitionType = transitionType;
     }
 
     public abstract Node createGUI();
 
-    public byte getTransitionType()
-    {
+    public byte getTransitionType() {
         return transitionType;
     }
 
-    public String getName()
-    {
+    public String getName() {
         return name;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return name;
     }
 }

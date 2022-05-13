@@ -34,14 +34,13 @@ import javafx.scene.Node;
  * graphical user interface does not have to be loaded into memory if it is not in use - it can be loaded or destroyed
  * at any time)
  *
- * @see         LoadingInformationPage
- * @see         StateData
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see LoadingInformationPage
+ * @see StateData
+ * @since 1.0
  */
-public class LoadingStateData extends StateData
-{
+public class LoadingStateData extends StateData {
     private static final String NAME = "LOADING";
 
     private final String title;
@@ -49,8 +48,7 @@ public class LoadingStateData extends StateData
     private final String buttonText;
     private final EventHandler eventHandler;
 
-    public LoadingStateData(String title)
-    {
+    public LoadingStateData(String title) {
         super(NAME, TransitionType.FADE);
         this.title = title;
         subtitle = null;
@@ -58,8 +56,7 @@ public class LoadingStateData extends StateData
         eventHandler = null;
     }
 
-    public LoadingStateData(String title, String subtitle)
-    {
+    public LoadingStateData(String title, String subtitle) {
         super(NAME, TransitionType.FADE);
         this.title = title;
         this.subtitle = subtitle;
@@ -67,8 +64,7 @@ public class LoadingStateData extends StateData
         eventHandler = null;
     }
 
-    public LoadingStateData(String title, String subtitle, String buttonText, EventHandler eventHandler)
-    {
+    public LoadingStateData(String title, String subtitle, String buttonText, EventHandler eventHandler) {
         super(NAME, TransitionType.FADE);
         this.title = title;
         this.subtitle = subtitle;
@@ -77,18 +73,12 @@ public class LoadingStateData extends StateData
     }
 
     @Override
-    public Node createGUI()
-    {
-        if (buttonText != null && eventHandler != null && subtitle != null)
-        {
+    public Node createGUI() {
+        if (buttonText != null && eventHandler != null && subtitle != null) {
             return new LoadingInformationPage(title, subtitle, buttonText, eventHandler);
-        }
-        else if (subtitle != null)
-        {
+        } else if (subtitle != null) {
             return new LoadingInformationPage(title, subtitle);
-        }
-        else
-        {
+        } else {
             return new LoadingInformationPage(title);
         }
     }

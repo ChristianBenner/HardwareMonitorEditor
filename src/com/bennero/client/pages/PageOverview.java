@@ -31,7 +31,6 @@ import com.bennero.client.core.CoreUtils;
 import com.bennero.client.core.Window;
 import com.bennero.client.network.NetworkClient;
 import com.bennero.client.network.NetworkScanner;
-import com.bennero.client.states.NetworkScanStateData;
 import com.bennero.client.states.PageEditorStateData;
 import com.bennero.client.states.PageOverviewStateData;
 import com.bennero.client.ui.ClientOptions;
@@ -41,7 +40,6 @@ import com.bennero.client.util.PageGenerator;
 import com.bennero.common.PageData;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
-import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -58,12 +56,11 @@ import java.util.Optional;
  * PageOverview is a page that shows all of the user created sensor pages. This provides an easy way for them to locate
  * and select a specific page for editing.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class PageOverview extends StackPane
-{
+public class PageOverview extends StackPane {
     private static final Insets PADDING = new Insets(10, 10, 10, 10);
     private static final double H_GAP = 10.0;
     private static final double V_GAP = 10.0;
@@ -81,8 +78,7 @@ public class PageOverview extends StackPane
     private int elementWidth;
     private SaveManager saveManager;
 
-    public PageOverview()
-    {
+    public PageOverview() {
         super.setId("standard-pane");
         super.setPadding(PADDING);
 
@@ -138,8 +134,7 @@ public class PageOverview extends StackPane
         //openSaveButton.setId("hw-default-button");
         openSaveButton.setOnAction(actionEvent ->
         {
-            if (saveManager.displayOpenSaveUI())
-            {
+            if (saveManager.displayOpenSaveUI()) {
                 ApplicationCore.s_setApplicationState(new PageOverviewStateData());
             }
         });
@@ -155,8 +150,7 @@ public class PageOverview extends StackPane
 
         newButton.setOnAction(actionEvent ->
         {
-            if (saveManager.displayNewSaveUI())
-            {
+            if (saveManager.displayNewSaveUI()) {
                 ApplicationCore.s_setApplicationState(new PageOverviewStateData());
             }
         });
@@ -207,10 +201,8 @@ public class PageOverview extends StackPane
             disconnectAlert.setTitle("Disconnect");
             disconnectAlert.setHeaderText("Disconnect");
             Optional<ButtonType> result = disconnectAlert.showAndWait();
-            if(result.isPresent())
-            {
-                if(result.get() == ButtonType.YES)
-                {
+            if (result.isPresent()) {
+                if (result.get() == ButtonType.YES) {
                     // Disconnect
                     Logger.log(LogLevel.INFO, getClass().getName(),
                             "Disconnecting from Hardware Monitor '" + HOSTNAME + "'");
@@ -243,29 +235,23 @@ public class PageOverview extends StackPane
         {
             String pageTitle = "None";
             boolean success = false;
-            while (!success)
-            {
+            while (!success) {
                 TextInputDialog textInputDialog = new TextInputDialog();
                 textInputDialog.setTitle("Enter Page Name");
                 textInputDialog.setHeaderText("Enter Page Name");
                 textInputDialog.setContentText("Enter a name for your page:");
                 Optional<String> result = textInputDialog.showAndWait();
-                if (result.isPresent())
-                {
-                    if (!result.get().isEmpty() && !result.get().replaceAll(" ", "").isEmpty())
-                    {
+                if (result.isPresent()) {
+                    if (!result.get().isEmpty() && !result.get().replaceAll(" ", "").isEmpty()) {
                         pageTitle = result.get();
                         success = true;
                     }
-                }
-                else
-                {
+                } else {
                     break;
                 }
             }
 
-            if (success)
-            {
+            if (success) {
                 PageData pageData = PageGenerator.generatePage(pageTitle);
                 saveManager.getSaveData().addPageData(pageData);
                 addPageInfoUI(pageData);
@@ -276,8 +262,7 @@ public class PageOverview extends StackPane
         super.getChildren().addAll(contentsPane, topLeftGroup, topRightGroup);
     }
 
-    public void loadPageIcons()
-    {
+    public void loadPageIcons() {
         pageOverviewList = new FlowPane();
         pageOverviewList.setId("overview-pane-list-pane");
         pageOverviewList.setHgap(H_GAP);
@@ -287,8 +272,7 @@ public class PageOverview extends StackPane
             // Re-calculate the widths of the page overview buttons
             elementWidth = (int) ((pageOverviewList.getWidth() - (NUM_SPACES_PER_ROW * PageOverview.H_GAP)) /
                     NUM_ELEMENTS_ROW);
-            for (PageInfo pageInfo : pageInfoList)
-            {
+            for (PageInfo pageInfo : pageInfoList) {
                 pageInfo.setMinSize(elementWidth, elementWidth / ELEMENT_WIDTH_HEIGHT_RATIO);
             }
             newPageButton.setMinSize(elementWidth, elementWidth / ELEMENT_WIDTH_HEIGHT_RATIO);
@@ -296,8 +280,7 @@ public class PageOverview extends StackPane
 
         pageInfoList = new ArrayList<>();
 
-        for (int i = 0; i < saveManager.getSaveData().getPageDataList().size(); i++)
-        {
+        for (int i = 0; i < saveManager.getSaveData().getPageDataList().size(); i++) {
             PageData pageData = saveManager.getSaveData().getPageDataList().get(i);
             PageInfo pageInfo = new PageInfo(pageData, elementWidth, ELEMENT_HEIGHT);
             pageInfo.setOnMouseClicked(mouseEvent -> ApplicationCore.s_setApplicationState(new PageEditorStateData(pageData)));
@@ -309,13 +292,11 @@ public class PageOverview extends StackPane
         pageOverviewList.getChildren().add(newPageButton);
     }
 
-    public void setNewPageListener(EventHandler eventHandler)
-    {
+    public void setNewPageListener(EventHandler eventHandler) {
         newPageButton.setOnAction(eventHandler);
     }
 
-    public void addPageInfoUI(PageData page)
-    {
+    public void addPageInfoUI(PageData page) {
         ApplicationCore.s_setApplicationState(new PageEditorStateData(page));
     }
 }

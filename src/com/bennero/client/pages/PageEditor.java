@@ -30,10 +30,13 @@ import com.bennero.client.states.PageEditorStateData;
 import com.bennero.client.states.PageOverviewStateData;
 import com.bennero.client.states.SensorEditorStateData;
 import com.bennero.client.states.SensorSelectionStateData;
-import com.bennero.client.ui.*;
+import com.bennero.client.ui.ColouredTextField;
+import com.bennero.client.ui.EditableSensor;
+import com.bennero.client.ui.PageOptions;
+import com.bennero.client.ui.TextFieldEditPane;
+import com.bennero.client.util.GridUtils;
 import com.bennero.common.PageData;
 import com.bennero.common.Sensor;
-import com.bennero.client.util.GridUtils;
 import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -55,12 +58,11 @@ import java.util.ArrayList;
  * on the hardware monitor). It is similar to the hardware monitor page display however it also provides some options to
  * edit some components.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class PageEditor extends StackPane
-{
+public class PageEditor extends StackPane {
     private final static Insets PAGE_PADDING = new Insets(10, 10, 10, 10);
     private final Background HOVER_BACKGROUND;
     private final Color HIGHLIGHT_COLOUR_TRANSPARENT;
@@ -83,8 +85,7 @@ public class PageEditor extends StackPane
     private SaveManager saveManager;
     private NetworkClient networkClient;
 
-    public PageEditor(PageData pageData)
-    {
+    public PageEditor(PageData pageData) {
         this.pageData = pageData;
         this.saveManager = SaveManager.getInstance();
         this.networkClient = NetworkClient.getInstance();
@@ -123,19 +124,14 @@ public class PageEditor extends StackPane
                     (observableValue, integer, t1) ->
                     {
                         pageData.setTitleEnabled(t1);
-                        if (!t1)
-                        {
+                        if (!t1) {
                             headerPane.getChildren().remove(titleStackPane);
-                        }
-                        else
-                        {
+                        } else {
                             initTitle();
 
                             // To make sure that the sub-title appears below the title
-                            if (pageData.isSubtitleEnabled())
-                            {
-                                if (subtitleStackPane != null)
-                                {
+                            if (pageData.isSubtitleEnabled()) {
+                                if (subtitleStackPane != null) {
                                     headerPane.getChildren().remove(subtitleStackPane);
                                 }
 
@@ -148,12 +144,9 @@ public class PageEditor extends StackPane
                     (observableValue, integer, t1) ->
                     {
                         pageData.setSubtitleEnabled(t1);
-                        if (!t1)
-                        {
+                        if (!t1) {
                             headerPane.getChildren().remove(subtitleStackPane);
-                        }
-                        else
-                        {
+                        } else {
                             initSubtitle();
                         }
 
@@ -214,8 +207,7 @@ public class PageEditor extends StackPane
         super.getChildren().add(optionsButton);
     }
 
-    protected void initGrid()
-    {
+    protected void initGrid() {
         placedSensors = new ArrayList<>();
         sensorPane = new GridPane();
         sensorPane.setPadding(new Insets(15, 15, 15, 15));
@@ -227,15 +219,13 @@ public class PageEditor extends StackPane
         // Configure the grid pane cells to be of equal size
         RowConstraints rc = new RowConstraints();
         rc.setPercentHeight(100d / pageData.getRows());
-        for (int y = 0; y < pageData.getRows(); y++)
-        {
+        for (int y = 0; y < pageData.getRows(); y++) {
             sensorPane.getRowConstraints().add(rc);
         }
 
         ColumnConstraints cc = new ColumnConstraints();
         cc.setPercentWidth(100d / pageData.getColumns());
-        for (int x = 0; x < pageData.getColumns(); x++)
-        {
+        for (int x = 0; x < pageData.getColumns(); x++) {
             sensorPane.getColumnConstraints().add(cc);
         }
 
@@ -246,15 +236,12 @@ public class PageEditor extends StackPane
         borderPane.setCenter(sensorPane);
     }
 
-    private double getGridWidth()
-    {
+    private double getGridWidth() {
         double width = 0.0;
         ObservableList<Node> nodes = sensorPane.getChildren();
-        for(int i = 0; i < nodes.size(); i++)
-        {
+        for (int i = 0; i < nodes.size(); i++) {
             Node node = nodes.get(i);
-            if(GridPane.getRowIndex(node) == 0)
-            {
+            if (GridPane.getRowIndex(node) == 0) {
                 width += node.getBoundsInParent().getWidth();
             }
         }
@@ -272,14 +259,11 @@ public class PageEditor extends StackPane
     }
 
 
-    private Node findNode(int row, int column)
-    {
+    private Node findNode(int row, int column) {
         ObservableList<Node> nodes = sensorPane.getChildren();
-        for(int i = 0; i < nodes.size(); i++)
-        {
+        for (int i = 0; i < nodes.size(); i++) {
             Node node = nodes.get(i);
-            if(GridPane.getRowIndex(node) == row && GridPane.getColumnIndex(node) == column)
-            {
+            if (GridPane.getRowIndex(node) == row && GridPane.getColumnIndex(node) == column) {
                 return node;
             }
         }
@@ -288,8 +272,7 @@ public class PageEditor extends StackPane
     }
 
 
-    protected void placeSensors(PageData pageData)
-    {
+    protected void placeSensors(PageData pageData) {
         this.pageData = pageData;
 
         Image editIcon = new Image(getClass().getClassLoader().getResourceAsStream("edit_icon.png"));
@@ -297,39 +280,36 @@ public class PageEditor extends StackPane
         Image moveIcon = new Image(getClass().getClassLoader().getResourceAsStream("move_icon.png"));
 
         // Add sensors to page
-        for (Sensor sensor : pageData.getSensorList())
-        {
-            if (!GridUtils.isSpaceTaken(placedSensors, sensor))
-            {
+        for (Sensor sensor : pageData.getSensorList()) {
+            if (!GridUtils.isSpaceTaken(placedSensors, sensor)) {
                 EditableSensor editableSensor = new EditableSensor(HIGHLIGHT_COLOUR, editIcon, removeIcon, moveIcon,
                         sensor,
-                actionEvent ->
-                {
-                    // Edit button has been selected
-                    ApplicationCore.s_setApplicationState(
-                            new SensorEditorStateData(pageData, sensor, new PageEditorStateData(pageData)));
-                },
-                actionEvent ->
-                {
-                    // Delete button has been selected
-                    // Ask before deleting
-                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Remove Sensor?", ButtonType.YES, ButtonType.NO);
-                    alert.setContentText("Are you sure you want to remove this sensor from the page?");
-                    alert.showAndWait();
+                        actionEvent ->
+                        {
+                            // Edit button has been selected
+                            ApplicationCore.s_setApplicationState(
+                                    new SensorEditorStateData(pageData, sensor, new PageEditorStateData(pageData)));
+                        },
+                        actionEvent ->
+                        {
+                            // Delete button has been selected
+                            // Ask before deleting
+                            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Remove Sensor?", ButtonType.YES, ButtonType.NO);
+                            alert.setContentText("Are you sure you want to remove this sensor from the page?");
+                            alert.showAndWait();
 
-                    if (alert.getResult() == ButtonType.YES)
-                    {
-                        pageData.removeSensor(sensor);
+                            if (alert.getResult() == ButtonType.YES) {
+                                pageData.removeSensor(sensor);
 
-                        borderPane.getChildren().remove(sensorPane);
-                        initGrid();
-                        placeSensors(pageData);
-                        saveManager.getSaveData().save();
+                                borderPane.getChildren().remove(sensorPane);
+                                initGrid();
+                                placeSensors(pageData);
+                                saveManager.getSaveData().save();
 
-                        // Send network message to remove the sensor
-                        NetworkClient.getInstance().writeRemoveSensorMessage((byte) sensor.getUniqueId(), (byte) pageData.getUniqueId());
-                    }
-                });
+                                // Send network message to remove the sensor
+                                NetworkClient.getInstance().writeRemoveSensorMessage((byte) sensor.getUniqueId(), (byte) pageData.getUniqueId());
+                            }
+                        });
 
                 editableSensor.setMoveButtonDragEvent(moveEvent ->
                 {
@@ -338,12 +318,11 @@ public class PageEditor extends StackPane
                     int prevCol = moveEvent.getPreviousColumn();
                     int prevRow = moveEvent.getPreviousRow();
 
-                    if(newRow + sensor.getRowSpan() <= pageData.getRows() &&
+                    if (newRow + sensor.getRowSpan() <= pageData.getRows() &&
                             newCol + sensor.getColumnSpan() <= pageData.getColumns() &&
                             newRow >= 0 &&
                             newCol >= 0 &&
-                            !GridUtils.isSpaceTaken(placedSensors, newCol, newRow, sensor.getColumnSpan(), sensor.getRowSpan(), sensor))
-                    {
+                            !GridUtils.isSpaceTaken(placedSensors, newCol, newRow, sensor.getColumnSpan(), sensor.getRowSpan(), sensor)) {
                         int rowSpan = sensor.getRowSpan();
                         int columnSpan = sensor.getColumnSpan();
 
@@ -388,29 +367,24 @@ public class PageEditor extends StackPane
                     MouseEvent mouseEvent = dragEvent.getMouseEvent();
 
                     boolean resized = false;
-                    if(dragEvent.isRightExpandable())
-                    {
+                    if (dragEvent.isRightExpandable()) {
                         resized = resizeRight(mouseEvent, sensor, editableSensor) || resized;
                     }
 
-                    if(dragEvent.isBottomExpandable())
-                    {
+                    if (dragEvent.isBottomExpandable()) {
                         resized = resizeBottom(mouseEvent, sensor, editableSensor) || resized;
                     }
 
-                    if(dragEvent.isLeftExpandable())
-                    {
+                    if (dragEvent.isLeftExpandable()) {
                         resized = resizeLeft(mouseEvent, sensor, editableSensor) || resized;
                     }
 
-                    if(dragEvent.isTopExpandable())
-                    {
+                    if (dragEvent.isTopExpandable()) {
                         resized = resizeTop(mouseEvent, sensor, editableSensor) || resized;
                     }
 
                     // If resized, update the hardware monitor to display it and also save the layout
-                    if(resized)
-                    {
+                    if (resized) {
                         saveManager.getSaveData().save();
 
                         // Send network message to remove the sensor
@@ -429,10 +403,8 @@ public class PageEditor extends StackPane
         }
     }
 
-    protected void initTitle()
-    {
-        if (pageData.isTitleEnabled())
-        {
+    protected void initTitle() {
+        if (pageData.isTitleEnabled()) {
             titleStackPane = new StackPane();
             titleTextField = new ColouredTextField(new Font(42), pageData.getTitle(), pageData.getTitleAlignment(),
                     pageData.getTitleColour());
@@ -445,8 +417,7 @@ public class PageEditor extends StackPane
                         alert.setContentText("Are you sure you want to remove the title from the page? (You can get it back under page options)");
 
                         alert.showAndWait();
-                        if (alert.getResult() == ButtonType.YES)
-                        {
+                        if (alert.getResult() == ButtonType.YES) {
                             headerPane.getChildren().remove(titleStackPane);
                             pageData.setTitleEnabled(false);
                             saveManager.getSaveData().save();
@@ -476,10 +447,8 @@ public class PageEditor extends StackPane
         }
     }
 
-    protected void initSubtitle()
-    {
-        if (pageData.isSubtitleEnabled())
-        {
+    protected void initSubtitle() {
+        if (pageData.isSubtitleEnabled()) {
             subtitleStackPane = new StackPane();
             subtitleTextField = new ColouredTextField(new Font(28), pageData.getSubtitle(),
                     pageData.getSubtitleAlignment(), pageData.getSubtitleColour());
@@ -492,8 +461,7 @@ public class PageEditor extends StackPane
                         alert.setContentText("Are you sure you want to remove the subheading from the page? (You can get it back under page options)");
 
                         alert.showAndWait();
-                        if (alert.getResult() == ButtonType.YES)
-                        {
+                        if (alert.getResult() == ButtonType.YES) {
                             headerPane.getChildren().remove(subtitleStackPane);
                             pageData.setSubtitleEnabled(false);
                             saveManager.getSaveData().save();
@@ -524,57 +492,46 @@ public class PageEditor extends StackPane
     }
 
     // returns null if no sensor in space
-    private Sensor getSensorByLocation(int column, int row)
-    {
+    private Sensor getSensorByLocation(int column, int row) {
         // Check if a placed sensor spans across the column and row provided
 
         boolean taken = false;
         Sensor placedSensor = null;
 
         // Check that no other sensor has been placed at that position
-        for (int i = 0; i < placedSensors.size() && !taken; i++)
-        {
+        for (int i = 0; i < placedSensors.size() && !taken; i++) {
             placedSensor = placedSensors.get(i);
             int placedStartColumn = placedSensor.getColumn();
             int placedEndColumn = placedStartColumn + placedSensor.getColumnSpan();
             int placedStartRow = placedSensor.getRow();
             int placedEndRow = placedStartRow + placedSensor.getRowSpan();
-            boolean withinRow = (row >= placedStartRow && row < placedEndRow) ;
+            boolean withinRow = (row >= placedStartRow && row < placedEndRow);
             boolean withinColumn = (column >= placedStartColumn && column < placedEndColumn);
 
-            if (withinRow && withinColumn)
-            {
+            if (withinRow && withinColumn) {
                 taken = true;
             }
         }
 
-        if(taken)
-        {
+        if (taken) {
             return placedSensor;
-        }
-        else
-        {
+        } else {
             return null;
         }
     }
 
-    private void placeAddSensorButtons()
-    {
+    private void placeAddSensorButtons() {
 
-        for (int column = 0; column < pageData.getColumns(); column++)
-        {
-            for (int row = 0; row < pageData.getRows(); row++)
-            {
-                if (!GridUtils.isSpaceTaken(placedSensors, column, row, 1, 1))
-                {
+        for (int column = 0; column < pageData.getColumns(); column++) {
+            for (int row = 0; row < pageData.getRows(); row++) {
+                if (!GridUtils.isSpaceTaken(placedSensors, column, row, 1, 1)) {
                     placeAddSensorButton(row, column);
                 }
             }
         }
     }
 
-    private void placeAddSensorButton(int row, int column)
-    {
+    private void placeAddSensorButton(int row, int column) {
         Button addSensorButton = new Button("+");
         addSensorButton.setId("add-button");
         addSensorButton.setBackground(new Background(new BackgroundFill(pageData.getColour().invert(),
@@ -595,8 +552,7 @@ public class PageEditor extends StackPane
     }
 
     // Returns true if the sensor has been resized
-    private boolean resizeRight(MouseEvent mouseEvent, Sensor sensor, EditableSensor editableSensor)
-    {
+    private boolean resizeRight(MouseEvent mouseEvent, Sensor sensor, EditableSensor editableSensor) {
         boolean resized = false;
 
         double currentX = mouseEvent.getSceneX();
@@ -605,16 +561,14 @@ public class PageEditor extends StackPane
         int sensorColumnSpan = sensor.getColumnSpan();
         int nextAvailableColumn = sensorColumn + sensorColumnSpan;
 
-        if(sensorColumnSpan > 1)
-        {
+        if (sensorColumnSpan > 1) {
             Bounds sensorBounds = editableSensor.localToScene(editableSensor.getBoundsInLocal());
             double startX = sensorBounds.getMinX();
             double partWidths = sensorBounds.getWidth() / sensorColumnSpan;
             int newColumnSpan = sensorColumnSpan - 1;
             double lastAvailableColumnEndX = startX + (partWidths * newColumnSpan);
 
-            if(currentX < lastAvailableColumnEndX)
-            {
+            if (currentX < lastAvailableColumnEndX) {
                 sensor.setColumnSpan(newColumnSpan);
                 GridPane.setColumnSpan(editableSensor, newColumnSpan);
 
@@ -627,8 +581,7 @@ public class PageEditor extends StackPane
             }
         }
 
-        if(nextAvailableColumn < pageData.getColumns())
-        {
+        if (nextAvailableColumn < pageData.getColumns()) {
             Node nextNode = gridArray[sensorRow][nextAvailableColumn];
             Bounds nextNodeBounds = nextNode.localToScene(nextNode.getBoundsInLocal());
             double nextNodeEndX = nextNodeBounds.getMaxX();
@@ -637,10 +590,9 @@ public class PageEditor extends StackPane
 
             // This checks if the mouse is passed the next nodes right side, it also checks that there is no sensor
             // covering that space
-            if(currentX > nextNodeEndX && !GridUtils.isRegionTaken(placedSensors,
+            if (currentX > nextNodeEndX && !GridUtils.isRegionTaken(placedSensors,
                     sensorColumn + sensorColumnSpan, sensorRow, sensorColumn + newColumnSpan,
-                    sensorRow + sensor.getRowSpan()))
-            {
+                    sensorRow + sensor.getRowSpan())) {
                 sensor.setColumnSpan(newColumnSpan);
                 GridPane.setColumnSpan(editableSensor, newColumnSpan);
                 removeUnusedNodesAfterExpansion(sensor);
@@ -653,8 +605,7 @@ public class PageEditor extends StackPane
     }
 
     // Returns true if the sensor has been resized
-    private boolean resizeBottom(MouseEvent mouseEvent, Sensor sensor, EditableSensor editableSensor)
-    {
+    private boolean resizeBottom(MouseEvent mouseEvent, Sensor sensor, EditableSensor editableSensor) {
         boolean resized = false;
 
         double currentY = mouseEvent.getSceneY();
@@ -663,16 +614,14 @@ public class PageEditor extends StackPane
         int sensorRowSpan = sensor.getRowSpan();
         int nextAvailableRow = sensorRow + sensorRowSpan;
 
-        if(sensorRowSpan > 1)
-        {
+        if (sensorRowSpan > 1) {
             Bounds sensorBounds = editableSensor.localToScene(editableSensor.getBoundsInLocal());
             double startY = sensorBounds.getMinY();
             double partHeights = sensorBounds.getHeight() / sensorRowSpan;
             int newRowSpan = sensorRowSpan - 1;
             double lastAvailableRowEndY = startY + (partHeights * newRowSpan);
 
-            if(currentY < lastAvailableRowEndY)
-            {
+            if (currentY < lastAvailableRowEndY) {
                 sensor.setRowSpan(newRowSpan);
                 GridPane.setRowSpan(editableSensor, newRowSpan);
 
@@ -685,8 +634,7 @@ public class PageEditor extends StackPane
             }
         }
 
-        if(nextAvailableRow < pageData.getRows())
-        {
+        if (nextAvailableRow < pageData.getRows()) {
             Node nextNode = gridArray[nextAvailableRow][sensorColumn];
             Bounds nextNodeBounds = nextNode.localToScene(nextNode.getBoundsInLocal());
             double nextNodeEndY = nextNodeBounds.getMaxY();
@@ -695,10 +643,9 @@ public class PageEditor extends StackPane
 
             // This checks if the mouse is passed the next nodes bottom side, it also checks that there is no sensor
             // covering that space
-            if(currentY > nextNodeEndY && !GridUtils.isRegionTaken(placedSensors, sensorColumn,
+            if (currentY > nextNodeEndY && !GridUtils.isRegionTaken(placedSensors, sensorColumn,
                     sensorRow + sensorRowSpan, sensorColumn + sensor.getColumnSpan(),
-                    sensorRow + newRowSpan))
-            {
+                    sensorRow + newRowSpan)) {
                 sensor.setRowSpan(newRowSpan);
                 GridPane.setRowSpan(editableSensor, newRowSpan);
 
@@ -712,8 +659,7 @@ public class PageEditor extends StackPane
     }
 
     // Returns true if the sensor has been resized
-    private boolean resizeLeft(MouseEvent mouseEvent, Sensor sensor, EditableSensor editableSensor)
-    {
+    private boolean resizeLeft(MouseEvent mouseEvent, Sensor sensor, EditableSensor editableSensor) {
         boolean resized = false;
 
         double currentX = mouseEvent.getSceneX();
@@ -721,14 +667,12 @@ public class PageEditor extends StackPane
         int sensorColumnSpan = sensor.getColumnSpan();
         int sensorRow = sensor.getRow();
 
-        if(sensorColumnSpan > 1)
-        {
+        if (sensorColumnSpan > 1) {
             Bounds sensorBounds = editableSensor.localToScene(editableSensor.getBoundsInLocal());
             double startX = sensorBounds.getMinX();
             double partWidths = sensorBounds.getWidth() / sensorColumnSpan;
             double secondPartStartX = startX + partWidths;
-            if(currentX > secondPartStartX)
-            {
+            if (currentX > secondPartStartX) {
                 // Move the sensor to the right and decrease the column span by one
                 int newColumnSpan = sensor.getColumnSpan() - 1;
 
@@ -751,16 +695,14 @@ public class PageEditor extends StackPane
         int leftNodeColumnIndex = sensorColumn - 1;
 
         // Check if any sensor takes up the space on the left of this sensor
-        if(leftNodeColumnIndex >= 0 && !GridUtils.isSpaceTaken(placedSensors, leftNodeColumnIndex, sensorRow,
-                1, sensor.getRowSpan()))
-        {
+        if (leftNodeColumnIndex >= 0 && !GridUtils.isSpaceTaken(placedSensors, leftNodeColumnIndex, sensorRow,
+                1, sensor.getRowSpan())) {
             // This means that the space is free
             Node leftNode = gridArray[sensorRow][leftNodeColumnIndex];
             Bounds leftNodeBounds = leftNode.localToScene(leftNode.getBoundsInLocal());
             double leftNodeStartX = leftNodeBounds.getMinX();
 
-            if(currentX < leftNodeStartX)
-            {
+            if (currentX < leftNodeStartX) {
                 int newColumnSpan = sensor.getColumnSpan() + 1;
 
                 // Remove both the left node and the sensor (sensor will be added back in the left nodes position)
@@ -786,8 +728,7 @@ public class PageEditor extends StackPane
     }
 
     // Returns true if the sensor has been resized
-    private boolean resizeTop(MouseEvent mouseEvent, Sensor sensor, EditableSensor editableSensor)
-    {
+    private boolean resizeTop(MouseEvent mouseEvent, Sensor sensor, EditableSensor editableSensor) {
         boolean resized = false;
 
         double currentY = mouseEvent.getSceneY();
@@ -795,14 +736,12 @@ public class PageEditor extends StackPane
         int sensorRowSpan = sensor.getRowSpan();
         int sensorColumn = sensor.getColumn();
 
-        if(sensorRowSpan > 1)
-        {
+        if (sensorRowSpan > 1) {
             Bounds sensorBounds = editableSensor.localToScene(editableSensor.getBoundsInLocal());
             double startY = sensorBounds.getMinY();
             double partHeights = sensorBounds.getHeight() / sensorRowSpan;
             double secondPartStartY = startY + partHeights;
-            if(currentY > secondPartStartY)
-            {
+            if (currentY > secondPartStartY) {
                 // Move the sensor down and decrease the row span by one
                 int newRowSpan = sensor.getRowSpan() - 1;
 
@@ -826,16 +765,15 @@ public class PageEditor extends StackPane
 
         //if(leftNodeColumnIndex >= 0 && !isSpaceTaken(leftNodeColumnIndex, sensorRow, 1, sensor.getRowSpan()))
         // Check if any sensor takes up the space above this sensor
-        if(aboveNodeRowIndex >= 0 && !GridUtils.isRegionTaken(placedSensors, sensorColumn, aboveNodeRowIndex,
-                sensorColumn + sensor.getColumnSpan(), sensorRow));
+        if (aboveNodeRowIndex >= 0 && !GridUtils.isRegionTaken(placedSensors, sensorColumn, aboveNodeRowIndex,
+                sensorColumn + sensor.getColumnSpan(), sensorRow)) ;
         {
             // Check if the mouse is at the beginning of the node above
             Node aboveNode = gridArray[aboveNodeRowIndex][sensorColumn];
             Bounds aboveNodeBounds = aboveNode.localToScene(aboveNode.getBoundsInLocal());
             double aboveNodeStartY = aboveNodeBounds.getMinY();
 
-            if(currentY < aboveNodeStartY)
-            {
+            if (currentY < aboveNodeStartY) {
                 int newRowSpan = sensor.getRowSpan() + 1;
 
                 // Remove both the left node and the sensor (sensor will be added back in the left nodes position)
@@ -860,18 +798,13 @@ public class PageEditor extends StackPane
         return resized;
     }
 
-    private void removeUnusedNodesAfterExpansion(Sensor sensor)
-    {
+    private void removeUnusedNodesAfterExpansion(Sensor sensor) {
         // Remove all nodes in area (except for the sensor itself)
-        for(int y = sensor.getRow(); y < sensor.getRow() + sensor.getRowSpan(); y++)
-        {
-            for(int x = sensor.getColumn(); x < sensor.getColumn() + sensor.getColumnSpan(); x++)
-            {
-                if(!(y == sensor.getRow() && x == sensor.getColumn()))
-                {
+        for (int y = sensor.getRow(); y < sensor.getRow() + sensor.getRowSpan(); y++) {
+            for (int x = sensor.getColumn(); x < sensor.getColumn() + sensor.getColumnSpan(); x++) {
+                if (!(y == sensor.getRow() && x == sensor.getColumn())) {
                     Node unusedNode = gridArray[y][x];
-                    if(unusedNode != null)
-                    {
+                    if (unusedNode != null) {
                         sensorPane.getChildren().remove(unusedNode);
                         gridArray[y][x] = null;
                     }
@@ -880,15 +813,11 @@ public class PageEditor extends StackPane
         }
     }
 
-    private void populateFreedSpace(int freeRowStart, int freeRowEnd, int freeColumnStart, int freeColumnEnd)
-    {
-        for (int y = Math.max(freeRowStart, 0); y < Math.min(freeRowEnd, pageData.getRows()); y++)
-        {
-            for(int x = Math.max(freeColumnStart, 0); x < Math.min(freeColumnEnd, pageData.getColumns()); x++)
-            {
+    private void populateFreedSpace(int freeRowStart, int freeRowEnd, int freeColumnStart, int freeColumnEnd) {
+        for (int y = Math.max(freeRowStart, 0); y < Math.min(freeRowEnd, pageData.getRows()); y++) {
+            for (int x = Math.max(freeColumnStart, 0); x < Math.min(freeColumnEnd, pageData.getColumns()); x++) {
                 // Only place an add sensor button if the space is free
-                if (gridArray[y][x] == null)
-                {
+                if (gridArray[y][x] == null) {
                     // Place an add sensor button on the cell that has been freed up
                     placeAddSensorButton(y, x);
                 }
@@ -903,20 +832,16 @@ public class PageEditor extends StackPane
                                              int excludeRowStart,
                                              int excludeRowEnd,
                                              int excludeColumnStart,
-                                             int excludeColumnEnd)
-    {
-        for (int y = Math.max(freeRowStart, 0); y < Math.min(freeRowEnd, pageData.getRows()); y++)
-        {
-            for(int x = Math.max(freeColumnStart, 0); x < Math.min(freeColumnEnd, pageData.getColumns()); x++)
-            {
+                                             int excludeColumnEnd) {
+        for (int y = Math.max(freeRowStart, 0); y < Math.min(freeRowEnd, pageData.getRows()); y++) {
+            for (int x = Math.max(freeColumnStart, 0); x < Math.min(freeColumnEnd, pageData.getColumns()); x++) {
                 // Check if the x, y co-ordinates are within the excluded space, if they are, do not place the button
                 boolean inExcludedRow = y >= excludeRowStart && y < excludeRowEnd;
                 boolean inExcludedColumn = x >= excludeColumnStart && x < excludeColumnEnd;
                 boolean excludePos = inExcludedRow && inExcludedColumn;
 
                 // Only place an add sensor button if the space is free
-                if (!excludePos && gridArray[y][x] == null)
-                {
+                if (!excludePos && gridArray[y][x] == null) {
                     // Place an add sensor button on the cell that has been freed up
                     placeAddSensorButton(y, x);
                 }
@@ -931,19 +856,15 @@ public class PageEditor extends StackPane
                                     int excludeRowStart,
                                     int excludeRowEnd,
                                     int excludeColStart,
-                                    int excludeColEnd)
-    {
-        for (int y = Math.max(rowStart, 0); y < Math.min(rowEnd, pageData.getRows()); y++)
-        {
-            for (int x = Math.max(colStart, 0); x < Math.min(colEnd, pageData.getColumns()); x++)
-            {
+                                    int excludeColEnd) {
+        for (int y = Math.max(rowStart, 0); y < Math.min(rowEnd, pageData.getRows()); y++) {
+            for (int x = Math.max(colStart, 0); x < Math.min(colEnd, pageData.getColumns()); x++) {
                 // Check if the x, y co-ordinates are within the excluded space, if they are, do not free the space
                 boolean inExcludedRow = y >= excludeRowStart && y < excludeRowEnd;
                 boolean inExcludedColumn = x >= excludeColStart && x < excludeColEnd;
                 boolean excludePos = inExcludedRow && inExcludedColumn;
 
-                if(!excludePos)
-                {
+                if (!excludePos) {
                     Node temp = gridArray[y][x];
                     sensorPane.getChildren().remove(temp);
                     gridArray[y][x] = null;

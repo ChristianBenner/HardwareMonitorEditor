@@ -36,18 +36,17 @@ import javafx.scene.paint.Color;
  * provides many options of pre-defined colours that the user can select from. This allows the user to easily select a
  * colour if they like one that they see.
  *
- * @see         ColourTab
- * @see         Tab
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see ColourTab
+ * @see Tab
+ * @since 1.0
  */
-public class PresetTab extends Tab implements ColourTab
-{
+public class PresetTab extends Tab implements ColourTab {
     private PresetColourButton currentlySelected;
     private ChangeListener<Color> handler;
-    public PresetTab()
-    {
+
+    public PresetTab() {
         super("Presets");
 
         GridPane gridPane = new GridPane();
@@ -105,23 +104,20 @@ public class PresetTab extends Tab implements ColourTab
 
         int row = 0;
         final int PER_ROW = 8;
-        for (int i = 0; i < colorList.length; i++)
-        {
+        for (int i = 0; i < colorList.length; i++) {
             PresetColourButton presetColourButton = new PresetColourButton(colorList[i]);
             presetColourButton.setOnAction(actionEvent ->
             {
                 setColourData(presetColourButton.getColour());
 
-                if (currentlySelected != null)
-                {
+                if (currentlySelected != null) {
                     currentlySelected.deselect();
                 }
 
                 presetColourButton.select();
                 currentlySelected = presetColourButton;
 
-                if (handler != null)
-                {
+                if (handler != null) {
                     handler.changed(null, null, presetColourButton.getColour());
                 }
             });
@@ -137,50 +133,40 @@ public class PresetTab extends Tab implements ColourTab
     }
 
     @Override
-    public void setColourData(Color colourData)
-    {
-        if (currentlySelected != null)
-        {
+    public void setColourData(Color colourData) {
+        if (currentlySelected != null) {
             this.currentlySelected.deselect();
             this.currentlySelected = null;
         }
     }
 
     @Override
-    public void setHandler(ChangeListener<Color> handler, Color colourIn)
-    {
+    public void setHandler(ChangeListener<Color> handler, Color colourIn) {
         setColourData(colourIn);
         this.handler = handler;
     }
 
     @Override
-    public void removeHandler()
-    {
+    public void removeHandler() {
         handler = null;
     }
 
-    class PresetColourButton extends Button
-    {
+    class PresetColourButton extends Button {
         private Color colour;
         private boolean selected;
 
-        public PresetColourButton(Color colour)
-        {
+        public PresetColourButton(Color colour) {
             super("");
             super.setBackground(new Background(new BackgroundFill(colour, CornerRadii.EMPTY, Insets.EMPTY)));
             super.setPrefSize(30.0, 30.0);
             super.setMaxSize(30.0, 30.0);
             super.hoverProperty().addListener((observableValue, aBoolean, hover) ->
             {
-                if (!selected)
-                {
-                    if (hover)
-                    {
+                if (!selected) {
+                    if (hover) {
                         setBorder(new Border(new BorderStroke(colour.darker(), BorderStrokeStyle.SOLID,
                                 CornerRadii.EMPTY, new BorderWidths(2))));
-                    }
-                    else
-                    {
+                    } else {
                         setBorder(Border.EMPTY);
                     }
                 }
@@ -190,20 +176,17 @@ public class PresetTab extends Tab implements ColourTab
             this.selected = false;
         }
 
-        public Color getColour()
-        {
+        public Color getColour() {
             return colour;
         }
 
-        public void select()
-        {
+        public void select() {
             this.selected = true;
             super.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY,
                     new BorderWidths(2), new Insets(0))));
         }
 
-        public void deselect()
-        {
+        public void deselect() {
             this.selected = false;
             super.setBorder(Border.EMPTY);
         }

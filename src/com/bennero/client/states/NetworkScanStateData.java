@@ -35,13 +35,12 @@ import javafx.scene.Node;
  * graphical user interface does not have to be loaded into memory if it is not in use - it can be loaded or destroyed
  * at any time)
  *
- * @see         StateData
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see StateData
+ * @since 1.0
  */
-public class NetworkScanStateData extends StateData
-{
+public class NetworkScanStateData extends StateData {
     private static final String NAME = "NETWORK_SCAN";
     private final String information;
     private NetworkScanInfoPage networkScanInfoPage;
@@ -50,8 +49,7 @@ public class NetworkScanStateData extends StateData
     private boolean connectToLast;
     private ConnectionInformation lastConnectedDevice;
 
-    public NetworkScanStateData(String information, EventHandler showOtherDevices)
-    {
+    public NetworkScanStateData(String information, EventHandler showOtherDevices) {
         super(NAME, TransitionType.FADE);
         this.information = information;
         this.showOtherDevices = showOtherDevices;
@@ -62,46 +60,37 @@ public class NetworkScanStateData extends StateData
     }
 
     @Override
-    public Node createGUI()
-    {
+    public Node createGUI() {
         networkScanInfoPage = new NetworkScanInfoPage(information, showOtherDevices);
         networkScanInfoPage.setNumberOfFoundDevices(numberOfFoundDevices);
         return networkScanInfoPage;
     }
 
-    public ConnectionInformation getLastConnectedDevice()
-    {
+    public ConnectionInformation getLastConnectedDevice() {
         return lastConnectedDevice;
     }
 
-    public void setLastConnectedDevice(ConnectionInformation lastConnectedDevice)
-    {
+    public void setLastConnectedDevice(ConnectionInformation lastConnectedDevice) {
         this.lastConnectedDevice = lastConnectedDevice;
     }
 
-    public void setConnectToLast(boolean state)
-    {
+    public void setConnectToLast(boolean state) {
         this.connectToLast = state;
     }
 
-    public boolean shouldConnectToLast()
-    {
+    public boolean shouldConnectToLast() {
         return connectToLast;
     }
 
-    public int getNumberOfFoundDevices()
-    {
+    public int getNumberOfFoundDevices() {
         return numberOfFoundDevices;
     }
 
-    public void setNumberOfFoundDevices(int numberOfFoundDevices)
-    {
+    public void setNumberOfFoundDevices(int numberOfFoundDevices) {
         this.numberOfFoundDevices = numberOfFoundDevices;
 
-        if (networkScanInfoPage != null)
-        {
+        if (networkScanInfoPage != null) {
             networkScanInfoPage.setNumberOfFoundDevices(numberOfFoundDevices);
-            System.out.println("SETTING NUMBER OF FOUND DEVICES TO " + numberOfFoundDevices);
         }
     }
 }

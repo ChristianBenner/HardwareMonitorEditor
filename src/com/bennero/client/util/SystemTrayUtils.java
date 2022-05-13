@@ -26,11 +26,10 @@ package com.bennero.client.util;
 /**
  * Some basic static utility functions for handling adding and removing the app to the OS system tray.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class SystemTrayUtils
-{
+public class SystemTrayUtils {
 
 }

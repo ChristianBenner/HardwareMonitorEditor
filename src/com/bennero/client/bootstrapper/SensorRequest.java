@@ -25,18 +25,21 @@ package com.bennero.client.bootstrapper;
 
 import com.bennero.client.core.SensorData;
 import com.bennero.client.core.SensorManager;
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
 import javafx.application.Platform;
 
 /**
  * SensorRequest is how to register a tracked hardware sensor to the application (not add to a page as a graphic). This
  * is used by the bootstrapper to provide and update hardware sensor information
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class SensorRequest
-{
+public class SensorRequest {
+    private static final String LOGGER_TAG = SensorRequest.class.getSimpleName();
+
     private final SensorData sensorData;
 
     public SensorRequest(int id,
@@ -44,17 +47,19 @@ public class SensorRequest
                          float max,
                          byte sensorType,
                          String hardwareType,
-                         float initialValue)
-    {
-        System.out.println("Received sensor request: [ID: " + id + "], [Name: " + name + "], [Max: " + max +
-                "], [SensorType: " + sensorType + "], [HardwareType: " + hardwareType + "], [InitialValue: " +
-                initialValue + "]");
+                         float initialValue) {
+        Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Received sensor request: [ID: " + id + "], [Name: " + name +
+                "], [Max: " + max + "], [SensorType: " + sensorType + "], [HardwareType: " + hardwareType +
+                "], [InitialValue: " + initialValue + "]");
         this.sensorData = new SensorData(id, name, max, sensorType, hardwareType, initialValue);
         SensorManager.getInstance().addSensorData(sensorData);
     }
 
-    public void setValue(float value)
-    {
+    public void setValue(float value) {
         Platform.runLater(() -> sensorData.setValue(value));
+    }
+
+    public float getMax() {
+        return sensorData.getMax();
     }
 }

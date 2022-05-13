@@ -36,29 +36,24 @@ import javafx.scene.text.TextAlignment;
  * An information pane that includes a title, subtitle, loading icon spinner and an optional programmable button to help
  * navigate away from the page
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class LoadingInformationPage extends StackPane
-{
-    public LoadingInformationPage(String title, String subtitle)
-    {
+public class LoadingInformationPage extends StackPane {
+    public LoadingInformationPage(String title, String subtitle) {
         init(title, subtitle, null, null);
     }
 
-    public LoadingInformationPage(String title)
-    {
+    public LoadingInformationPage(String title) {
         init(title, null, null, null);
     }
 
-    public LoadingInformationPage(String title, String subtitle, String buttonText, EventHandler eventHandler)
-    {
+    public LoadingInformationPage(String title, String subtitle, String buttonText, EventHandler eventHandler) {
         init(title, subtitle, buttonText, eventHandler);
     }
 
-    private void init(String title, String info, String buttonText, EventHandler buttonEvent)
-    {
+    private void init(String title, String info, String buttonText, EventHandler buttonEvent) {
         super.setId("standard-pane");
 
         VBox slide = new VBox();
@@ -73,8 +68,7 @@ public class LoadingInformationPage extends StackPane
         titleLabel.setTextAlignment(TextAlignment.CENTER);
         slide.getChildren().add(titleLabel);
 
-        if (info != null)
-        {
+        if (info != null) {
             Label infoLabel = new Label(info);
             infoLabel.setId("hw-welcome-page-subtitle");
             infoLabel.setWrapText(true);
@@ -85,8 +79,7 @@ public class LoadingInformationPage extends StackPane
         ProgressIndicator progressIndicator = new ProgressIndicator();
         slide.getChildren().add(progressIndicator);
 
-        if (buttonEvent != null && buttonText != null)
-        {
+        if (buttonEvent != null && buttonText != null) {
             Button button = new Button(buttonText);
             button.setId("hw-default-button");
             button.setOnAction(buttonEvent);

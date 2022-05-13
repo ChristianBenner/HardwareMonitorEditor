@@ -47,12 +47,11 @@ import static com.bennero.common.Skin.*;
  * many different types of gauges and then customise each attribute of the selected gauge type. Attributes such as
  * colour and text can be customised.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class SensorEditor extends BorderPane
-{
+public class SensorEditor extends BorderPane {
     private ColourEditor colourEditor;
     private VBox editOptions;
     private VBox interchangeableEditOptions;
@@ -61,8 +60,7 @@ public class SensorEditor extends BorderPane
 
     private SaveManager saveManager;
 
-    public SensorEditor(PageData pageData, Sensor sensor, StateData backButtonState)
-    {
+    public SensorEditor(PageData pageData, Sensor sensor, StateData backButtonState) {
         this.saveManager = SaveManager.getInstance();
 
         super.setBackground(new Background(new BackgroundFill(Color.DARKGREY, CornerRadii.EMPTY, Insets.EMPTY)));
@@ -89,8 +87,7 @@ public class SensorEditor extends BorderPane
                 SkinHelper.getNames(),
                 (observableValue, s, selected) ->
                 {
-                    if (SkinHelper.containsSkin(selected))
-                    {
+                    if (SkinHelper.containsSkin(selected)) {
                         sensor.setSkin(SkinHelper.getByteCode(selected));
                     }
 
@@ -153,29 +150,23 @@ public class SensorEditor extends BorderPane
         footerPane.setRight(doneButton);
         doneButton.setOnAction(actionEvent ->
         {
-            if (!pageData.containsSensor(sensor))
-            {
+            if (!pageData.containsSensor(sensor)) {
                 // Attempting to add new sensor to page, check space first
-                if (pageData.isSpaceFree(sensor))
-                {
+                if (pageData.isSpaceFree(sensor)) {
                     pageData.addSensor(sensor);
                     saveManager.getSaveData().save();
 
                     // Send the page sensor data to the client
-                    NetworkClient.getInstance().writeSensorMessage(sensor, (byte)pageData.getUniqueId());
+                    NetworkClient.getInstance().writeSensorMessage(sensor, (byte) pageData.getUniqueId());
 
                     ApplicationCore.s_setApplicationState(new PageEditorStateData(pageData));
-                }
-                else
-                {
+                } else {
                     // Error pop-up because it will not fit
                     Alert alert = new Alert(Alert.AlertType.WARNING, "Cannot Fit", ButtonType.OK);
                     alert.setContentText("The sensor will not fit with the specified row and column spans, another sensor is in the way. Please adjust the values");
                     alert.showAndWait();
                 }
-            }
-            else
-            {
+            } else {
                 // This is just a sensor edit, save and display page editor
                 saveManager.getSaveData().save();
                 ApplicationCore.s_setApplicationState(new PageEditorStateData(pageData));
@@ -188,81 +179,66 @@ public class SensorEditor extends BorderPane
         pageTitle.setId("pane-title");
     }
 
-    private void loadSkinSpecificUI(byte skin, Sensor sensor)
-    {
+    private void loadSkinSpecificUI(byte skin, Sensor sensor) {
         editOptions.getChildren().remove(interchangeableEditOptions);
         interchangeableEditOptions = new VBox();
         editOptions.getChildren().add(interchangeableEditOptions);
 
         // Add UI for supported customisations only
-        if (SkinHelper.checkSupport(skin, FOREGROUND_BASE_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, FOREGROUND_BASE_COLOUR_SUPPORTED)) {
             addForegroundBaseColourUI(sensor);
         }
 
-        if (SkinHelper.checkSupport(skin, TITLE_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, TITLE_COLOUR_SUPPORTED)) {
             addTitleColourUI(sensor);
         }
 
-        if (SkinHelper.checkSupport(skin, VALUE_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, VALUE_COLOUR_SUPPORTED)) {
             addValueColourUI(sensor);
         }
 
-        if (SkinHelper.checkSupport(skin, UNIT_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, UNIT_COLOUR_SUPPORTED)) {
             addUnitColourUI(sensor);
         }
 
-        if (SkinHelper.checkSupport(skin, BAR_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, BAR_COLOUR_SUPPORTED)) {
             addBarColourUI(sensor);
         }
 
-        if (SkinHelper.checkSupport(skin, AVERAGE_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, AVERAGE_COLOUR_SUPPORTED)) {
             addAverageUI(sensor);
         }
 
-        if (SkinHelper.checkSupport(skin, NEEDLE_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, NEEDLE_COLOUR_SUPPORTED)) {
             addNeedleColourUI(sensor);
         }
 
-        if (SkinHelper.checkSupport(skin, KNOB_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, KNOB_COLOUR_SUPPORTED)) {
             addKnobColourUI(sensor);
         }
 
-        if (SkinHelper.checkSupport(skin, THRESHOLD_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, THRESHOLD_COLOUR_SUPPORTED)) {
             addThresholdUI(sensor);
         }
 
-        if (SkinHelper.checkSupport(skin, BAR_BACKGROUND_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, BAR_BACKGROUND_COLOUR_SUPPORTED)) {
             addBarBackgroundColourUI(sensor);
         }
 
-        if (SkinHelper.checkSupport(skin, TICK_LABEL_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, TICK_LABEL_COLOUR_SUPPORTED)) {
             addTickLabelColourUI(sensor);
         }
 
-        if (SkinHelper.checkSupport(skin, TICK_MARK_COLOUR_SUPPORTED))
-        {
+        if (SkinHelper.checkSupport(skin, TICK_MARK_COLOUR_SUPPORTED)) {
             addTickMarkColourUI(sensor);
         }
     }
 
-    private void loadSkinSpecificUI(String skin, Sensor sensor)
-    {
+    private void loadSkinSpecificUI(String skin, Sensor sensor) {
         loadSkinSpecificUI(SkinHelper.getByteCode(skin), sensor);
     }
 
-    private void addAverageUI(Sensor sensor)
-    {
+    private void addAverageUI(Sensor sensor) {
         final boolean ENABLED_BY_DEFAULT = false;
 
         BorderPane colourOptions = createColourOption(colourEditor, "Average Colour", sensor.getAverageColour(),
@@ -287,48 +263,42 @@ public class SensorEditor extends BorderPane
         interchangeableEditOptions.getChildren().add(averagePeriodGroup);
     }
 
-    private void addNeedleColourUI(Sensor sensor)
-    {
+    private void addNeedleColourUI(Sensor sensor) {
         BorderPane colourOptions = createColourOption(colourEditor, "Needle Colour", sensor.getNeedleColour(),
                 (observableValue, color, t1) -> sensor.setNeedleColour(t1));
 
         interchangeableEditOptions.getChildren().add(colourOptions);
     }
 
-    private void addValueColourUI(Sensor sensor)
-    {
+    private void addValueColourUI(Sensor sensor) {
         BorderPane colourOptions = createColourOption(colourEditor, "Value Colour", sensor.getValueColour(),
                 (observableValue, color, t1) -> sensor.setValueColour(t1));
 
         interchangeableEditOptions.getChildren().add(colourOptions);
     }
 
-    private void addUnitColourUI(Sensor sensor)
-    {
+    private void addUnitColourUI(Sensor sensor) {
         BorderPane colourOptions = createColourOption(colourEditor, "Unit Colour", sensor.getUnitColour(),
                 (observableValue, color, t1) -> sensor.setUnitColour(t1));
 
         interchangeableEditOptions.getChildren().add(colourOptions);
     }
 
-    private void addKnobColourUI(Sensor sensor)
-    {
+    private void addKnobColourUI(Sensor sensor) {
         BorderPane colourOptions = createColourOption(colourEditor, "Knob Colour", sensor.getKnobColour(),
                 (observableValue, color, t1) -> sensor.setKnobColour(t1));
 
         interchangeableEditOptions.getChildren().add(colourOptions);
     }
 
-    private void addBarColourUI(Sensor sensor)
-    {
+    private void addBarColourUI(Sensor sensor) {
         BorderPane colourOptions = createColourOption(colourEditor, "Bar Colour", sensor.getBarColour(),
                 (observableValue, color, t1) -> sensor.setBarColour(t1));
 
         interchangeableEditOptions.getChildren().add(colourOptions);
     }
 
-    private void addThresholdUI(Sensor sensor)
-    {
+    private void addThresholdUI(Sensor sensor) {
         BorderPane colourOptions = createColourOption(colourEditor, "Threshold Colour", sensor.getThresholdColour(),
                 (observableValue, color, t1) -> sensor.setThresholdColour(t1));
 
@@ -341,67 +311,56 @@ public class SensorEditor extends BorderPane
         interchangeableEditOptions.getChildren().add(thresholdValueGroup);
     }
 
-    private void addTitleColourUI(Sensor sensor)
-    {
+    private void addTitleColourUI(Sensor sensor) {
         BorderPane colourOptions = createColourOption(colourEditor, "Title Colour", sensor.getTitleColour(),
                 (observableValue, color, t1) -> sensor.setTitleColour(t1));
 
         interchangeableEditOptions.getChildren().add(colourOptions);
     }
 
-    private void addBarBackgroundColourUI(Sensor sensor)
-    {
+    private void addBarBackgroundColourUI(Sensor sensor) {
         BorderPane colourOptions = createColourOption(colourEditor, "Bar Background Colour", sensor.getBarBackgroundColour(),
                 (observableValue, color, t1) -> sensor.setBarBackgroundColour(t1));
 
         interchangeableEditOptions.getChildren().add(colourOptions);
     }
 
-    private void addForegroundBaseColourUI(Sensor sensor)
-    {
+    private void addForegroundBaseColourUI(Sensor sensor) {
         BorderPane colourOptions = createColourOption(colourEditor, "Foreground Colour", sensor.getTitleColour(),
                 (observableValue, color, t1) ->
                 {
                     sensor.setForegroundColour(t1);
 
                     // These reset the colours to show correctly on the graphic
-                    if (sensor.getNeedleColour() != null)
-                    {
+                    if (sensor.getNeedleColour() != null) {
                         sensor.setNeedleColour(sensor.getNeedleColour());
                     }
 
-                    if (sensor.getValueColour() != null)
-                    {
+                    if (sensor.getValueColour() != null) {
                         sensor.setValueColour(sensor.getValueColour());
                     }
 
-                    if (sensor.getUnitColour() != null)
-                    {
+                    if (sensor.getUnitColour() != null) {
                         sensor.setUnitColour(sensor.getUnitColour());
                     }
 
-                    if (sensor.getKnobColour() != null)
-                    {
+                    if (sensor.getKnobColour() != null) {
                         sensor.setKnobColour(sensor.getKnobColour());
                     }
 
-                    if (sensor.getBarColour() != null)
-                    {
+                    if (sensor.getBarColour() != null) {
                         sensor.setBarColour(sensor.getBarColour());
                     }
 
-                    if (sensor.getThresholdColour() != null)
-                    {
+                    if (sensor.getThresholdColour() != null) {
                         sensor.setThresholdColour(sensor.getThresholdColour());
                     }
 
-                    if (sensor.getTitleColour() != null)
-                    {
+                    if (sensor.getTitleColour() != null) {
                         sensor.setTitleColour(sensor.getTitleColour());
                     }
 
-                    if (sensor.getBarBackgroundColour() != null)
-                    {
+                    if (sensor.getBarBackgroundColour() != null) {
                         sensor.setBarBackgroundColour(sensor.getBarBackgroundColour());
                     }
                 });
@@ -409,16 +368,14 @@ public class SensorEditor extends BorderPane
         interchangeableEditOptions.getChildren().add(colourOptions);
     }
 
-    private void addTickLabelColourUI(Sensor sensor)
-    {
+    private void addTickLabelColourUI(Sensor sensor) {
         BorderPane colourOptions = createColourOption(colourEditor, "Tick Label Colour", sensor.getTickLabelColour(),
                 (observableValue, color, t1) -> sensor.setTickLabelColour(t1));
 
         interchangeableEditOptions.getChildren().add(colourOptions);
     }
 
-    private void addTickMarkColourUI(Sensor sensor)
-    {
+    private void addTickMarkColourUI(Sensor sensor) {
         BorderPane colourOptions = createColourOption(colourEditor, "Tick Label Colour", sensor.getTickMarkColour(),
                 (observableValue, color, t1) -> sensor.setTickMarkColour(t1));
 

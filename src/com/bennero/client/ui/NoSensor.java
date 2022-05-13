@@ -30,10 +30,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextAlignment;
 
-public class NoSensor extends VBox
-{
-    public NoSensor(String sensorName)
-    {
+public class NoSensor extends VBox {
+    public NoSensor(String sensorName) {
         super.setAlignment(Pos.CENTER);
 
         Image noSensorImage = new Image(getClass().getClassLoader().getResourceAsStream("no_sensor.png"));

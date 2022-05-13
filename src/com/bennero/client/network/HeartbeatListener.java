@@ -34,7 +34,6 @@ import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.util.concurrent.BlockingQueue;
 
 import static com.bennero.common.Constants.*;
 import static com.bennero.common.networking.NetworkUtils.readLong;
@@ -44,12 +43,11 @@ import static com.bennero.common.networking.NetworkUtils.readLong;
  * the monitor so it can determine if it is still connected to it. If no heartbeat is received within a specific timeout
  * interval, an event will be passed back. If connection is lost unexpectedly, an event will also be passed back.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class HeartbeatListener extends Thread
-{
+public class HeartbeatListener extends Thread {
     // Tag for logging
     private static final String TAG = HeartbeatListener.class.getSimpleName();
 
@@ -62,8 +60,7 @@ public class HeartbeatListener extends Thread
 
     public HeartbeatListener(int heartbeatTimeoutMilliseconds,
                              EventHandler noHeartbeatReceived,
-                             EventHandler lostConnection) throws IOException
-    {
+                             EventHandler lostConnection) throws IOException {
         serverSocket = new ServerSocket(HEARTBEAT_PORT);
         this.heartbeatTimeoutMilliseconds = heartbeatTimeoutMilliseconds;
         this.noHeartbeatReceived = noHeartbeatReceived;
@@ -71,97 +68,68 @@ public class HeartbeatListener extends Thread
         run = true;
     }
 
-    public void stopThread()
-    {
+    public void stopThread() {
         run = false;
 
-        try
-        {
+        try {
             serverSocket.close();
 
-            if(socket != null)
-            {
+            if (socket != null) {
                 socket.close();
             }
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public void run()
-    {
-        try
-        {
+    public void run() {
+        try {
             socket = serverSocket.accept();
             serverSocket.setSoTimeout(heartbeatTimeoutMilliseconds);
             socket.setSoTimeout(heartbeatTimeoutMilliseconds);
             InputStream is = socket.getInputStream();
-            while (run)
-            {
-                try
-                {
+            while (run) {
+                try {
                     byte[] bytes;
                     bytes = new byte[MESSAGE_NUM_BYTES];
                     is.read(bytes, 0, MESSAGE_NUM_BYTES);
                     readMessage(bytes);
-                }
-                catch (SocketTimeoutException se)
-                {
-                    if(run)
-                    {
+                } catch (SocketTimeoutException se) {
+                    if (run) {
                         se.printStackTrace();
                         noHeartbeatReceived.handle(new Event(null));
                         Logger.log(LogLevel.ERROR, TAG, "No heartbeat received");
                         run = false;
                     }
-                }
-                catch (Exception e)
-                {
-                    if(run)
-                    {
+                } catch (Exception e) {
+                    if (run) {
                         e.printStackTrace();
                         lostConnection.handle(new Event(null));
                         Logger.log(LogLevel.ERROR, TAG, "Socket unexpected connection loss");
                         run = false;
-                    }
-                    else
-                    {
+                    } else {
                         Logger.log(LogLevel.INFO, TAG, "Expected connection drop");
                     }
                 }
             }
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
-        try
-        {
+        try {
             serverSocket.close();
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void readMessage(byte[] bytes)
-    {
-        if (bytes[MESSAGE_TYPE_POS] == MessageType.HEARTBEAT_MESSAGE)
-        {
+    public void readMessage(byte[] bytes) {
+        if (bytes[MESSAGE_TYPE_POS] == MessageType.HEARTBEAT_MESSAGE) {
             final long hwMonitorSystemUniqueConnectionId = readLong(bytes, HW_HEARTBEAT_VALIDATION_NUMBER_POS);
 
             // Ensures that the message came from a hardware monitor and not a random device on the network
-            if (hwMonitorSystemUniqueConnectionId == HW_HEARTBEAT_VALIDATION_NUMBER)
-            {
-                Logger.log(LogLevel.DEBUG, TAG, "Received a heartbeat from Hardware Monitor");
-            }
-            else
-            {
+            if (hwMonitorSystemUniqueConnectionId != HW_HEARTBEAT_VALIDATION_NUMBER) {
                 Logger.log(LogLevel.WARNING, TAG, "Received an invalid heartbeat from Hardware Monitor");
             }
         }

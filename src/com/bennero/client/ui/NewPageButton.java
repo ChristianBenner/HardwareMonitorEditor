@@ -33,20 +33,18 @@ import javafx.scene.paint.Color;
 /**
  * A simple custom button with a plus icon used to add new pages to the PageOverview page
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class NewPageButton extends Button
-{
+public class NewPageButton extends Button {
     private static final CornerRadii BACKGROUND_CORNER_RADII = new CornerRadii(15.0);
     private static final Background BACKGROUND = new Background(new BackgroundFill(Color.DARKSLATEBLUE,
             BACKGROUND_CORNER_RADII, Insets.EMPTY));
     private static final Background BACKGROUND_HOVER = new Background(new BackgroundFill(Color.LIGHTBLUE,
             BACKGROUND_CORNER_RADII, Insets.EMPTY));
 
-    public NewPageButton(final int width, final int height)
-    {
+    public NewPageButton(final int width, final int height) {
         super("+");
         super.setMinSize(width, height);
         super.setBackground(BACKGROUND);

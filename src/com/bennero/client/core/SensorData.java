@@ -28,8 +28,7 @@ import com.bennero.common.SensorType;
 
 import java.util.ArrayList;
 
-public class SensorData
-{
+public class SensorData {
     private final int id;
     private final String name;
     private final float max;
@@ -44,8 +43,7 @@ public class SensorData
                       float max,
                       byte type,
                       String hardwareType,
-                      float initialValue)
-    {
+                      float initialValue) {
         this.id = id;
         this.name = name + " (" + SensorType.getSuffix(type) + ")";
         this.max = max;
@@ -55,45 +53,36 @@ public class SensorData
         sensorList = new ArrayList<>();
     }
 
-    public int getId()
-    {
+    public int getId() {
         return id;
     }
 
-    public String getName()
-    {
+    public String getName() {
         return name;
     }
 
-    public float getMax()
-    {
+    public float getMax() {
         return max;
     }
 
-    public byte getType()
-    {
+    public byte getType() {
         return type;
     }
 
-    public String getHardwareType()
-    {
+    public String getHardwareType() {
         return hardwareType;
     }
 
-    public float getInitialValue()
-    {
+    public float getInitialValue() {
         return initialValue;
     }
 
-    public void addSensor(Sensor sensor)
-    {
+    public void addSensor(Sensor sensor) {
         this.sensorList.add(sensor);
     }
 
-    public void setValue(float value)
-    {
-        for(int i = 0; i < sensorList.size(); i++)
-        {
+    public void setValue(float value) {
+        for (int i = 0; i < sensorList.size(); i++) {
             sensorList.get(i).setValue(value);
         }
     }

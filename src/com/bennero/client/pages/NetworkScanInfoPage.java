@@ -36,19 +36,17 @@ import javafx.scene.text.TextAlignment;
  * Network scan information page is similar to the standard information page however it has been made so that it can
  * update its subtitle on when a new number of devices has been found
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class NetworkScanInfoPage extends StackPane
-{
+public class NetworkScanInfoPage extends StackPane {
     private VBox optionPane;
     private int numberOfFoundDevices;
     private Label noOtherDevicesLabel;
     private Button viewOtherDevicesButton;
 
-    public NetworkScanInfoPage(String information, EventHandler showOtherDevices)
-    {
+    public NetworkScanInfoPage(String information, EventHandler showOtherDevices) {
         super.setId("standard-pane");
         numberOfFoundDevices = 0;
 
@@ -92,18 +90,13 @@ public class NetworkScanInfoPage extends StackPane
         super.getChildren().add(slide);
     }
 
-    public void setNumberOfFoundDevices(int numberOfFoundDevices)
-    {
-        if (this.numberOfFoundDevices != numberOfFoundDevices)
-        {
+    public void setNumberOfFoundDevices(int numberOfFoundDevices) {
+        if (this.numberOfFoundDevices != numberOfFoundDevices) {
             optionPane.getChildren().clear();
 
-            if (numberOfFoundDevices == 0)
-            {
+            if (numberOfFoundDevices == 0) {
                 optionPane.getChildren().add(noOtherDevicesLabel);
-            }
-            else
-            {
+            } else {
                 viewOtherDevicesButton.setText("Other Devices (" + numberOfFoundDevices + ")");
                 optionPane.getChildren().add(viewOtherDevicesButton);
             }

@@ -31,15 +31,14 @@ package com.bennero.client;
  * Patch: Small changes such as bug fixes or minor feature implementations. Implies network compatibility with other
  * patch versions.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class Version
-{
+public class Version {
     public static final byte VERSION_MAJOR = 1;
-    public static final byte VERSION_MINOR = 3;
+    public static final byte VERSION_MINOR = 0;
     public static final byte VERSION_PATCH = 0;
-    public static final boolean BOOTSTRAPPER_LAUNCH_REQUIRED = true;
+    public static final boolean BOOTSTRAPPER_LAUNCH_REQUIRED = false;
     public static final boolean DEBUG_BOOTSTRAPPER = false;
 }

@@ -34,13 +34,12 @@ import java.util.Random;
  * Generates a new PageData object by providing some default values and two colours that go well together. The colour
  * pair is picked randomly from a list of pre-defined backgrounds and foregrounds using the same index.
  *
- * @see         PageData
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @see PageData
+ * @since 1.0
  */
-public class PageGenerator
-{
+public class PageGenerator {
     private static final Color PAGE_BACKGROUND_COLOURS[] =
             {
                     Color.BLACK,
@@ -163,19 +162,16 @@ public class PageGenerator
             };
     private static int s_id = 0;
 
-    public static void setNextAvailablePageId(int id)
-    {
+    public static void setNextAvailablePageId(int id) {
         s_id = id;
     }
 
-    public static PageData generatePage(String pageTitle)
-    {
+    public static PageData generatePage(String pageTitle) {
         Random random = new Random();
 
         // Pick random colours from list
         int randomIndex = random.nextInt(PAGE_BACKGROUND_COLOURS.length - 1);
-        if (randomIndex > PAGE_FOREGROUND_COLOURS.length)
-        {
+        if (randomIndex > PAGE_FOREGROUND_COLOURS.length) {
             randomIndex = 0;
         }
 

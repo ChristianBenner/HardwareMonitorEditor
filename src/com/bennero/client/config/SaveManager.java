@@ -41,37 +41,31 @@ import java.util.Optional;
  * SaveManager is a singleton that provides the ability to create or load save data. Save data is the pages that the
  * user has created and customised to display their systems hardware information.
  *
- * @author      Christian Benner
- * @version     %I%, %G%
- * @since       1.0
+ * @author Christian Benner
+ * @version %I%, %G%
+ * @since 1.0
  */
-public class SaveManager
-{
+public class SaveManager {
     private static SaveManager instance = null;
 
     private SaveData currentSaveData;
 
-    private SaveManager()
-    {
+    private SaveManager() {
         currentSaveData = null;
     }
 
-    public static SaveManager getInstance()
-    {
-        if (instance == null)
-        {
+    public static SaveManager getInstance() {
+        if (instance == null) {
             instance = new SaveManager();
         }
 
         return instance;
     }
 
-    public boolean displayOpenSaveUI()
-    {
+    public boolean displayOpenSaveUI() {
         File selectedFile = CoreUtils.showFileSelector();
 
-        if (selectedFile != null)
-        {
+        if (selectedFile != null) {
             // Remove all pages from hardware monitor
             purgeCurrentPages();
             SaveManager.getInstance().loadSave(selectedFile);
@@ -82,8 +76,7 @@ public class SaveManager
         return false;
     }
 
-    public boolean displayNewSaveUI()
-    {
+    public boolean displayNewSaveUI() {
         final ProgramConfigManager programConfigManager = ProgramConfigManager.getInstance();
         final SaveManager saveManager = SaveManager.getInstance();
 
@@ -92,26 +85,20 @@ public class SaveManager
         textInputDialog.setHeaderText("Enter Layout Name");
         textInputDialog.setContentText("Enter a name for your layout:");
         Optional<String> result = textInputDialog.showAndWait();
-        if (result.isPresent())
-        {
-            if (!result.get().isEmpty() && !result.get().replaceAll(" ", "").isEmpty())
-            {
+        if (result.isPresent()) {
+            if (!result.get().isEmpty() && !result.get().replaceAll(" ", "").isEmpty()) {
                 String fileName = result.get();
-                if (!fileName.endsWith(".bhwms"))
-                {
+                if (!fileName.endsWith(".bhwms")) {
                     fileName += ".bhwms";
                 }
 
                 // Check if that already exists
-                if (new File(programConfigManager.getFileAreaPath() + "\\" + fileName).exists())
-                {
+                if (new File(programConfigManager.getFileAreaPath() + "\\" + fileName).exists()) {
                     // Error pop-up because it will not fit
                     Alert alert = new Alert(Alert.AlertType.WARNING, "Save File Already Exists", ButtonType.OK);
                     alert.setContentText("A save file with that name already exists in the directory, please use another name");
                     alert.showAndWait();
-                }
-                else
-                {
+                } else {
                     // Remove all pages from hardware monitor
                     saveManager.purgeCurrentPages();
 
@@ -126,80 +113,56 @@ public class SaveManager
         return false;
     }
 
-    private void purgeCurrentPages()
-    {
+    private void purgeCurrentPages() {
         // If current save data is not null, remove all the pages from the monitor
         SaveData saveData = SaveManager.getInstance().getSaveData();
-        if (saveData != null)
-        {
+        if (saveData != null) {
             final NetworkClient networkClient = NetworkClient.getInstance();
             final ArrayList<PageData> pageData = saveData.getPageDataList();
-            for (int i = 0; i < pageData.size(); i++)
-            {
+            for (int i = 0; i < pageData.size(); i++) {
                 networkClient.writeRemovePageMessage((byte) pageData.get(i).getUniqueId());
             }
         }
     }
 
-    public boolean loadPreviousSave()
-    {
+    public boolean isSaveLoaded() {
+        return currentSaveData != null;
+    }
+
+    public boolean loadPreviousSave() {
         ProgramConfigManager programConfigManager = ProgramConfigManager.getInstance();
-        if (programConfigManager.isLastLoadedFilePathAvailable())
-        {
+        if (programConfigManager.isLastLoadedFilePathAvailable()) {
             return loadSave(new File(programConfigManager.getLastLoadedFilePath()));
         }
 
         return false;
     }
 
-    public boolean loadSave(File file)
-    {
-        if (file != null && file.exists())
-        {
+    public boolean loadSave(File file) {
+        if (file != null && file.exists()) {
             currentSaveData = new SaveData(file);
             ArrayList<PageData> pageDataList = currentSaveData.getPageDataList();
             int highestId = 0;
-            for (int i = 0; i < pageDataList.size(); i++)
-            {
-                if (pageDataList.get(i).getUniqueId() > highestId)
-                {
+            for (int i = 0; i < pageDataList.size(); i++) {
+                if (pageDataList.get(i).getUniqueId() > highestId) {
                     highestId = pageDataList.get(i).getUniqueId();
                 }
             }
 
             PageGenerator.setNextAvailablePageId(highestId + 1);
-
-            // Send all of the pages to the monitor
-            if (NetworkClient.getInstance().isConnected())
-            {
-                for (PageData pageData : pageDataList)
-                {
-                    NetworkClient.getInstance().writePageMessage(pageData);
-
-                    // Send all sensors contained in the pages to the monitor
-                    for (Sensor sensor : pageData.getSensorList())
-                    {
-                        NetworkClient.getInstance().writeSensorMessage(sensor, (byte) pageData.getUniqueId());
-                    }
-                }
-            }
-
             ProgramConfigManager.getInstance().setLastLoadedFilePath(file.getAbsolutePath());
             ApplicationCore.getInstance().getWindow().updateWindowTitle(file.getName());
+
             return true;
         }
 
         return false;
     }
 
-    public void newSave(File file)
-    {
-        if (!file.getAbsolutePath().endsWith(".bhwms"))
-        {
+    public void newSave(File file) {
+        if (!file.getAbsolutePath().endsWith(".bhwms")) {
             currentSaveData = new SaveData(new File(file.getAbsolutePath() + ".bhwms"));
-        }
-        else
-        {
+        } else {
             currentSaveData = new SaveData(file);
         }
 
@@ -208,13 +171,11 @@ public class SaveManager
         ProgramConfigManager.getInstance().setLastLoadedFilePath(file.getAbsolutePath());
     }
 
-    public boolean containsSaveData()
-    {
+    public boolean containsSaveData() {
         return currentSaveData != null;
     }
 
-    public SaveData getSaveData()
-    {
+    public SaveData getSaveData() {
         return currentSaveData;
     }
 }
