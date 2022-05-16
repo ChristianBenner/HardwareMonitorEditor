@@ -55,7 +55,7 @@ public class SensorManager {
     private static final String LOGGER_TAG = SensorManager.class.getSimpleName();
 
     private static SensorManager instance = null;
-    private static int sensorGuiId = 0;
+    private static byte sensorGuiId = 0;
 
     private List<SensorData> sensorList;
 
@@ -99,8 +99,7 @@ public class SensorManager {
         if (!exists) {
             Platform.runLater(() ->
             {
-                Logger.log(LogLevel.INFO, LOGGER_TAG, "Adding Sensor Data: " + name + ", Hardware Type: " +
-                        sensorData.getHardwareType());
+                Logger.log(LogLevel.INFO, LOGGER_TAG, "Adding Sensor Data: " + name + ", Hardware Type: " + sensorData.getHardwareType());
                 sensorList.add(sensorData);
             });
         }
@@ -125,20 +124,12 @@ public class SensorManager {
         return false;
     }
 
-    public int getAvailableId() {
+    public byte getAvailableId() {
         return ++sensorGuiId;
     }
 
-    public Sensor createSensorGui(SensorData sensorData,
-                                  int row,
-                                  int column,
-                                  byte skin,
-                                  float threshold,
-                                  String title,
-                                  boolean averagingEnabled,
-                                  int averagingPeriod,
-                                  int rowSpan,
-                                  int columnSpan) {
+    public Sensor createSensorGui(SensorData sensorData, int row, int column, byte skin, float threshold, String title,
+                                  boolean averagingEnabled, int averagingPeriod, int rowSpan, int columnSpan) {
         Sensor sensor = new Sensor(getAvailableId(), row, column, sensorData.getType(), skin, sensorData.getMax(),
                 threshold, sensorData.getName(), title, averagingEnabled, averagingPeriod, rowSpan, columnSpan);
         sensor.setHardwareType(sensorData.getHardwareType());
@@ -156,8 +147,7 @@ public class SensorManager {
         sensor.setValueChangeListener((observableValue, aFloat, t1) -> NetworkClient.getInstance().
                 writeSensorValueMessage(sensor.getUniqueId(), t1));
         sensorData.addSensor(sensor);
-        Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Registered Sensor: [ID: " + sensor.getUniqueId() +
-                "], [SENSOR_DATA_ID: " + sensorData.getId() + "], [NAME: " + sensor.getTitle() + "]");
+        Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Registered Sensor: [ID: " + sensor.getUniqueId() + "], [SENSOR_DATA_ID: " + sensorData.getId() + "], [NAME: " + sensor.getTitle() + "]");
     }
 
     public void registerExistingSensor(Sensor sensor) {
@@ -169,7 +159,7 @@ public class SensorManager {
             if (compareSensorGuiToData(sensorList.get(i), sensor)) {
                 registerSensor(sensor, sensorList.get(i));
                 if (sensorGuiId < sensor.getUniqueId()) {
-                    sensorGuiId = sensor.getUniqueId();
+                    sensorGuiId = (byte)(sensor.getUniqueId() + 1);
                 }
                 foundSensorData = true;
             }

@@ -61,7 +61,7 @@ public class PageOptions extends Stage {
                        ChangeListener<Color> backgroundColourChange,
                        ChangeListener<Integer> rowChange,
                        ChangeListener<Integer> columnChange,
-                       ChangeListener<Integer> nextPageChange,
+                       ChangeListener<Byte> nextPageChange,
                        ChangeListener<Integer> transitionTypeChange,
                        ChangeListener<Integer> transitionTimeChange,
                        ChangeListener<Integer> durationChange,

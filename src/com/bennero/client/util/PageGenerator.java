@@ -160,9 +160,10 @@ public class PageGenerator {
                     Color.web("#FDDB27FF"),
                     Color.web("#00B1D2FF")
             };
-    private static int s_id = 0;
 
-    public static void setNextAvailablePageId(int id) {
+    private static byte s_id = 0;
+
+    public static void setNextAvailablePageId(byte id) {
         s_id = id;
     }
 

@@ -149,7 +149,7 @@ public class SaveManager {
                 }
             }
 
-            PageGenerator.setNextAvailablePageId(highestId + 1);
+            PageGenerator.setNextAvailablePageId((byte)(highestId + 1));
             ProgramConfigManager.getInstance().setLastLoadedFilePath(file.getAbsolutePath());
             ApplicationCore.getInstance().getWindow().updateWindowTitle(file.getName());
 

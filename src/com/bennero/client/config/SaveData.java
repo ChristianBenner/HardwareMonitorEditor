@@ -375,9 +375,9 @@ public class SaveData extends ConfigurationSaveHandler {
             }
         }
 
-        currentPageData = new PageData(id, backgroundColour, titleColour, subtitleColour, rows, columns, nextPageId,
-                transitionId, transitionTime, durationMs, title, titleEnabled, titleAlignment, subtitle,
-                subtitleEnabled, subtitleAlignment);
+        currentPageData = new PageData((byte)id, backgroundColour, titleColour, subtitleColour, rows, columns,
+                (byte)nextPageId, transitionId, transitionTime, durationMs, title, titleEnabled, titleAlignment,
+                subtitle, subtitleEnabled, subtitleAlignment);
         pageDataList.add(currentPageData);
 
         //System.out.println();
@@ -477,7 +477,7 @@ public class SaveData extends ConfigurationSaveHandler {
                 }
             }
 
-            Sensor sensor = new Sensor(id, row, column, (byte) type, skin, max, threshold, originalName, title, averageEnabled,
+            Sensor sensor = new Sensor((byte)id, row, column, (byte) type, skin, max, threshold, originalName, title, averageEnabled,
                     averagingPeriod, rowSpan, columnSpan);
             sensor.setHardwareType(hardwareType);
             SensorManager.getInstance().registerExistingSensor(sensor);
