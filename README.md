@@ -1,6 +1,8 @@
 # HardwareMonitorEditor
 The Hardware Monitor system (including all Hardware Monitor subsystems) are provided for free under GPLv3 Open-Source licenses. There is no monetary gain on the project except for voluntary donations through PayPal, which are greatly appreciated!
 
+**You can find the display [here](https://github.com/ChristianBenner/HardwareMonitor)**
+
 ## System Purpose
 The system is designed to provide a method of monitoring computer systems over the network. It's purpose is to display the hardware information of one device on to another, with high levels of customisation, good visuals and most importantly, minimal hardware utilisation. It works great with a Raspberry Pi to monitor the status of your main device.
 
@@ -13,14 +15,14 @@ The system is designed to provide a method of monitoring computer systems over t
 ## Set-Up
 ### Monitored Device
 Here we will install the Hardware Monitor Editor on the device that will be monitored. This device must be running Windows.
-- Download the latest Hardware Monitor Editor version from the releases page https://github.com/ChristianBenner/HardwareMonitorEditor/releases
+- Download the latest Hardware Monitor Editor version from the [releases page](https://github.com/ChristianBenner/HardwareMonitorEditor/releases)
 - Run the installation application
 
 ### Display Device
 Here we will install the Hardware Monitor Display on the device that will display the information collected from the monitored device. This device can be running Windows, Raspberry Pi OS, Ubuntu (Untested) or MacOS (Untested). Please follow the necessary steps for your target operating system.
 #### Dedicated Raspberry Pi
 A custom image has been created so you can easily turn your Raspberry Pi into a dedicated Hardware Monitor Display. This means that it will boot into the software seamlessly with no tricky set-up involved.
-- Download the latest Hardware Monitor Display disc image file from https://github.com/ChristianBenner/HardwareMonitor/releases
+- Download the latest Hardware Monitor Display disc image file from the [display releases page](https://github.com/ChristianBenner/HardwareMonitor/releases)
 - Extract the image file from the ZIP
 - Download Raspberry Pi Imager https://www.raspberrypi.com/software/
 - Plug-in the SD card you wish to install the system to
@@ -31,11 +33,11 @@ A custom image has been created so you can easily turn your Raspberry Pi into a 
 - Click the settings icon
 - Set a hostname e.g. ‘hardwaremonitor’ or ‘gamingpcmonitor’
 - Uncheck ‘Set username and password’ as this will cause issues with auto-login and running the Hardware Monitor Display software
-- To have the ability to use the device wirelessly in the future, check ‘Configure wireless LAN’ and change ‘Wireless LAN country’ to your country code. Enter your wireless network details, you can change this later on the device if necessary. You can find your country code in this list https://en.wikipedia.org/wiki/ISO_3166-1.
+- To have the ability to use the device wirelessly in the future, check ‘Configure wireless LAN’ and change ‘Wireless LAN country’ to your country code. Enter your wireless network details, you can change this later on the device if necessary. You can find your country code in this [list](https://en.wikipedia.org/wiki/ISO_3166-1)
 - Select ‘Write’
 - Once complete, insert the SD into the Raspberry Pi, switch it on and you are ready to go. You can scan the network for your Hardware Monitor Display from the Editor
 #### Windows
-- Download the Hardware Monitor Display Windows from https://github.com/ChristianBenner/HardwareMonitor/releases
+- Download the Hardware Monitor Display Windows from the [display releases page](https://github.com/ChristianBenner/HardwareMonitor/releases)
 - Run the installation application
 
 
