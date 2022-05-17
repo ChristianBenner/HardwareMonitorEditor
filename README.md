@@ -1,5 +1,5 @@
 # HardwareMonitorEditor
-The Hardware Monitor system (including all Hardware Monitor subsystems) are provided for free under GPLv3 Open-Source licenses. There is no monetary gain on the project except for voluntary donations through PayPal, which are greatly appreciated!
+The Hardware Monitor system (including all Hardware Monitor subsystems) are provided for free under GPLv3 Open-Source licenses. There is no monetary gain on the project except for voluntary donations through [PayPal](https://www.paypal.com/donate/?hosted_button_id=R7QL6UW899UJU), which are greatly appreciated!
 
 **You can find the display [here](https://github.com/ChristianBenner/HardwareMonitor)**
 
