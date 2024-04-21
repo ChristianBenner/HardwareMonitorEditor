@@ -28,6 +28,8 @@ import com.bennero.client.config.SaveManager;
 import com.bennero.client.network.ConnectedEvent;
 import com.bennero.client.network.NetworkClient;
 import com.bennero.client.network.NetworkScanner;
+import com.bennero.client.serial.SerialClient;
+import com.bennero.client.serial.SerialScanner;
 import com.bennero.client.states.*;
 import com.bennero.common.PageData;
 import com.bennero.common.Sensor;
@@ -43,8 +45,8 @@ import javafx.scene.image.Image;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
+import java.io.Serial;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import static com.bennero.client.Version.*;
@@ -65,6 +67,13 @@ import static com.bennero.common.networking.NetworkUtils.ip4AddressToString;
 public class ApplicationCore extends Application {
     private static final String CLASS_NAME = ApplicationCore.class.getSimpleName();
     private static final String RES_PATH_PARAMETER = "-respath=";
+
+    enum CommunicationMode {
+        USB,
+        IP,
+    }
+
+    private static final CommunicationMode COMMUNICATION_MODE = CommunicationMode.USB;
 
     public static ApplicationCore applicationCore = null;
     private static StateData currentStateData = null;
@@ -133,6 +142,7 @@ public class ApplicationCore extends Application {
     }
 
     @Override
+
     public void start(Stage stage) {
         // Process parameters
         processParameters();
@@ -168,10 +178,19 @@ public class ApplicationCore extends Application {
             // If the program configuration exists but there is no previously connected device, the user has configured
             // there file area (its not the first time launching), but they never connected to a device. In this
             // scenario we need to show the GUI and start a scan
-            Logger.log(LogLevel.DEBUG, CLASS_NAME, "Program configuration does not contain all of the " +
-                    "required connection information, scanning network for Hardware Monitors");
-            NetworkScanner.handleScan();
-            window.show();
+
+            switch (COMMUNICATION_MODE) {
+                case USB:
+                    Logger.log(LogLevel.DEBUG, CLASS_NAME, "Program configuration does not contain all of the required serial information, scanning ports for Hardware Monitors");
+                    SerialScanner.handleScan();
+                    window.show();
+                    break;
+                case IP:
+                    Logger.log(LogLevel.DEBUG, CLASS_NAME, "Program configuration does not contain all of the required connection information, scanning network for Hardware Monitors");
+                    NetworkScanner.handleScan();
+                    window.show();
+                    break;
+            }
         } else {
             // If the program has been set-up/launched before and has previously connected to a device, run in system
             // tray and attempt to connect to the device
@@ -242,7 +261,7 @@ public class ApplicationCore extends Application {
 
                 // Send all sensors contained in the pages to the monitor
                 for (Sensor sensor : pageData.getSensorList()) {
-                    NetworkClient.getInstance().writeSensorMessage(sensor, (byte) pageData.getUniqueId());
+                    NetworkClient.getInstance().writeSensorSetupMessage(sensor, (byte) pageData.getUniqueId());
                 }
             }
         }

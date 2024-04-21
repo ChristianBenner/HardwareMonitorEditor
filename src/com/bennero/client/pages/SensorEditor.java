@@ -157,7 +157,7 @@ public class SensorEditor extends BorderPane {
                     saveManager.getSaveData().save();
 
                     // Send the page sensor data to the client
-                    NetworkClient.getInstance().writeSensorMessage(sensor, (byte) pageData.getUniqueId());
+                    NetworkClient.getInstance().writeSensorSetupMessage(sensor, (byte) pageData.getUniqueId());
 
                     ApplicationCore.s_setApplicationState(new PageEditorStateData(pageData));
                 } else {

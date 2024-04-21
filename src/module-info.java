@@ -24,6 +24,7 @@
  *
  * @author Christian Benner
  * @version %I%, %G%
+ * u
  * @since 1.0
  */
 module HardwareMonitorEditor
@@ -34,6 +35,7 @@ module HardwareMonitorEditor
     requires javafx.base;
     requires javafx.graphics;
     requires javafx.web;
+    requires com.fazecast.jSerialComm;
     requires HardwareMonitorCommon;
     requires java.desktop;
 }

@@ -24,11 +24,9 @@
 package com.bennero.client.network;
 
 import com.bennero.client.config.ProgramConfigManager;
-import com.bennero.client.core.SensorManager;
+import com.bennero.client.messages.*;
 import com.bennero.common.PageData;
 import com.bennero.common.Sensor;
-import com.bennero.common.Skin;
-import com.bennero.common.SkinHelper;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
 import com.bennero.common.messages.*;
@@ -207,77 +205,51 @@ public class NetworkClient {
 
     public void writeRemovePageMessage(byte pageId) {
         if (socket != null && socket.isConnected()) {
-            byte[] message = new byte[MESSAGE_NUM_BYTES];
-
-            message[MESSAGE_TYPE_POS] = MessageType.REMOVE_PAGE;
-            message[MESSAGE_TYPE_POS + 1] = pageId;
+            byte[] message = RemovePageMessage.create(pageId);
             sendMessage(message, 0, MESSAGE_NUM_BYTES);
             Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent Remove Page Message: [ID: " + pageId + "]");
         } else {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG,
-                    "Failed to send Remove Page message because socket is not connected");
+            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to send Remove Page message because socket is not connected");
         }
     }
 
     public void writeRemoveSensorMessage(byte sensorId, byte pageId) {
         if (socket != null && socket.isConnected()) {
-            byte[] message = new byte[MESSAGE_NUM_BYTES];
-
-            message[MESSAGE_TYPE_POS] = MessageType.REMOVE_SENSOR;
-            message[RemoveSensorDataPositions.SENSOR_ID_POS] = sensorId;
-            message[RemoveSensorDataPositions.PAGE_ID_POS] = pageId;
+            byte[] message = RemoveSensorMessage.create(sensorId, pageId);
             sendMessage(message, 0, MESSAGE_NUM_BYTES);
             Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent Remove Sensor Message: [ID: " + sensorId + "]");
         } else {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG,
-                    "Failed to send Remove Sensor message because socket is not connected");
+            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to send Remove Sensor message because socket is not connected");
         }
     }
 
     public void writePageMessage(PageData pageData) {
         if (socket != null && socket.isConnected()) {
-            byte[] message = new byte[MESSAGE_NUM_BYTES];
-            writePageSetupMessage(pageData, message);
+            byte[] message = PageSetupMessage.create(pageData);
             sendMessage(message, 0, MESSAGE_NUM_BYTES);
-            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent PageData Message: [ID: " + pageData.getUniqueId() +
-                    "], [TITLE: " + pageData.getTitle() + "]");
+            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent PageData Message: [ID: " + pageData.getUniqueId() + "], [TITLE: " + pageData.getTitle() + "]");
         } else {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG,
-                    "Failed to send PageData message because socket is not connected");
+            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to send PageData message because socket is not connected");
         }
     }
 
-    public void writeSensorMessage(Sensor sensor, byte pageId) {
+    public void writeSensorSetupMessage(Sensor sensor, byte pageId) {
         if (socket != null && socket.isConnected()) {
-            byte[] message = new byte[MESSAGE_NUM_BYTES];
-            writeSensorSetupMessage(sensor, pageId, message);
+            byte[] message = SensorSetupMessage.create(sensor, pageId);
             sendMessage(message, 0, MESSAGE_NUM_BYTES);
-            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent Sensor set-up Message: [ID: " + sensor.getUniqueId() +
-                    "], [TITLE: " + sensor.getTitle() + "]");
+            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent Sensor set-up Message: [ID: " + sensor.getUniqueId() + "], [TITLE: " + sensor.getTitle() + "]");
         } else {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG,
-                    "Failed to send Sensor set-up Message because socket is not connected");
+            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to send Sensor set-up Message because socket is not connected");
         }
     }
 
     public void writeSensorTransformationMessage(Sensor sensor, byte pageId) {
         if (socket != null && socket.isConnected()) {
-            byte[] message = new byte[MESSAGE_NUM_BYTES];
-
-            message[MESSAGE_TYPE_POS] = MessageType.SENSOR_TRANSFORMATION_MESSAGE;
-            message[SensorTransformationPositions.ID_POS] = (byte) sensor.getUniqueId();
-            message[SensorTransformationPositions.PAGE_ID_POS] = pageId;
-            message[SensorTransformationPositions.ROW_POS] = (byte) sensor.getRow();
-            message[SensorTransformationPositions.COLUMN_POS] = (byte) sensor.getColumn();
-            message[SensorTransformationPositions.ROW_SPAN_POS] = (byte) sensor.getRowSpan();
-            message[SensorTransformationPositions.COLUMN_SPAN_POS] = (byte) sensor.getColumnSpan();
+            byte[] message = SensorTransformationMessage.create(sensor, pageId);
             sendMessage(message, 0, MESSAGE_NUM_BYTES);
-
-            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent Sensor Transformation Message: [ID: " +
-                    sensor.getUniqueId() + "], [TITLE: " + sensor.getTitle() + "]");
+            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent Sensor Transformation Message: [ID: " + sensor.getUniqueId() + "], [TITLE: " + sensor.getTitle() + "]");
         } else {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG,
-                    "Failed to send Sensor Transformation Message because socket is not connected");
+            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to send Sensor Transformation Message because socket is not connected");
         }
     }
 
@@ -285,15 +257,10 @@ public class NetworkClient {
     // the remaining on another
     public void writeSensorValueMessage(int sensorId, float value) {
         if (socket != null && socket.isConnected()) {
-            byte[] message = new byte[MESSAGE_NUM_BYTES];
-
-            message[MESSAGE_TYPE_POS] = MessageType.DATA;
-            message[SensorValueDataPositions.ID_POS] = (byte) sensorId;
-            writeToMessage(message, SensorValueDataPositions.VALUE_POS, value);
+            byte[] message = SensorValueMessage.create(sensorId, value);
             sendMessage(message, 0, MESSAGE_NUM_BYTES);
         } else {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG,
-                    "Failed to send Sensor value message because socket is not connected");
+            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to send Sensor value message because socket is not connected");
         }
     }
 
@@ -313,147 +280,6 @@ public class NetworkClient {
 
         sendMessage(message, 0, MESSAGE_NUM_BYTES);
         Logger.log(LogLevel.INFO, LOGGER_TAG, "Sent connection request message");
-    }
-
-    private void writeSensorSetupMessage(Sensor sensor, byte pageId, byte[] bytes) {
-        bytes[MESSAGE_TYPE_POS] = MessageType.SENSOR_SETUP;
-        bytes[SensorDataPositions.ID_POS] = (byte) sensor.getUniqueId();
-        bytes[SensorDataPositions.PAGE_ID_POS] = pageId;
-        bytes[SensorDataPositions.ROW_POS] = (byte) sensor.getRow();
-        bytes[SensorDataPositions.COLUMN_POS] = (byte) sensor.getColumn();
-        bytes[SensorDataPositions.TYPE_POS] = sensor.getType();
-        bytes[SensorDataPositions.SKIN_POS] = sensor.getSkin();
-        writeToMessage(bytes, SensorDataPositions.MAX_POS, sensor.getMax());
-        writeToMessage(bytes, SensorDataPositions.THRESHOLD_POS, sensor.getThreshold());
-        bytes[SensorDataPositions.AVERAGE_ENABLED_POS] = sensor.isAverageEnabled() ? (byte) 0x01 : (byte) 0x00;
-        writeToMessage(bytes, SensorDataPositions.AVERAGING_PERIOD_POS, sensor.getAveragingPeriod());
-        bytes[SensorDataPositions.ROW_SPAN_POS] = (byte) sensor.getRowSpan();
-        bytes[SensorDataPositions.COLUMN_SPAN_POS] = (byte) sensor.getColumnSpan();
-
-        if (sensor.getAverageColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.AVERAGE_COLOUR_SUPPORTED)) {
-            bytes[SensorDataPositions.AVERAGE_COLOUR_R_POS] = (byte) (sensor.getAverageColour().getRed() * 255.0);
-            bytes[SensorDataPositions.AVERAGE_COLOUR_G_POS] = (byte) (sensor.getAverageColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.AVERAGE_COLOUR_B_POS] = (byte) (sensor.getAverageColour().getBlue() * 255.0);
-        }
-
-        if (sensor.getNeedleColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.NEEDLE_COLOUR_SUPPORTED)) {
-            bytes[SensorDataPositions.NEEDLE_COLOUR_R_POS] = (byte) (sensor.getNeedleColour().getRed() * 255.0);
-            bytes[SensorDataPositions.NEEDLE_COLOUR_G_POS] = (byte) (sensor.getNeedleColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.NEEDLE_COLOUR_B_POS] = (byte) (sensor.getNeedleColour().getBlue() * 255.0);
-        }
-
-        if (sensor.getValueColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.VALUE_COLOUR_SUPPORTED)) {
-            bytes[SensorDataPositions.VALUE_COLOUR_R_POS] = (byte) (sensor.getValueColour().getRed() * 255.0);
-            bytes[SensorDataPositions.VALUE_COLOUR_G_POS] = (byte) (sensor.getValueColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.VALUE_COLOUR_B_POS] = (byte) (sensor.getValueColour().getBlue() * 255.0);
-        }
-
-        if (sensor.getUnitColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.UNIT_COLOUR_SUPPORTED)) {
-            bytes[SensorDataPositions.UNIT_COLOUR_R_POS] = (byte) (sensor.getUnitColour().getRed() * 255.0);
-            bytes[SensorDataPositions.UNIT_COLOUR_G_POS] = (byte) (sensor.getUnitColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.UNIT_COLOUR_B_POS] = (byte) (sensor.getUnitColour().getBlue() * 255.0);
-        }
-
-        if (sensor.getKnobColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.KNOB_COLOUR_SUPPORTED)) {
-            bytes[SensorDataPositions.KNOB_COLOUR_R_POS] = (byte) (sensor.getKnobColour().getRed() * 255.0);
-            bytes[SensorDataPositions.KNOB_COLOUR_G_POS] = (byte) (sensor.getKnobColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.KNOB_COLOUR_B_POS] = (byte) (sensor.getKnobColour().getBlue() * 255.0);
-        }
-
-        if (sensor.getBarColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.BAR_COLOUR_SUPPORTED)) {
-            bytes[SensorDataPositions.BAR_COLOUR_R_POS] = (byte) (sensor.getBarColour().getRed() * 255.0);
-            bytes[SensorDataPositions.BAR_COLOUR_G_POS] = (byte) (sensor.getBarColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.BAR_COLOUR_B_POS] = (byte) (sensor.getBarColour().getBlue() * 255.0);
-        }
-
-        if (sensor.getThresholdColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.THRESHOLD_COLOUR_SUPPORTED)) {
-            bytes[SensorDataPositions.THRESHOLD_COLOUR_R_POS] = (byte) (sensor.getThresholdColour().getRed() * 255.0);
-            bytes[SensorDataPositions.THRESHOLD_COLOUR_G_POS] = (byte) (sensor.getThresholdColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.THRESHOLD_COLOUR_B_POS] = (byte) (sensor.getThresholdColour().getBlue() * 255.0);
-        }
-
-        if (sensor.getTitleColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.TITLE_COLOUR_SUPPORTED)) {
-            bytes[SensorDataPositions.TITLE_COLOUR_R_POS] = (byte) (sensor.getTitleColour().getRed() * 255.0);
-            bytes[SensorDataPositions.TITLE_COLOUR_G_POS] = (byte) (sensor.getTitleColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.TITLE_COLOUR_B_POS] = (byte) (sensor.getTitleColour().getBlue() * 255.0);
-        }
-
-        if (sensor.getBarBackgroundColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.BAR_BACKGROUND_COLOUR_SUPPORTED)) {
-            bytes[SensorDataPositions.BAR_BACKGROUND_COLOUR_R_POS] = (byte) (sensor.getBarBackgroundColour().getRed() * 255.0);
-            bytes[SensorDataPositions.BAR_BACKGROUND_COLOUR_G_POS] = (byte) (sensor.getBarBackgroundColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.BAR_BACKGROUND_COLOUR_B_POS] = (byte) (sensor.getBarBackgroundColour().getBlue() * 255.0);
-        }
-
-        if (sensor.getForegroundColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.FOREGROUND_BASE_COLOUR_SUPPORTED)) {
-            bytes[SensorDataPositions.FOREGROUND_COLOUR_R_POS] = (byte) (sensor.getForegroundColour().getRed() * 255.0);
-            bytes[SensorDataPositions.FOREGROUND_COLOUR_G_POS] = (byte) (sensor.getForegroundColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.FOREGROUND_COLOUR_B_POS] = (byte) (sensor.getForegroundColour().getBlue() * 255.0);
-        }
-
-        if (sensor.getTickLabelColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.TICK_LABEL_COLOUR_SUPPORTED)) {
-            bytes[SensorDataPositions.TICK_LABEL_COLOUR_R_POS] = (byte) (sensor.getTickLabelColour().getRed() * 255.0);
-            bytes[SensorDataPositions.TICK_LABEL_COLOUR_G_POS] = (byte) (sensor.getTickLabelColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.TICK_LABEL_COLOUR_B_POS] = (byte) (sensor.getTickLabelColour().getBlue() * 255.0);
-        }
-
-        if (sensor.getTickMarkColour() != null && SkinHelper.checkSupport(sensor.getSkin(), Skin.TICK_MARK_COLOUR_SUPPORTED)) {
-            bytes[SensorDataPositions.TICK_MARK_COLOUR_R_POS] = (byte) (sensor.getTickMarkColour().getRed() * 255.0);
-            bytes[SensorDataPositions.TICK_MARK_COLOUR_G_POS] = (byte) (sensor.getTickMarkColour().getGreen() * 255.0);
-            bytes[SensorDataPositions.TICK_MARK_COLOUR_B_POS] = (byte) (sensor.getTickMarkColour().getBlue() * 255.0);
-        }
-
-        writeToMessage(bytes, SensorDataPositions.INITIAL_VALUE_POS, sensor.getValue());
-        writeStringToMessage(bytes, SensorDataPositions.TITLE_POS, sensor.getTitle(), NAME_STRING_NUM_BYTES);
-    }
-
-    // take a Page type in the future
-    private void writePageSetupMessage(PageData pageData, byte[] bytes) {
-        byte pageId = (byte) pageData.getUniqueId();
-        byte pageColourR = (byte) (pageData.getColour().getRed() * 255.0);
-        byte pageColourG = (byte) (pageData.getColour().getGreen() * 255.0);
-        byte pageColourB = (byte) (pageData.getColour().getBlue() * 255.0);
-        byte titleColourR = (byte) (pageData.getTitleColour().getRed() * 255.0);
-        byte titleColourG = (byte) (pageData.getTitleColour().getGreen() * 255.0);
-        byte titleColourB = (byte) (pageData.getTitleColour().getBlue() * 255.0);
-        byte subtitleColourR = (byte) (pageData.getSubtitleColour().getRed() * 255.0);
-        byte subtitleColourG = (byte) (pageData.getSubtitleColour().getGreen() * 255.0);
-        byte subtitleColourB = (byte) (pageData.getSubtitleColour().getBlue() * 255.0);
-        byte pageRows = (byte) pageData.getRows();
-        byte pageColumns = (byte) pageData.getColumns();
-        byte nextPageId = (byte) pageData.getNextPageId();
-        byte pageTransitionType = (byte) pageData.getTransitionType();
-        int pageTransitionTime = pageData.getTransitionTime();
-        int pageDurationMs = pageData.getDurationMs();
-        String title = pageData.getTitle();
-        byte titleEnabled = pageData.isTitleEnabled() ? (byte) 0x01 : (byte) 0x00;
-        byte titleAlignment = (byte) pageData.getTitleAlignment();
-        String subtitle = pageData.getSubtitle();
-        byte subtitleEnabled = pageData.isSubtitleEnabled() ? (byte) 0x01 : (byte) 0x00;
-        byte subtitleAlignment = (byte) pageData.getSubtitleAlignment();
-
-        bytes[MESSAGE_TYPE_POS] = MessageType.PAGE_SETUP;
-        bytes[PageDataPositions.ID_POS] = pageId;
-        bytes[PageDataPositions.COLOUR_R_POS] = pageColourR;
-        bytes[PageDataPositions.COLOUR_G_POS] = pageColourG;
-        bytes[PageDataPositions.COLOUR_B_POS] = pageColourB;
-        bytes[PageDataPositions.TITLE_COLOUR_R_POS] = titleColourR;
-        bytes[PageDataPositions.TITLE_COLOUR_G_POS] = titleColourG;
-        bytes[PageDataPositions.TITLE_COLOUR_B_POS] = titleColourB;
-        bytes[PageDataPositions.SUBTITLE_COLOUR_R_POS] = subtitleColourR;
-        bytes[PageDataPositions.SUBTITLE_COLOUR_G_POS] = subtitleColourG;
-        bytes[PageDataPositions.SUBTITLE_COLOUR_B_POS] = subtitleColourB;
-        bytes[PageDataPositions.ROWS_POS] = pageRows;
-        bytes[PageDataPositions.COLUMNS_POS] = pageColumns;
-        bytes[PageDataPositions.NEXT_ID_POS] = nextPageId;
-        bytes[PageDataPositions.TRANSITION_TYPE_POS] = pageTransitionType;
-        writeToMessage(bytes, PageDataPositions.TRANSITION_TIME_POS, pageTransitionTime);
-        writeToMessage(bytes, PageDataPositions.DURATION_MS_POS, pageDurationMs);
-        writeStringToMessage(bytes, PageDataPositions.TITLE_POS, title, NAME_STRING_NUM_BYTES);
-        bytes[PageDataPositions.TITLE_ENABLED_POS] = titleEnabled;
-        bytes[PageDataPositions.TITLE_ALIGNMENT_POS] = titleAlignment;
-        writeStringToMessage(bytes, PageDataPositions.SUBTITLE_POS, subtitle, NAME_STRING_NUM_BYTES);
-        bytes[PageDataPositions.SUBTITLE_POS_ENABLED_POS] = subtitleEnabled;
-        bytes[PageDataPositions.SUBTITLE_POS_ALIGNMENT_POS] = subtitleAlignment;
     }
 
     private void sendDisconnectMessage() {

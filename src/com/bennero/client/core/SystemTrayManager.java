@@ -33,6 +33,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.io.InputStream;
 
 public class SystemTrayManager {
     // Tag for logging
@@ -88,7 +89,11 @@ public class SystemTrayManager {
 
             // Get and create system tray icon
             try {
-                Image imageIcon = ImageIO.read(SystemTrayUtils.class.getClassLoader().getResourceAsStream("icon.png"));
+                InputStream inputStream =  SystemTrayUtils.class.getClassLoader().getResourceAsStream("icon.png");
+                if(inputStream == null) {
+                    return;
+                }
+                Image imageIcon = ImageIO.read(inputStream);
                 trayIcon = new TrayIcon(imageIcon, "Hardware Monitor Editor", popupMenu);
                 trayIcon.setImageAutoSize(true);
                 trayIcon.addMouseListener(new MouseAdapter() {
@@ -109,6 +114,9 @@ public class SystemTrayManager {
             } catch (AWTException systemTrayException) {
                 Logger.log(LogLevel.ERROR, TAG, "Failed to add application to system tray");
                 systemTrayException.printStackTrace();
+            } catch (Exception e) {
+                Logger.log(LogLevel.ERROR, TAG, "Failed to load system tray icon");
+                e.printStackTrace();
             }
         }
     }

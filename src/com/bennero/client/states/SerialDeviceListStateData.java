@@ -21,24 +21,42 @@
  * =====================================================================================================================
  */
 
-package com.bennero.client;
+package com.bennero.client.states;
+
+import com.bennero.client.pages.ConnectionListPage;
+import com.bennero.client.pages.SerialConnectionListPage;
+import com.bennero.common.TransitionType;
+import com.bennero.common.networking.ConnectionInformation;
+import com.fazecast.jSerialComm.SerialPort;
+import javafx.scene.Node;
+
+import java.util.List;
 
 /**
- * Specifies the version of the hardware monitor editor software. Comprised of major, minor and patch versions.
- * Major: A major release marks a milestone according to design and requirements
- * Minor: Addition of one or more design components/requirements. A minor version change should also be done if any
- * network messages have been altered as this effects compatibility with hardware monitors.
- * Patch: Small changes such as bug fixes or minor feature implementations. Implies network compatibility with other
- * patch versions.
+ * State data for the SerialConnectionListPage. SerialDeviceListStateData is a subclass of StateData, it stores
+ * information about the current state of the application so that the GUI can be created or destroyed at any time
+ * (meaning that the graphical user interface does not have to be loaded into memory if it is not in use - it can be
+ * loaded or destroyed at any time)
  *
  * @author Christian Benner
  * @version %I%, %G%
+ * @see SerialConnectionListPage
+ * @see StateData
  * @since 1.0
  */
-public class Version {
-    public static final byte VERSION_MAJOR = 1;
-    public static final byte VERSION_MINOR = 0;
-    public static final byte VERSION_PATCH = 0;
-    public static final boolean BOOTSTRAPPER_LAUNCH_REQUIRED = false;
-    public static final boolean DEBUG_BOOTSTRAPPER = false;
+public class SerialDeviceListStateData extends StateData {
+    private static final String NAME = "CONNECTION_LIST";
+    private final SerialPort[] serialDevices;
+
+    public SerialDeviceListStateData(SerialPort[] serialDevices) {
+        super(NAME, TransitionType.FADE);
+        this.serialDevices = serialDevices;
+    }
+
+    @Override
+    public Node createGUI() {
+        SerialConnectionListPage connectionListPage = new SerialConnectionListPage();
+        connectionListPage.setAvailableDevicesList(serialDevices);
+        return connectionListPage;
+    }
 }
