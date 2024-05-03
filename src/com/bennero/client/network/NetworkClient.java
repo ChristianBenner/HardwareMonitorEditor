@@ -24,7 +24,7 @@
 package com.bennero.client.network;
 
 import com.bennero.client.config.ProgramConfigManager;
-import com.bennero.client.messages.*;
+import com.bennero.client.message.*;
 import com.bennero.common.PageData;
 import com.bennero.common.Sensor;
 import com.bennero.common.logging.LogLevel;
@@ -43,7 +43,7 @@ import java.net.*;
 import static com.bennero.client.Version.*;
 import static com.bennero.client.network.ConnectionRequestReplyMessage.processConnectionRequestReplyMessageData;
 import static com.bennero.common.Constants.*;
-import static com.bennero.common.networking.NetworkUtils.*;
+import static com.bennero.common.messages.MessageUtils.*;
 
 /**
  * NetworkClient is a thread that handles the connection to a hardware monitor. It is responsible for establishing

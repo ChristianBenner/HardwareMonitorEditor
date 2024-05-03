@@ -23,14 +23,18 @@
 
 package com.bennero.client.ui;
 
+import com.bennero.client.core.CoreUtils;
 import com.bennero.client.ui.coloureditor.ColourEditor;
 import javafx.beans.value.ChangeListener;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 
+import java.io.File;
 import java.util.Collection;
 
 /**
@@ -76,6 +80,29 @@ public class UIHelper {
         allGroup.setRight(editOptionsGroup);
 
         return allGroup;
+    }
+
+    public static BorderPane createFileOption(String text, ChangeListener<File> changeListener) {
+        Label label = new Label(text + ":");
+        label.setId("sensor-editor-label");
+
+        Button button = new Button("Browse");
+        button.setId("hw-sensor-editor-options-button");
+        button.setOnAction(event -> {
+            File selected = CoreUtils.showFileSelector();
+            if(selected != null && selected.exists() && selected.isFile()) {
+                changeListener.changed(null, null, selected);
+            }
+        });
+
+        BorderPane borderPane = new BorderPane();
+        borderPane.setPadding(new Insets(5));
+        BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+        BorderPane.setAlignment(button, Pos.CENTER_RIGHT);
+        borderPane.setLeft(label);
+        borderPane.setRight(button);
+
+        return borderPane;
     }
 
     public static BorderPane createCheckboxOption(String text,

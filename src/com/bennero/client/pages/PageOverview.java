@@ -28,6 +28,7 @@ import com.bennero.client.config.SaveData;
 import com.bennero.client.config.SaveManager;
 import com.bennero.client.core.ApplicationCore;
 import com.bennero.client.core.CoreUtils;
+import com.bennero.client.core.DataClient;
 import com.bennero.client.core.Window;
 import com.bennero.client.network.NetworkClient;
 import com.bennero.client.network.NetworkScanner;
@@ -255,7 +256,7 @@ public class PageOverview extends StackPane {
                 PageData pageData = PageGenerator.generatePage(pageTitle);
                 saveManager.getSaveData().addPageData(pageData);
                 addPageInfoUI(pageData);
-                NetworkClient.getInstance().writePageMessage(pageData);
+                DataClient.writePageMessage(pageData);
             }
         });
 

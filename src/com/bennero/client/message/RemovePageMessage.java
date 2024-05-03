@@ -1,4 +1,4 @@
-package com.bennero.client.messages;
+package com.bennero.client.message;
 
 import com.bennero.common.messages.MessageType;
 

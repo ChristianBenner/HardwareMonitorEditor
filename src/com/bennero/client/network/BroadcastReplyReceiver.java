@@ -26,7 +26,6 @@ package com.bennero.client.network;
 import com.bennero.common.messages.BroadcastReplyDataPositions;
 import com.bennero.common.messages.MessageType;
 import com.bennero.common.networking.ConnectionInformation;
-import com.bennero.common.networking.NetworkUtils;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 
@@ -37,7 +36,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
 import static com.bennero.common.Constants.*;
-import static com.bennero.common.networking.NetworkUtils.*;
+import static com.bennero.common.messages.MessageUtils.*;
 
 /**
  * BroadcastReplyReceiver is a thread for receiving messages from hardware monitors. More specifically, the messages are

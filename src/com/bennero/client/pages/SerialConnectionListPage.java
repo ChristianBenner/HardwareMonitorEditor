@@ -36,6 +36,7 @@ import com.bennero.common.logging.Logger;
 import com.bennero.common.networking.ConnectionInformation;
 import com.bennero.common.networking.NetworkUtils;
 import com.fazecast.jSerialComm.SerialPort;
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
@@ -104,15 +105,17 @@ public class SerialConnectionListPage extends StackPane {
         selectButton.setOnMouseClicked(mouseEvent ->
         {
             if (connectionListView.getSelectionModel().getSelectedItem() != null) {
-                SerialPort selectedPortInformation = (SerialPort) connectionListView.getSelectionModel().getSelectedItem();
+                SerialPortDisplay selectedPortInformation = (SerialPortDisplay) connectionListView.getSelectionModel().getSelectedItem();
 
                 Alert info = new Alert(Alert.AlertType.CONFIRMATION, "Confirmation", ButtonType.OK);
                 info.setContentText("Ensure that the correct device is selected");
                 info.showAndWait();
 
-                boolean connected = SerialClient.getInstance().connect(selectedPortInformation);
+                boolean connected = SerialClient.getInstance().connect(selectedPortInformation.serialPort);
                 if(connected) {
-                    ApplicationCore.getInstance().onConnected();
+                    Platform.runLater(() -> {
+                        ApplicationCore.getInstance().onConnected();
+                    });
                 } else {
 
                 }

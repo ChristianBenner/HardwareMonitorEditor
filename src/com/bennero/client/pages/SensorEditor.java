@@ -25,6 +25,7 @@ package com.bennero.client.pages;
 
 import com.bennero.client.config.SaveManager;
 import com.bennero.client.core.ApplicationCore;
+import com.bennero.client.core.DataClient;
 import com.bennero.client.network.NetworkClient;
 import com.bennero.client.states.PageEditorStateData;
 import com.bennero.client.states.StateData;
@@ -157,7 +158,7 @@ public class SensorEditor extends BorderPane {
                     saveManager.getSaveData().save();
 
                     // Send the page sensor data to the client
-                    NetworkClient.getInstance().writeSensorSetupMessage(sensor, (byte) pageData.getUniqueId());
+                    DataClient.writeSensorSetupMessage(sensor, (byte) pageData.getUniqueId());
 
                     ApplicationCore.s_setApplicationState(new PageEditorStateData(pageData));
                 } else {

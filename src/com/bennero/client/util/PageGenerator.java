@@ -183,6 +183,6 @@ public class PageGenerator {
                 PAGE_FOREGROUND_COLOURS[randomIndex], rows, columns, s_id,
                 TransitionType.getRandomTransition(random), 1000, 10000, pageTitle,
                 true, Constants.TEXT_ALIGNMENT_CENTER, "Subheading", false,
-                Constants.TEXT_ALIGNMENT_CENTER);
+                Constants.TEXT_ALIGNMENT_CENTER, "");
     }
 }

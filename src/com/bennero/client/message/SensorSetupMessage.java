@@ -1,4 +1,4 @@
-package com.bennero.client.messages;
+package com.bennero.client.message;
 
 import com.bennero.common.Sensor;
 import com.bennero.common.Skin;
@@ -7,8 +7,8 @@ import com.bennero.common.messages.MessageType;
 import com.bennero.common.messages.SensorDataPositions;
 
 import static com.bennero.common.Constants.*;
-import static com.bennero.common.networking.NetworkUtils.writeStringToMessage;
-import static com.bennero.common.networking.NetworkUtils.writeToMessage;
+import static com.bennero.common.messages.MessageUtils.writeStringToMessage;
+import static com.bennero.common.messages.MessageUtils.writeToMessage;
 
 public class SensorSetupMessage {
     // Creates a message that contains all information required to create a new sensor

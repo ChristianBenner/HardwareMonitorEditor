@@ -71,6 +71,7 @@ public class SaveData extends ConfigurationSaveHandler {
     private static final String PAGE_SUBTITLE_ELEMENT_TAG = "subtitle";
     private static final String PAGE_SUBTITLE_ENABLED_ELEMENT_TAG = "subtitleEnabled";
     private static final String PAGE_SUBTITLE_ALIGNMENT_ELEMENT_TAG = "subtitleAlignment";
+    private static final String BACKGROUND_IMAGE_ELEMENT_TAG = "backgroundImage";
 
     private static final String SENSOR_ELEMENT_TAG = "sensor";
     private static final String SENSOR_ID_ELEMENT_TAG = "id";
@@ -217,6 +218,7 @@ public class SaveData extends ConfigurationSaveHandler {
             streamWriter.writeAttribute(PAGE_SUBTITLE_ELEMENT_TAG, temp.getSubtitle());
             streamWriter.writeAttribute(PAGE_SUBTITLE_ENABLED_ELEMENT_TAG, Boolean.toString(temp.isSubtitleEnabled()));
             streamWriter.writeAttribute(PAGE_SUBTITLE_ALIGNMENT_ELEMENT_TAG, Integer.toString(temp.getSubtitleAlignment()));
+            streamWriter.writeAttribute(BACKGROUND_IMAGE_ELEMENT_TAG, temp.getBackgroundImage());
 
             if (!temp.getSensorList().isEmpty()) {
                 writeIndentation(streamWriter, ++depth, true);
@@ -332,6 +334,7 @@ public class SaveData extends ConfigurationSaveHandler {
         boolean subtitleEnabled = false;
         String subtitle = null;
         int subtitleAlignment = 0;
+        String backgroundImage = "";
 
         //System.out.print("\tPage:");
         for (int i = 0; i < attributes.getLength(); i++) {
@@ -372,12 +375,14 @@ public class SaveData extends ConfigurationSaveHandler {
                 subtitleEnabled = Boolean.parseBoolean(attributeValue);
             } else if (attributeName.compareTo(PAGE_SUBTITLE_ALIGNMENT_ELEMENT_TAG) == 0) {
                 subtitleAlignment = Integer.parseInt(attributeValue);
+            } else if (attributeName.compareTo(BACKGROUND_IMAGE_ELEMENT_TAG) == 0) {
+                backgroundImage = attributeValue;
             }
         }
 
         currentPageData = new PageData((byte)id, backgroundColour, titleColour, subtitleColour, rows, columns,
                 (byte)nextPageId, transitionId, transitionTime, durationMs, title, titleEnabled, titleAlignment,
-                subtitle, subtitleEnabled, subtitleAlignment);
+                subtitle, subtitleEnabled, subtitleAlignment, backgroundImage);
         pageDataList.add(currentPageData);
 
         //System.out.println();

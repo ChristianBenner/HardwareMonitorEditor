@@ -31,6 +31,7 @@ import com.bennero.client.states.InformationStateData;
 import com.bennero.client.states.LoadingStateData;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
+import com.bennero.common.messages.MessageUtils;
 import com.bennero.common.networking.ConnectionInformation;
 import com.bennero.common.networking.NetworkUtils;
 import javafx.geometry.Pos;
@@ -89,16 +90,16 @@ public class ConnectionListPage extends StackPane {
             if (connectionListView.getSelectionModel().getSelectedItem() != null) {
                 ConnectionInformation selectedConnectionInformation = (ConnectionInformation) connectionListView.
                         getSelectionModel().getSelectedItem();
-                NetworkUtils.Compatibility compatibility = NetworkUtils.isVersionCompatible(VERSION_MAJOR,
+                MessageUtils.Compatibility compatibility = MessageUtils.isVersionCompatible(VERSION_MAJOR,
                         VERSION_MINOR, selectedConnectionInformation.getMajorVersion(),
                         selectedConnectionInformation.getMinorVersion());
-                if (compatibility == NetworkUtils.Compatibility.NEWER) {
+                if (compatibility == MessageUtils.Compatibility.NEWER) {
                     Alert alert = new Alert(Alert.AlertType.ERROR, "Incompatible Monitor Version",
                             ButtonType.OK);
                     alert.setContentText("Cannot connect to Hardware Monitor " + selectedConnectionInformation +
                             " because it is running an older software version than the editor");
                     alert.showAndWait();
-                } else if (compatibility == NetworkUtils.Compatibility.OLDER) {
+                } else if (compatibility == MessageUtils.Compatibility.OLDER) {
                     Alert alert = new Alert(Alert.AlertType.ERROR, "Incompatible Monitor Version",
                             ButtonType.OK);
                     alert.setContentText("Cannot connect to Hardware Monitor " + selectedConnectionInformation +

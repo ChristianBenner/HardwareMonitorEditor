@@ -25,10 +25,9 @@ package com.bennero.client.config;
 
 import com.bennero.client.core.ApplicationCore;
 import com.bennero.client.core.CoreUtils;
-import com.bennero.client.network.NetworkClient;
+import com.bennero.client.core.DataClient;
 import com.bennero.client.util.PageGenerator;
 import com.bennero.common.PageData;
-import com.bennero.common.Sensor;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextInputDialog;
@@ -63,7 +62,7 @@ public class SaveManager {
     }
 
     public boolean displayOpenSaveUI() {
-        File selectedFile = CoreUtils.showFileSelector();
+        File selectedFile = CoreUtils.showSaveFileSelector();
 
         if (selectedFile != null) {
             // Remove all pages from hardware monitor
@@ -117,10 +116,9 @@ public class SaveManager {
         // If current save data is not null, remove all the pages from the monitor
         SaveData saveData = SaveManager.getInstance().getSaveData();
         if (saveData != null) {
-            final NetworkClient networkClient = NetworkClient.getInstance();
             final ArrayList<PageData> pageData = saveData.getPageDataList();
             for (int i = 0; i < pageData.size(); i++) {
-                networkClient.writeRemovePageMessage((byte) pageData.get(i).getUniqueId());
+                DataClient.writeRemovePageMessage((byte) pageData.get(i).getUniqueId());
             }
         }
     }

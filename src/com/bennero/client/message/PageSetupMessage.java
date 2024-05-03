@@ -1,12 +1,12 @@
-package com.bennero.client.messages;
+package com.bennero.client.message;
 
 import com.bennero.common.PageData;
 import com.bennero.common.messages.MessageType;
 import com.bennero.common.messages.PageDataPositions;
 
 import static com.bennero.common.Constants.*;
-import static com.bennero.common.networking.NetworkUtils.writeStringToMessage;
-import static com.bennero.common.networking.NetworkUtils.writeToMessage;
+import static com.bennero.common.messages.MessageUtils.writeStringToMessage;
+import static com.bennero.common.messages.MessageUtils.writeToMessage;
 
 public class PageSetupMessage {
     public static byte[] create(PageData pageData) {
@@ -33,6 +33,7 @@ public class PageSetupMessage {
         String subtitle = pageData.getSubtitle();
         byte subtitleEnabled = pageData.isSubtitleEnabled() ? (byte) 0x01 : (byte) 0x00;
         byte subtitleAlignment = (byte) pageData.getSubtitleAlignment();
+        String backgroundImage = pageData.getBackgroundImage();
 
         bytes[MESSAGE_TYPE_POS] = MessageType.PAGE_SETUP;
         bytes[PageDataPositions.ID_POS] = pageId;
@@ -57,6 +58,7 @@ public class PageSetupMessage {
         writeStringToMessage(bytes, PageDataPositions.SUBTITLE_POS, subtitle, NAME_STRING_NUM_BYTES);
         bytes[PageDataPositions.SUBTITLE_POS_ENABLED_POS] = subtitleEnabled;
         bytes[PageDataPositions.SUBTITLE_POS_ALIGNMENT_POS] = subtitleAlignment;
+        writeStringToMessage(bytes, PageDataPositions.BACKGROUND_IMAGE_POS, backgroundImage, BACKGROUND_IMAGE_STRING_NUM_BYTES);
 
         return bytes;
     }

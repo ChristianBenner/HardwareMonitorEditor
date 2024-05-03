@@ -82,6 +82,14 @@
     -fx-cursor: hand;
 }
 
+#hw-sensor-editor-options-button {
+    -fx-background-color: -hw-button-bg;
+    -fx-font-size: 16px;
+    -fx-background-radius: 5.0 5.0 5.0 5.0;
+    -fx-text-fill: white;
+    -fx-cursor: hand;
+}
+
 #hw-page-editor-back-button {
     -fx-background-color: -hw-button-bg;
     -fx-font-size: 12px;

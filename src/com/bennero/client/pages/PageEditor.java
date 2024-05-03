@@ -23,8 +23,10 @@
 
 package com.bennero.client.pages;
 
+import com.bennero.client.config.ProgramConfigManager;
 import com.bennero.client.config.SaveManager;
 import com.bennero.client.core.ApplicationCore;
+import com.bennero.client.core.DataClient;
 import com.bennero.client.network.NetworkClient;
 import com.bennero.client.states.PageEditorStateData;
 import com.bennero.client.states.PageOverviewStateData;
@@ -37,6 +39,10 @@ import com.bennero.client.ui.TextFieldEditPane;
 import com.bennero.client.util.GridUtils;
 import com.bennero.common.PageData;
 import com.bennero.common.Sensor;
+import com.bennero.common.logging.LogLevel;
+import com.bennero.common.logging.Logger;
+import com.bennero.common.messages.FileDataPositions;
+import com.bennero.common.osspecific.OSUtils;
 import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -51,7 +57,10 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
+import java.io.*;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.UUID;
 
 /**
  * PageEditor class is the user interface that lets users customize the page holding sensors (the appearance of a page
@@ -83,12 +92,10 @@ public class PageEditor extends StackPane {
     private ColouredTextField subtitleTextField;
 
     private SaveManager saveManager;
-    private NetworkClient networkClient;
 
     public PageEditor(PageData pageData) {
         this.pageData = pageData;
         this.saveManager = SaveManager.getInstance();
-        this.networkClient = NetworkClient.getInstance();
         this.addSensorButtons = new ArrayList<>();
 
         HIGHLIGHT_COLOUR = Color.color(pageData.getTitleColour().getRed(), pageData.getTitleColour().getGreen(),
@@ -97,7 +104,11 @@ public class PageEditor extends StackPane {
                 pageData.getTitleColour().getBlue(), 0.2);
         HOVER_BACKGROUND = new Background(new BackgroundFill(HIGHLIGHT_COLOUR_TRANSPARENT, new CornerRadii(20), Insets.EMPTY));
 
-        super.setBackground(new Background(new BackgroundFill(pageData.getColour(), CornerRadii.EMPTY, Insets.EMPTY)));
+        if(pageData.getBackgroundImage().isEmpty()) {
+            super.setBackground(new Background(new BackgroundFill(pageData.getColour(), CornerRadii.EMPTY, Insets.EMPTY)));
+        } else {
+            setBackgroundImage(pageData.getBackgroundImage());
+        }
 
         headerPane = new VBox();
         initTitle();
@@ -139,7 +150,7 @@ public class PageEditor extends StackPane {
                             }
                         }
 
-                        networkClient.writePageMessage(pageData);
+                        DataClient.writePageMessage(pageData);
                     },
                     (observableValue, integer, t1) ->
                     {
@@ -150,45 +161,89 @@ public class PageEditor extends StackPane {
                             initSubtitle();
                         }
 
-                        networkClient.writePageMessage(pageData);
+                        DataClient.writePageMessage(pageData);
                     },
                     (observableValue, color, t1) ->
                     {
                         setBackground(new Background(new BackgroundFill(t1, CornerRadii.EMPTY, Insets.EMPTY)));
                         pageData.setColour(t1);
-                        networkClient.writePageMessage(pageData);
+                        DataClient.writePageMessage(pageData);
+                    },
+                    (observableValue, file, t1) ->
+                    {
+                        // Need to prepare the background image for being saved to this page data and sent to the
+                        // hardware monitor. Incase the file gets deleted by the user, save a copy to application data
+                        // directory. This means the file can also be named to a consistent length UUID.
+                        String extension = t1.getName().substring(t1.getName().lastIndexOf('.'));
+                        String duplicatedFileName = UUID.randomUUID().toString() + extension;
+
+                        File directoryDest = new File(OSUtils.getBackgroundImageDirectory());
+                        if(!directoryDest.exists()) {
+                            directoryDest.mkdirs();
+                        }
+
+                        File destination = new File(OSUtils.getBackgroundImageDirectory() + File.separator + duplicatedFileName);
+                        try {
+                            Files.copy(t1.toPath(), destination.toPath());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return;
+                        }
+
+                        // Read the file
+                        try {
+                            FileInputStream fileInputStream = new FileInputStream(destination);
+                            byte[] bytes = fileInputStream.readAllBytes();
+
+                            // Transfer the file to the hardware monitor
+                            DataClient.writeFileMessage(bytes.length, duplicatedFileName, bytes, FileDataPositions.TYPE_IMAGE);
+                        } catch (FileNotFoundException e) {
+                            e.printStackTrace();
+                            return;
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return;
+                        }
+
+                        if(!destination.exists()) {
+                            return;
+                        }
+
+                        pageData.setBackgroundImage(duplicatedFileName);
+                        setBackgroundImage(duplicatedFileName);
+                        DataClient.writePageMessage(pageData);
                     },
                     (observableValue, integer, t1) ->
                     {
                         pageData.setRows(t1);
                         initGrid();
-                        networkClient.writePageMessage(pageData);
+                        DataClient.writePageMessage(pageData);
                     },
                     (observableValue, integer, t1) ->
                     {
                         pageData.setColumns(t1);
                         initGrid();
-                        networkClient.writePageMessage(pageData);
+                        DataClient.writePageMessage(pageData);
                     },
                     (observableValue, string, t1) ->
                     {
                         pageData.setNextPageId(t1);
-                        networkClient.writePageMessage(pageData);
+                        DataClient.writePageMessage(pageData);
                     },
                     (observableValue, integer, t1) ->
                     {
                         pageData.setTransitionType(t1);
-                        networkClient.writePageMessage(pageData);
+                        DataClient.writePageMessage(pageData);
                     },
                     (observableValue, integer, t1) ->
                     {
                         pageData.setTransitionTime(t1);
-                        networkClient.writePageMessage(pageData);
+                        DataClient.writePageMessage(pageData);
                     },
                     (observableValue, integer, t1) ->
                     {
                         pageData.setDurationMs(t1);
-                        networkClient.writePageMessage(pageData);
+                        DataClient.writePageMessage(pageData);
                     },
                     (EventHandler<Event>) event ->
                     {
@@ -205,6 +260,26 @@ public class PageEditor extends StackPane {
         StackPane.setAlignment(optionsButton, Pos.BOTTOM_RIGHT);
         super.getChildren().add(backButton);
         super.getChildren().add(optionsButton);
+    }
+
+    private void setBackgroundImage(String imageFile) {
+        // Resolve location
+        File file = new File(OSUtils.getBackgroundImageDirectory() + File.separator + imageFile);
+
+        if(!file.exists()) {
+            return;
+        }
+
+        // Set the background image of the editor
+        try {
+            InputStream is = new FileInputStream(file);
+            Image image = new Image(is);
+
+            BackgroundSize backgroundSize = new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, false, true);
+            super.setBackground(new Background(new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, backgroundSize)));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     protected void initGrid() {
@@ -307,7 +382,7 @@ public class PageEditor extends StackPane {
                                 saveManager.getSaveData().save();
 
                                 // Send network message to remove the sensor
-                                NetworkClient.getInstance().writeRemoveSensorMessage((byte) sensor.getUniqueId(), (byte) pageData.getUniqueId());
+                                DataClient.writeRemoveSensorMessage((byte) sensor.getUniqueId(), (byte) pageData.getUniqueId());
                             }
                         });
 
@@ -356,7 +431,7 @@ public class PageEditor extends StackPane {
                         saveManager.getSaveData().save();
 
                         // Send network message to remove the sensor
-                        NetworkClient.getInstance().writeSensorTransformationMessage(sensor,
+                        DataClient.writeSensorTransformationMessage(sensor,
                                 (byte) pageData.getUniqueId());
                     }
                 });
@@ -388,7 +463,7 @@ public class PageEditor extends StackPane {
                         saveManager.getSaveData().save();
 
                         // Send network message to remove the sensor
-                        NetworkClient.getInstance().writeSensorTransformationMessage(sensor,
+                        DataClient.writeSensorTransformationMessage(sensor,
                                 (byte) pageData.getUniqueId());
                     }
                 });
@@ -421,26 +496,26 @@ public class PageEditor extends StackPane {
                             headerPane.getChildren().remove(titleStackPane);
                             pageData.setTitleEnabled(false);
                             saveManager.getSaveData().save();
-                            networkClient.writePageMessage(pageData);
+                            DataClient.writePageMessage(pageData);
                         }
                     },
                     (observableValue, integer, t1) ->
                     {
                         pageData.setTitleAlignment(t1);
                         saveManager.getSaveData().save();
-                        networkClient.writePageMessage(pageData);
+                        DataClient.writePageMessage(pageData);
                     },
                     (observableValue, color, t1) ->
                     {
                         pageData.setTitleColour(t1);
                         saveManager.getSaveData().save();
-                        networkClient.writePageMessage(pageData);
+                        DataClient.writePageMessage(pageData);
                     },
                     (observableValue, s, t1) ->
                     {
                         pageData.setTitle(t1);
                         saveManager.getSaveData().save();
-                        networkClient.writePageMessage(pageData);
+                        DataClient.writePageMessage(pageData);
                     }));
 
             headerPane.getChildren().add(titleStackPane);
@@ -465,26 +540,26 @@ public class PageEditor extends StackPane {
                             headerPane.getChildren().remove(subtitleStackPane);
                             pageData.setSubtitleEnabled(false);
                             saveManager.getSaveData().save();
-                            networkClient.writePageMessage(pageData);
+                            DataClient.writePageMessage(pageData);
                         }
                     },
                     (observableValue, integer, t1) ->
                     {
                         pageData.setSubtitleAlignment(t1);
                         saveManager.getSaveData().save();
-                        networkClient.writePageMessage(pageData);
+                        DataClient.writePageMessage(pageData);
                     },
                     (observableValue, color, t1) ->
                     {
                         pageData.setSubtitleColour(t1);
                         saveManager.getSaveData().save();
-                        networkClient.writePageMessage(pageData);
+                        DataClient.writePageMessage(pageData);
                     },
                     (observableValue, s, t1) ->
                     {
                         pageData.setSubtitle(t1);
                         saveManager.getSaveData().save();
-                        networkClient.writePageMessage(pageData);
+                        DataClient.writePageMessage(pageData);
                     }));
 
             headerPane.getChildren().add(subtitleStackPane);

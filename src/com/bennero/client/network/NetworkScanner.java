@@ -47,8 +47,8 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.bennero.common.Constants.*;
-import static com.bennero.common.networking.NetworkUtils.writeBytesToMessage;
-import static com.bennero.common.networking.NetworkUtils.writeToMessage;
+import static com.bennero.common.messages.MessageUtils.writeBytesToMessage;
+import static com.bennero.common.messages.MessageUtils.writeToMessage;
 
 /**
  * NetworkScanner class provides functionality for scanning the network for hardware monitors. It will send out a

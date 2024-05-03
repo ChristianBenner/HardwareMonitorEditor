@@ -36,7 +36,7 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 
 import static com.bennero.common.Constants.*;
-import static com.bennero.common.networking.NetworkUtils.readLong;
+import static com.bennero.common.messages.MessageUtils.readLong;
 
 /**
  * HeartbeatListener is a thread that runs while connected to a hardware monitor. It listens for heartbeats sent out by

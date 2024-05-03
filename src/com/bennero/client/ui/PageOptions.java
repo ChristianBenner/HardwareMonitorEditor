@@ -23,6 +23,7 @@
 
 package com.bennero.client.ui;
 
+import com.bennero.client.core.DataClient;
 import com.bennero.client.network.NetworkClient;
 import com.bennero.client.ui.coloureditor.ColourEditor;
 import com.bennero.common.PageData;
@@ -39,6 +40,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,6 +61,7 @@ public class PageOptions extends Stage {
                        ChangeListener<Boolean> titleEnabledChange,
                        ChangeListener<Boolean> subheadingEnabledChange,
                        ChangeListener<Color> backgroundColourChange,
+                       ChangeListener<File> backgroundImageChange,
                        ChangeListener<Integer> rowChange,
                        ChangeListener<Integer> columnChange,
                        ChangeListener<Byte> nextPageChange,
@@ -92,6 +95,7 @@ public class PageOptions extends Stage {
         optionsPane.getChildren().add(UIHelper.createCheckboxOption("Title", pageData.isTitleEnabled(), titleEnabledChange));
         optionsPane.getChildren().add(UIHelper.createCheckboxOption("Subheading", pageData.isSubtitleEnabled(), subheadingEnabledChange));
         optionsPane.getChildren().add(UIHelper.createColourOption(colourEditor, "Background Colour", pageData.getColour(), backgroundColourChange));
+        optionsPane.getChildren().add(UIHelper.createFileOption("Background Image", backgroundImageChange));
         optionsPane.getChildren().add(UIHelper.createIntSpinnerOption("Rows", pageData.getRows(), 0, 10, rowChange));
         optionsPane.getChildren().add(UIHelper.createIntSpinnerOption("Columns", pageData.getColumns(), 0, 10, columnChange));
 
@@ -152,7 +156,7 @@ public class PageOptions extends Stage {
 
             alert.showAndWait();
             if (alert.getResult() == ButtonType.YES) {
-                NetworkClient.getInstance().writeRemovePageMessage((byte) pageData.getUniqueId());
+                DataClient.writeRemovePageMessage(pageData.getUniqueId());
                 hide();
                 deletePage.handle(actionEvent);
             }

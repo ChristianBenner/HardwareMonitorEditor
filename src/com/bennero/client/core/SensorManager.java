@@ -144,8 +144,7 @@ public class SensorManager {
     }
 
     public void registerSensor(Sensor sensor, SensorData sensorData) {
-        sensor.setValueChangeListener((observableValue, aFloat, t1) -> NetworkClient.getInstance().
-                writeSensorValueMessage(sensor.getUniqueId(), t1));
+        sensor.setValueChangeListener((observableValue, aFloat, t1) -> DataClient.writeSensorValueMessage(sensor.getUniqueId(), t1));
         sensorData.addSensor(sensor);
         Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Registered Sensor: [ID: " + sensor.getUniqueId() + "], [SENSOR_DATA_ID: " + sensorData.getId() + "], [NAME: " + sensor.getTitle() + "]");
     }
@@ -234,7 +233,7 @@ public class SensorManager {
                         if (usingDebugSensors) {
                             updateDebugSensors();
                         } else {
-                            if (NetworkClient.getInstance().isConnected()) {
+                            if (DataClient.isConnected()) {
                                 Native.updateSensors();
                             }
                         }

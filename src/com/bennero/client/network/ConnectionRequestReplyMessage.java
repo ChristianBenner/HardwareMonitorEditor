@@ -26,9 +26,8 @@ package com.bennero.client.network;
 import com.bennero.common.PageData;
 import com.bennero.common.messages.ConnectionRequestReplyDataPositions;
 
-import static com.bennero.client.Version.*;
 import static com.bennero.common.Constants.NAME_STRING_NUM_BYTES;
-import static com.bennero.common.networking.NetworkUtils.readString;
+import static com.bennero.common.messages.MessageUtils.readString;
 
 /**
  * ConnectionRequestReplyMessage contains the data of a connection request response from a Hardware Monitor. It can

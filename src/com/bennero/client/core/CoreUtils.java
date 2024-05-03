@@ -43,7 +43,7 @@ public class CoreUtils {
         return directoryChooser.showDialog(ApplicationCore.getInstance().getWindow().getStage());
     }
 
-    public static File showFileSelector() {
+    public static File showSaveFileSelector() {
         ProgramConfigManager programConfigManager = ProgramConfigManager.getInstance();
         FileChooser fileChooser = new FileChooser();
 
@@ -59,6 +59,11 @@ public class CoreUtils {
                 "Benner Hardware Monitor Save (*.bhwms)", "*.bhwms");
         fileChooser.getExtensionFilters().add(extensionFilter);
 
+        return fileChooser.showOpenDialog(ApplicationCore.getInstance().getWindow().getStage());
+    }
+
+    public static File showFileSelector() {
+        FileChooser fileChooser = new FileChooser();
         return fileChooser.showOpenDialog(ApplicationCore.getInstance().getWindow().getStage());
     }
 

@@ -28,13 +28,13 @@ import com.bennero.client.config.SaveManager;
 import com.bennero.client.network.ConnectedEvent;
 import com.bennero.client.network.NetworkClient;
 import com.bennero.client.network.NetworkScanner;
-import com.bennero.client.serial.SerialClient;
 import com.bennero.client.serial.SerialScanner;
 import com.bennero.client.states.*;
 import com.bennero.common.PageData;
 import com.bennero.common.Sensor;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
+import com.bennero.common.messages.MessageUtils;
 import com.bennero.common.networking.ConnectionInformation;
 import com.bennero.common.networking.NetworkUtils;
 import javafx.application.Application;
@@ -45,7 +45,6 @@ import javafx.scene.image.Image;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -255,13 +254,13 @@ public class ApplicationCore extends Application {
         ArrayList<PageData> pageDataList = saveManager.getSaveData().getPageDataList();
 
         // Send all of the pages to the monitor
-        if (NetworkClient.getInstance().isConnected()) {
+        if (DataClient.isConnected()) {
             for (PageData pageData : pageDataList) {
-                NetworkClient.getInstance().writePageMessage(pageData);
+                DataClient.writePageMessage(pageData);
 
                 // Send all sensors contained in the pages to the monitor
                 for (Sensor sensor : pageData.getSensorList()) {
-                    NetworkClient.getInstance().writeSensorSetupMessage(sensor, (byte) pageData.getUniqueId());
+                    DataClient.writeSensorSetupMessage(sensor, (byte) pageData.getUniqueId());
                 }
             }
         }
@@ -476,11 +475,11 @@ public class ApplicationCore extends Application {
                 setApplicationState(new ConnectionListStateData(availableConnections));
             } else {
                 NetworkClient networkClient = NetworkClient.getInstance();
-                NetworkUtils.Compatibility compatibility = NetworkUtils.isVersionCompatible(VERSION_MAJOR,
+                MessageUtils.Compatibility compatibility = MessageUtils.isVersionCompatible(VERSION_MAJOR,
                         VERSION_MINOR, networkScanStateData.getLastConnectedDevice().getMajorVersion(),
                         networkScanStateData.getLastConnectedDevice().getMinorVersion());
 
-                if (compatibility == NetworkUtils.Compatibility.COMPATIBLE) {
+                if (compatibility == MessageUtils.Compatibility.COMPATIBLE) {
                     // Connect to new IP4 address of the device
                     networkClientConnect(networkClient, networkScanStateData.getLastConnectedDevice(),
                             availableConnections);
@@ -488,11 +487,11 @@ public class ApplicationCore extends Application {
                     Alert alert = new Alert(Alert.AlertType.ERROR, "Incompatible Monitor Version",
                             ButtonType.OK);
 
-                    if (compatibility == NetworkUtils.Compatibility.NEWER) {
+                    if (compatibility == MessageUtils.Compatibility.NEWER) {
                         alert.setContentText("Cannot connect to previously connected Hardware Monitor " +
                                 networkScanStateData.getLastConnectedDevice() +
                                 " because it is running an older software version than the editor");
-                    } else if (compatibility == NetworkUtils.Compatibility.OLDER) {
+                    } else if (compatibility == MessageUtils.Compatibility.OLDER) {
                         alert.setContentText("Cannot connect to previously connected Hardware Monitor " +
                                 networkScanStateData.getLastConnectedDevice() +
                                 " because it is running an newer software version than the editor");
