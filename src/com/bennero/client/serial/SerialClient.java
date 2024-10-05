@@ -5,27 +5,47 @@ import com.bennero.common.PageData;
 import com.bennero.common.Sensor;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
+import com.bennero.common.messages.HeartbeatMessage;
 import com.bennero.common.messages.MessageType;
 import com.fazecast.jSerialComm.SerialPort;
 
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
-import static com.bennero.common.Constants.MESSAGE_NUM_BYTES;
+import static com.bennero.common.Constants.*;
 
 public class SerialClient {
+    enum ConnectionState {
+        CONNECTED,
+        COMMUNICATION_FAILURE,
+
+    }
+
     private static final String LOGGER_TAG = SerialClient.class.getSimpleName();
+    private static final int MAX_ATTEMPTS = 4;
+
+    // First wait is 0ms, then 25ms, then 125ms, then 600ms, then 3000ms then fail completely
+    private static final double ATTEMPT_WAIT_MS = 25;
 
     private static SerialClient instance = null;
+
     private SerialPort serialPort;
     private boolean connected;
 
+    private UUID connectedUUID;
+    private UUID instanceUUID;
+    private long lastMessageSendMs;
+
     private SerialClient() {
         connected = false;
+        this.connectedUUID = null;
+        instanceUUID = UUID.randomUUID();
+
 //        this.programConfigManager = ProgramConfigManager.getInstance();
 //        this.connected = false;
     }
@@ -50,7 +70,10 @@ public class SerialClient {
         Thread t = new Thread(() -> {
             while(serialPort.isOpen()) {
                 try {
-                    write();
+                    if(!write()) {
+                        // Comms failure occurred
+
+                    }
                     Thread.sleep(25);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -60,7 +83,8 @@ public class SerialClient {
         t.start();
     }
 
-    private void write() throws InterruptedException {
+    // true if successful, false if comms failure
+    private boolean write() throws InterruptedException {
         // Try to obtain queue lock
         messageQueueLock.acquire();
 
@@ -71,6 +95,14 @@ public class SerialClient {
 
         // Release lock at the earliest possible time so the queue can be added to again
         messageQueueLock.release();
+
+        long timeSinceLastSendMs = System.currentTimeMillis() - lastMessageSendMs;
+
+        // Send a heartbeat if we have not sent a message since the heartbeat timeout
+        if (messages.isEmpty() && timeSinceLastSendMs >= HEARTBEAT_FREQUENCY_MS) {
+            messages.add(HeartbeatMessage.create(instanceUUID, true));
+            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "No message sent for " + HEARTBEAT_FREQUENCY_MS + "ms. Queueing heartbeat message");
+        }
 
         // Send all the messages
         for(byte[] message : messages) {
@@ -83,8 +115,54 @@ public class SerialClient {
 
             // Send message with checksum
             byte[] packetWithChecksum = buffer.array();
-            serialPort.writeBytes(packetWithChecksum, packetWithChecksum.length);
+
+            // todo: implement a write and read block but with timeouts. If timeout expires report disconnect
+            int attempt = 0;
+            for(; attempt < MAX_ATTEMPTS; attempt++) {
+                serialPort.writeBytes(packetWithChecksum, packetWithChecksum.length);
+                Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent message of type: " + packetWithChecksum[MESSAGE_TYPE_POS] + " attempt: " + attempt);
+
+                lastMessageSendMs = System.currentTimeMillis();
+
+                byte[] messageReceiveStatus = new byte[MESSAGE_NUM_BYTES];
+                serialPort.readBytes(messageReceiveStatus, MESSAGE_NUM_BYTES);
+                HeartbeatMessage heartbeatMessage = HeartbeatMessage.readHeartbeatMessage(messageReceiveStatus);
+
+                // todo: what if the first message received back is bad? need to add checksum to heartbeat
+                if (connectedUUID == null) {
+                    connectedUUID = heartbeatMessage.getInstanceUuid();
+                    Logger.log(LogLevel.DEBUG, LOGGER_TAG, "New connected monitor ID: " + connectedUUID.toString());
+
+                    continue;
+                }
+
+                if (!connectedUUID.equals(heartbeatMessage.getInstanceUuid()) && heartbeatMessage.isOk()) {
+                    Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Received bad heartbeat from monitor");
+
+                    // Message did not receive correctly, try to send again
+                    // If that was the first attempt try again immediately
+                    if(attempt == 0) {
+                        continue;
+                    }
+
+                    // Bad comm, retry send but wait before
+                    int sleepMs = (int)ATTEMPT_WAIT_MS * (int)Math.pow(5, attempt);
+                    Thread.sleep(sleepMs);
+                } else {
+                    Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Received good message confirmation from monitor");
+
+                    // Message was received correctly, do not re-attempt send
+                    break;
+                }
+            }
+
+            if (attempt == MAX_ATTEMPTS) {
+                // Exit due to com failure
+                return false;
+            }
         }
+
+        return true;
     }
 
     private void queueMessage(byte[] ... messages) {
