@@ -105,21 +105,11 @@ public class SerialClient {
 
         // Send all the messages
         for(byte[] message : messages) {
-            // Add a checksum to the end of the message so that the monitor can verify the data was received correctly
-            Checksum checksum = new CRC32();
-            checksum.update(message, 0, message.length);
-            ByteBuffer buffer = ByteBuffer.allocate(message.length + Long.BYTES);
-            buffer.put(message);
-            buffer.putLong(checksum.getValue());
-
-            // Send message with checksum
-            byte[] packetWithChecksum = buffer.array();
-
             // todo: implement a write and read block but with timeouts. If timeout expires report disconnect
             int attempt = 0;
             for(; attempt < MAX_ATTEMPTS; attempt++) {
-                serialPort.writeBytes(packetWithChecksum, packetWithChecksum.length);
-                Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent message of type: " + packetWithChecksum[Message.NUM_BYTES] + " attempt: " + attempt);
+                serialPort.writeBytes(message, Message.NUM_BYTES);
+                Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent message of type: " + Message.getType(message) + " attempt: " + attempt);
 
                 lastMessageSendMs = System.currentTimeMillis();
 
@@ -209,7 +199,7 @@ public class SerialClient {
             return false;
         }
 
-        if(readBuffer[0] != MessageType.VERSION_PARITY_RESPONSE) {
+        if(Message.getType(readBuffer) != MessageType.VERSION_PARITY_RESPONSE) {
             Logger.log(LogLevel.ERROR, LOGGER_TAG, "Unexpected message type in response to version parity request: " +  readBuffer[0]);
             return false;
         }
