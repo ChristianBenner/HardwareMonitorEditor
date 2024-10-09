@@ -34,6 +34,8 @@ import com.bennero.client.ui.coloureditor.ColourEditor;
 import com.bennero.common.PageData;
 import com.bennero.common.Sensor;
 import com.bennero.common.SkinHelper;
+import com.bennero.common.messages.SensorCreateMessage;
+import com.bennero.common.messages.util.SensorCreateMessageHelper;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -158,7 +160,9 @@ public class SensorEditor extends BorderPane {
                     saveManager.getSaveData().save();
 
                     // Send the page sensor data to the client
-                    DataClient.writeSensorSetupMessage(sensor, (byte) pageData.getUniqueId());
+                    SensorCreateMessage out = SensorCreateMessageHelper.create(ApplicationCore.s_getUUID(), sensor,
+                            pageData.getUniqueId());
+                    DataClient.writeMessage(out);
 
                     ApplicationCore.s_setApplicationState(new PageEditorStateData(pageData));
                 } else {

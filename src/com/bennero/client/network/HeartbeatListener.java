@@ -25,6 +25,8 @@ package com.bennero.client.network;
 
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
+import com.bennero.common.messages.HeartbeatMessage;
+import com.bennero.common.messages.Message;
 import com.bennero.common.messages.MessageType;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -34,9 +36,9 @@ import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.UUID;
 
 import static com.bennero.common.Constants.*;
-import static com.bennero.common.messages.MessageUtils.readLong;
 
 /**
  * HeartbeatListener is a thread that runs while connected to a hardware monitor. It listens for heartbeats sent out by
@@ -57,6 +59,8 @@ public class HeartbeatListener extends Thread {
     private boolean run;
     private ServerSocket serverSocket;
     private Socket socket;
+    private UUID monitorUuid;
+    private long lastReceivedHeartbeatMs;
 
     public HeartbeatListener(int heartbeatTimeoutMilliseconds,
                              EventHandler noHeartbeatReceived,
@@ -92,9 +96,18 @@ public class HeartbeatListener extends Thread {
             while (run) {
                 try {
                     byte[] bytes;
-                    bytes = new byte[MESSAGE_NUM_BYTES];
-                    is.read(bytes, 0, MESSAGE_NUM_BYTES);
-                    readMessage(bytes);
+                    bytes = new byte[Message.NUM_BYTES];
+                    is.read(bytes, 0, Message.NUM_BYTES);
+                    boolean goodHeartbeat = readMessage(bytes);
+                    if (goodHeartbeat) {
+                        lastReceivedHeartbeatMs = System.currentTimeMillis();
+                    } else {
+                        if (System.currentTimeMillis() - lastReceivedHeartbeatMs > heartbeatTimeoutMilliseconds) {
+                            noHeartbeatReceived.handle(new Event(null));
+                            Logger.logf(LogLevel.ERROR, TAG, "No heartbeat received for %dms", System.currentTimeMillis() - lastReceivedHeartbeatMs);
+                            run = false;
+                        }
+                    }
                 } catch (SocketTimeoutException se) {
                     if (run) {
                         se.printStackTrace();
@@ -124,14 +137,33 @@ public class HeartbeatListener extends Thread {
         }
     }
 
-    public void readMessage(byte[] bytes) {
-        if (bytes[MESSAGE_TYPE_POS] == MessageType.HEARTBEAT_MESSAGE) {
-            final long hwMonitorSystemUniqueConnectionId = readLong(bytes, HW_HEARTBEAT_VALIDATION_NUMBER_POS);
+    // returns true if a valid heartbeat was received, else false
+    public boolean readMessage(byte[] bytes) {
+        if (Message.getType(bytes) == MessageType.HEARTBEAT) {
+            HeartbeatMessage heartbeatMessage = new HeartbeatMessage(bytes);
 
-            // Ensures that the message came from a hardware monitor and not a random device on the network
-            if (hwMonitorSystemUniqueConnectionId != HW_HEARTBEAT_VALIDATION_NUMBER) {
-                Logger.log(LogLevel.WARNING, TAG, "Received an invalid heartbeat from Hardware Monitor");
+            switch (heartbeatMessage.getStatus()) {
+                case Message.STATUS_OK:
+                    if (monitorUuid == null) {
+                        monitorUuid = heartbeatMessage.getSenderUuid();
+                    }
+
+                    // Ensures that the message came from a hardware monitor and not a random device on the network
+                    if (!monitorUuid.equals(heartbeatMessage.getSenderUuid())) {
+                        Logger.log(LogLevel.WARNING, TAG, "Received a heartbeat from a different Hardware Monitor");
+                        return false;
+                    }
+
+                    return true;
+                case Message.STATUS_FAILED_READ:
+                    Logger.log(LogLevel.WARNING, TAG, "Received invalid heartbeat");
+                    return false;
+                case Message.STATUS_BAD_RECEIVE:
+                    // Should not possible as the received message is not a response of anything
+                    return false;
             }
         }
+
+        return false;
     }
 }

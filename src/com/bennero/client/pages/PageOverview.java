@@ -41,6 +41,7 @@ import com.bennero.client.util.PageGenerator;
 import com.bennero.common.PageData;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
+import com.bennero.common.messages.PageRemoveMessage;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -256,7 +257,8 @@ public class PageOverview extends StackPane {
                 PageData pageData = PageGenerator.generatePage(pageTitle);
                 saveManager.getSaveData().addPageData(pageData);
                 addPageInfoUI(pageData);
-                DataClient.writePageMessage(pageData);
+                PageRemoveMessage out = new PageRemoveMessage(ApplicationCore.s_getUUID(), true, pageData.getUniqueId());
+                DataClient.writeMessage(out);
             }
         });
 

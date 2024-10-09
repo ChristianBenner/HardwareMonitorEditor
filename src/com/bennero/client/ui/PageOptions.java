@@ -23,11 +23,13 @@
 
 package com.bennero.client.ui;
 
+import com.bennero.client.core.ApplicationCore;
 import com.bennero.client.core.DataClient;
 import com.bennero.client.network.NetworkClient;
 import com.bennero.client.ui.coloureditor.ColourEditor;
 import com.bennero.common.PageData;
 import com.bennero.common.TransitionType;
+import com.bennero.common.messages.PageRemoveMessage;
 import javafx.beans.value.ChangeListener;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -156,7 +158,8 @@ public class PageOptions extends Stage {
 
             alert.showAndWait();
             if (alert.getResult() == ButtonType.YES) {
-                DataClient.writeRemovePageMessage(pageData.getUniqueId());
+                PageRemoveMessage out = new PageRemoveMessage(ApplicationCore.s_getUUID(), true, pageData.getUniqueId());
+                DataClient.writeMessage(out);
                 hide();
                 deletePage.handle(actionEvent);
             }

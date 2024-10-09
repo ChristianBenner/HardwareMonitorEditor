@@ -4,6 +4,8 @@ import com.bennero.client.network.NetworkClient;
 import com.bennero.client.serial.SerialClient;
 import com.bennero.common.PageData;
 import com.bennero.common.Sensor;
+import com.bennero.common.messages.FileTransferMessage;
+import com.bennero.common.messages.Message;
 
 public class DataClient {
     public static boolean isConnected() {
@@ -14,59 +16,20 @@ public class DataClient {
         return false;
     }
 
-    public static void writeRemovePageMessage(byte pageId) {
+    public static void writeMessage(Message message) {
         if(NetworkClient.getInstance().isConnected()) {
-            NetworkClient.getInstance().writeRemovePageMessage(pageId);
+            NetworkClient.getInstance().writeMessage(message);
         } else if(SerialClient.getInstance().isConnected()) {
-            SerialClient.getInstance().writeRemovePageMessage(pageId);
+            SerialClient.getInstance().writeMessage(message);
         }
     }
 
-    public static void writeRemoveSensorMessage(byte sensorId, byte pageId) {
-        if(NetworkClient.getInstance().isConnected()) {
-            NetworkClient.getInstance().writeRemoveSensorMessage(sensorId, pageId);
-        } else if(SerialClient.getInstance().isConnected()) {
-            SerialClient.getInstance().writeRemoveSensorMessage(sensorId, pageId);
-        }
-    }
-
-    public static void writePageMessage(PageData pageData) {
-        if(NetworkClient.getInstance().isConnected()) {
-            NetworkClient.getInstance().writePageMessage(pageData);
-        } else if(SerialClient.getInstance().isConnected()) {
-            SerialClient.getInstance().writePageMessage(pageData);
-        }
-    }
-
-    public static void writeSensorSetupMessage(Sensor sensor, byte pageId) {
-        if(NetworkClient.getInstance().isConnected()) {
-            NetworkClient.getInstance().writeSensorSetupMessage(sensor, pageId);
-        } else if(SerialClient.getInstance().isConnected()) {
-            SerialClient.getInstance().writeSensorSetupMessage(sensor, pageId);
-        }
-    }
-
-    public static void writeSensorTransformationMessage(Sensor sensor, byte pageId) {
-        if(NetworkClient.getInstance().isConnected()) {
-            NetworkClient.getInstance().writeSensorTransformationMessage(sensor, pageId);
-        } else if(SerialClient.getInstance().isConnected()) {
-            SerialClient.getInstance().writeSensorTransformationMessage(sensor, pageId);
-        }
-    }
-
-    public static void writeSensorValueMessage(int sensorId, float value) {
-        if(NetworkClient.getInstance().isConnected()) {
-            NetworkClient.getInstance().writeSensorValueMessage(sensorId, value);
-        } else if(SerialClient.getInstance().isConnected()) {
-            SerialClient.getInstance().writeSensorValueMessage(sensorId, value);
-        }
-    }
-
-    public static void writeFileMessage(int size, String name, byte[] bytes, byte type) {
+    // Files work differently to other messages as they do not fit in the regular message size
+    public static void writeFile(FileTransferMessage message, byte[] fileBytes) {
         if(NetworkClient.getInstance().isConnected()) {
             // todo: implement
         } else if(SerialClient.getInstance().isConnected()) {
-            SerialClient.getInstance().writeFileMessage(size, name, bytes, type);
+            SerialClient.getInstance().writeFileMessage(message, fileBytes);
         }
     }
 }

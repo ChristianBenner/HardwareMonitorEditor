@@ -1,12 +1,12 @@
 package com.bennero.client.serial;
 
-import com.bennero.client.message.*;
+import com.bennero.client.Version;
+import com.bennero.client.core.ApplicationCore;
 import com.bennero.common.PageData;
 import com.bennero.common.Sensor;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
-import com.bennero.common.messages.HeartbeatMessage;
-import com.bennero.common.messages.MessageType;
+import com.bennero.common.messages.*;
 import com.fazecast.jSerialComm.SerialPort;
 
 import java.nio.ByteBuffer;
@@ -38,13 +38,11 @@ public class SerialClient {
     private boolean connected;
 
     private UUID connectedUUID;
-    private UUID instanceUUID;
     private long lastMessageSendMs;
 
     private SerialClient() {
         connected = false;
         this.connectedUUID = null;
-        instanceUUID = UUID.randomUUID();
 
 //        this.programConfigManager = ProgramConfigManager.getInstance();
 //        this.connected = false;
@@ -100,7 +98,8 @@ public class SerialClient {
 
         // Send a heartbeat if we have not sent a message since the heartbeat timeout
         if (messages.isEmpty() && timeSinceLastSendMs >= HEARTBEAT_FREQUENCY_MS) {
-            messages.add(HeartbeatMessage.create(instanceUUID, true));
+            HeartbeatMessage out = new HeartbeatMessage(ApplicationCore.s_getUUID(), true);
+            messages.add(out.write());
             Logger.log(LogLevel.DEBUG, LOGGER_TAG, "No message sent for " + HEARTBEAT_FREQUENCY_MS + "ms. Queueing heartbeat message");
         }
 
@@ -120,23 +119,23 @@ public class SerialClient {
             int attempt = 0;
             for(; attempt < MAX_ATTEMPTS; attempt++) {
                 serialPort.writeBytes(packetWithChecksum, packetWithChecksum.length);
-                Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent message of type: " + packetWithChecksum[MESSAGE_TYPE_POS] + " attempt: " + attempt);
+                Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent message of type: " + packetWithChecksum[Message.NUM_BYTES] + " attempt: " + attempt);
 
                 lastMessageSendMs = System.currentTimeMillis();
 
-                byte[] messageReceiveStatus = new byte[MESSAGE_NUM_BYTES];
-                serialPort.readBytes(messageReceiveStatus, MESSAGE_NUM_BYTES);
-                HeartbeatMessage heartbeatMessage = HeartbeatMessage.readHeartbeatMessage(messageReceiveStatus);
+                byte[] messageReceiveStatus = new byte[Message.NUM_BYTES];
+                serialPort.readBytes(messageReceiveStatus, Message.NUM_BYTES);
+                HeartbeatMessage heartbeatMessage = new HeartbeatMessage(messageReceiveStatus);
 
                 // todo: what if the first message received back is bad? need to add checksum to heartbeat
                 if (connectedUUID == null) {
-                    connectedUUID = heartbeatMessage.getInstanceUuid();
+                    connectedUUID = heartbeatMessage.getSenderUuid();
                     Logger.log(LogLevel.DEBUG, LOGGER_TAG, "New connected monitor ID: " + connectedUUID.toString());
 
                     continue;
                 }
 
-                if (!connectedUUID.equals(heartbeatMessage.getInstanceUuid()) && heartbeatMessage.isOk()) {
+                if (!connectedUUID.equals(heartbeatMessage.getSenderUuid()) && heartbeatMessage.getStatus() == Message.STATUS_OK) {
                     Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Received bad heartbeat from monitor");
 
                     // Message did not receive correctly, try to send again
@@ -197,25 +196,27 @@ public class SerialClient {
         // todo: move the connection establish code to its own function and use the write thread instead, need to report
         //  back using handlers
         // Send a message to determine version parity
-        byte[] versionParityMessage = VersionParityMessage.create();
-        serialPort.writeBytes(versionParityMessage, MESSAGE_NUM_BYTES);
+        VersionParityMessage out = new VersionParityMessage(ApplicationCore.s_getUUID(), true,
+                Version.VERSION_MAJOR, Version.VERSION_MINOR, Version.VERSION_PATCH);
+        byte[] bytes = out.write();
+        serialPort.writeBytes(bytes, Message.NUM_BYTES);
 
         // Expect immediate response
-        byte[] readBuffer = new byte[MESSAGE_NUM_BYTES];
-        int numRead = serialPort.readBytes(readBuffer, MESSAGE_NUM_BYTES);
-        if (numRead < MESSAGE_NUM_BYTES) {
+        byte[] readBuffer = new byte[Message.NUM_BYTES];
+        int numRead = serialPort.readBytes(readBuffer, Message.NUM_BYTES);
+        if (numRead < Message.NUM_BYTES) {
             Logger.log(LogLevel.ERROR, LOGGER_TAG, "Unexpected read amount on serial port: " +  numRead);
             return false;
         }
 
-        if(readBuffer[0] != MessageType.VERSION_PARITY_RESPONSE_MESSAGE) {
+        if(readBuffer[0] != MessageType.VERSION_PARITY_RESPONSE) {
             Logger.log(LogLevel.ERROR, LOGGER_TAG, "Unexpected message type in response to version parity request: " +  readBuffer[0]);
             return false;
         }
 
-        VersionParityResponseMessage response = VersionParityResponseMessage.processConnectionRequestMessageData(readBuffer);
-        if(!response.isAccepted()) {
-            Logger.log(LogLevel.INFO, LOGGER_TAG, "Hardware Monitor refused connection because of version mismatch: v" + response.getMajorVersion() + "." + response.getMinorVersion() + "." + response.getPatchVersion());
+        VersionParityResponseMessage in = new VersionParityResponseMessage(readBuffer);
+        if(!in.isAccepted()) {
+            Logger.log(LogLevel.INFO, LOGGER_TAG, "Hardware Monitor refused connection because of version mismatch: v" + in.getVersionMajor() + "." + in.getVersionMinor() + "." + in.getVersionPatch());
             return false;
         }
 
@@ -226,70 +227,22 @@ public class SerialClient {
         return true;
     }
 
-    public void writeRemovePageMessage(byte pageId) {
-        if (connected && serialPort.isOpen()) {
-            byte[] message = RemovePageMessage.create(pageId);
-            queueMessage(message);
-            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent Remove Page Message: [ID: " + pageId + "]");
-        } else {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to send Remove Page message because serial port is not connected");
+    public boolean writeMessage(Message message) {
+        if (!connected || !serialPort.isOpen()) {
+            Logger.logf(LogLevel.DEBUG, LOGGER_TAG, "Failed to send message (type: %d) because serial port is not connected", message.getType());
         }
+
+        byte[] bytes = message.write();
+        queueMessage(bytes);
+        Logger.logf(LogLevel.DEBUG, LOGGER_TAG, "Sent message (type: %d)", message.getType());
+        return true;
     }
 
-    public void writeRemoveSensorMessage(byte sensorId, byte pageId) {
-        if (connected && serialPort.isOpen()) {
-            byte[] message = RemoveSensorMessage.create(sensorId, pageId);
-            queueMessage(message);
-            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent Remove Sensor Message: [ID: " + sensorId + "]");
-        } else {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to send Remove Sensor message because serial port is not connected");
-        }
-    }
-
-    public void writePageMessage(PageData pageData) {
-        if (connected && serialPort.isOpen()) {
-            byte[] message = PageSetupMessage.create(pageData);
-            queueMessage(message);
-            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent PageData Message: [ID: " + pageData.getUniqueId() + "], [TITLE: " + pageData.getTitle() + "]");
-        } else {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to send PageData message because serial port is not connected");
-        }
-    }
-
-    public void writeSensorSetupMessage(Sensor sensor, byte pageId) {
-        if (connected && serialPort.isOpen()) {
-            byte[] message = SensorSetupMessage.create(sensor, pageId);
-            queueMessage(message);
-            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent Sensor set-up Message: [ID: " + sensor.getUniqueId() + "], [TITLE: " + sensor.getTitle() + "]");
-        } else {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to send Sensor set-up Message because serial port is not connected");
-        }
-    }
-
-    public void writeSensorTransformationMessage(Sensor sensor, byte pageId) {
-        if (connected && serialPort.isOpen()) {
-            byte[] message = SensorTransformationMessage.create(sensor, pageId);
-            queueMessage(message);
-            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent Sensor Transformation Message: [ID: " + sensor.getUniqueId() + "], [TITLE: " + sensor.getTitle() + "]");
-        } else {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to send Sensor Transformation Message because serial port is not connected");
-        }
-    }
-
-    public void writeSensorValueMessage(int sensorId, float value) {
-        if (connected && serialPort.isOpen()) {
-            byte[] message = SensorValueMessage.create(sensorId, value);
-            queueMessage(message);
-        } else {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to send Sensor value message because serial port is not connected");
-        }
-    }
-
-    public void writeFileMessage(int size, String name, byte[] fileBytes, byte type) {
+    public void writeFileMessage(FileTransferMessage message, byte[] fileBytes) {
+       // int size, String name, byte[] fileBytes, byte type
         if (connected && serialPort.isOpen()) {
             // Transfer inbound message
-            byte[] filePrepMessage = FileMessage.create(size, name, type);
-            queueMessage(filePrepMessage, fileBytes);
+            queueMessage(message.write(), fileBytes);
         } else {
             Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to send File message because serial port is not connected");
         }

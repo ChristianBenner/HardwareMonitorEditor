@@ -29,7 +29,8 @@ import com.bennero.client.states.LoadingStateData;
 import com.bennero.common.Constants;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
-import com.bennero.common.messages.BroadcastAnnouncementDataPositions;
+import com.bennero.common.messages.BroadcastAnnouncementMessage;
+import com.bennero.common.messages.Message;
 import com.bennero.common.messages.MessageType;
 import com.bennero.common.networking.AddressInformation;
 import com.bennero.common.networking.ConnectionInformation;
@@ -199,14 +200,12 @@ public class NetworkScanner {
             DatagramSocket broadcastSocket = new DatagramSocket();
             broadcastSocket.setBroadcast(true);
 
-            byte[] message = new byte[MESSAGE_NUM_BYTES];
-            message[MESSAGE_TYPE_POS] = MessageType.BROADCAST_MESSAGE;
-
             AddressInformation siteLocalAddress = NetworkUtils.getMyIpAddress();
-            writeToMessage(message, BroadcastAnnouncementDataPositions.HW_SYSTEM_IDENTIFIER_POS, HW_EDITOR_SYSTEM_UNIQUE_CONNECTION_ID);
-            writeBytesToMessage(message, BroadcastAnnouncementDataPositions.IP4_ADDRESS_POS, siteLocalAddress.getIp4Address(), IP4_ADDRESS_NUM_BYTES);
+            BroadcastAnnouncementMessage out = new BroadcastAnnouncementMessage(ApplicationCore.s_getUUID(), true,
+                    HW_EDITOR_SYSTEM_UNIQUE_CONNECTION_ID, siteLocalAddress.getIp4Address());
 
-            DatagramPacket packet = new DatagramPacket(message, MESSAGE_NUM_BYTES, inetAddress, Constants.BROADCAST_RECEIVE_PORT);
+            DatagramPacket packet = new DatagramPacket(out.write(), Message.NUM_BYTES, inetAddress,
+                    Constants.BROADCAST_RECEIVE_PORT);
             broadcastSocket.send(packet);
             broadcastSocket.close();
             Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent broadcastAvailability message on: " +

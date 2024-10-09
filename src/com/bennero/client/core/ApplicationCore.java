@@ -35,6 +35,10 @@ import com.bennero.common.Sensor;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
 import com.bennero.common.messages.MessageUtils;
+import com.bennero.common.messages.PageCreateMessage;
+import com.bennero.common.messages.SensorCreateMessage;
+import com.bennero.common.messages.util.PageCreateMessageHelper;
+import com.bennero.common.messages.util.SensorCreateMessageHelper;
 import com.bennero.common.networking.ConnectionInformation;
 import com.bennero.common.networking.NetworkUtils;
 import javafx.application.Application;
@@ -47,6 +51,7 @@ import javafx.stage.Stage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static com.bennero.client.Version.*;
 import static com.bennero.common.Constants.HEARTBEAT_TIMEOUT_MS;
@@ -82,6 +87,7 @@ public class ApplicationCore extends Application {
     private SystemTrayManager systemTrayManager;
     private SensorManager sensorManager;
     private SaveManager saveManager;
+    private UUID myUuid;
 
     /**
      * Construct the application and initialise core components such as the programs configuration
@@ -93,6 +99,7 @@ public class ApplicationCore extends Application {
         programConfigManager = ProgramConfigManager.getInstance();
         sensorManager = SensorManager.getInstance();
         saveManager = SaveManager.getInstance();
+        myUuid = UUID.randomUUID();
 
         final LogLevel LOG_LEVEL_ON_BOOTSTRAPPER_LAUNCH = DEBUG_BOOTSTRAPPER ? LogLevel.DEBUG : LogLevel.INFO;
         final LogLevel LOG_LEVEL = BOOTSTRAPPER_LAUNCH_REQUIRED ? LOG_LEVEL_ON_BOOTSTRAPPER_LAUNCH : LogLevel.DEBUG;
@@ -122,6 +129,10 @@ public class ApplicationCore extends Application {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static UUID s_getUUID() {
+        return getInstance().myUuid;
     }
 
     public static StateData s_getApplicationState() {
@@ -256,11 +267,14 @@ public class ApplicationCore extends Application {
         // Send all of the pages to the monitor
         if (DataClient.isConnected()) {
             for (PageData pageData : pageDataList) {
-                DataClient.writePageMessage(pageData);
+                PageCreateMessage pageCreateMessage = PageCreateMessageHelper.create(myUuid, pageData);
+                DataClient.writeMessage(pageCreateMessage);
 
                 // Send all sensors contained in the pages to the monitor
                 for (Sensor sensor : pageData.getSensorList()) {
-                    DataClient.writeSensorSetupMessage(sensor, (byte) pageData.getUniqueId());
+                    //SensorCreateMessage sensorCreateMessage =
+                    SensorCreateMessage sensorCreateMessage = SensorCreateMessageHelper.create(myUuid, sensor, pageData.getUniqueId());
+                    DataClient.writeMessage(sensorCreateMessage);
                 }
             }
         }

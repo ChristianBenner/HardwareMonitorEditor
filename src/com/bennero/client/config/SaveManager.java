@@ -28,6 +28,7 @@ import com.bennero.client.core.CoreUtils;
 import com.bennero.client.core.DataClient;
 import com.bennero.client.util.PageGenerator;
 import com.bennero.common.PageData;
+import com.bennero.common.messages.PageRemoveMessage;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextInputDialog;
@@ -118,7 +119,9 @@ public class SaveManager {
         if (saveData != null) {
             final ArrayList<PageData> pageData = saveData.getPageDataList();
             for (int i = 0; i < pageData.size(); i++) {
-                DataClient.writeRemovePageMessage((byte) pageData.get(i).getUniqueId());
+                PageRemoveMessage out = new PageRemoveMessage(ApplicationCore.s_getUUID(), true,
+                        pageData.get(i).getUniqueId());
+                DataClient.writeMessage(out);
             }
         }
     }

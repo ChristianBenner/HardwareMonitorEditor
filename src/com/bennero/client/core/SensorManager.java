@@ -32,6 +32,7 @@ import com.bennero.common.SensorType;
 import com.bennero.common.Skin;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
+import com.bennero.common.messages.SensorValueMessage;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 
@@ -144,7 +145,7 @@ public class SensorManager {
     }
 
     public void registerSensor(Sensor sensor, SensorData sensorData) {
-        sensor.setValueChangeListener((observableValue, aFloat, t1) -> DataClient.writeSensorValueMessage(sensor.getUniqueId(), t1));
+        sensor.setValueChangeListener((observableValue, aFloat, t1) -> DataClient.writeMessage(new SensorValueMessage(ApplicationCore.s_getUUID(), true, sensor.getUniqueId(), t1)));
         sensorData.addSensor(sensor);
         Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Registered Sensor: [ID: " + sensor.getUniqueId() + "], [SENSOR_DATA_ID: " + sensorData.getId() + "], [NAME: " + sensor.getTitle() + "]");
     }

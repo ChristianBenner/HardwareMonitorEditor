@@ -23,7 +23,8 @@
 
 package com.bennero.client.network;
 
-import com.bennero.common.messages.BroadcastReplyDataPositions;
+import com.bennero.common.messages.BroadcastReplyMessage;
+import com.bennero.common.messages.Message;
 import com.bennero.common.messages.MessageType;
 import com.bennero.common.networking.ConnectionInformation;
 import javafx.event.Event;
@@ -79,7 +80,7 @@ public class BroadcastReplyReceiver extends Thread {
         try {
             serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.configureBlocking(true);
-            serverSocketChannel.socket().setReceiveBufferSize(MESSAGE_NUM_BYTES);
+            serverSocketChannel.socket().setReceiveBufferSize(Message.NUM_BYTES);
             serverSocketChannel.socket().bind(new InetSocketAddress(BROADCAST_REPLY_PORT));
             this.run = true;
 
@@ -89,8 +90,8 @@ public class BroadcastReplyReceiver extends Thread {
                 InputStream is = socketChannel.socket().getInputStream();
                 byte[] bytes;
 
-                bytes = new byte[MESSAGE_NUM_BYTES];
-                is.read(bytes, 0, MESSAGE_NUM_BYTES);
+                bytes = new byte[Message.NUM_BYTES];
+                is.read(bytes, 0, Message.NUM_BYTES);
                 readMessage(bytes);
 
                 socketChannel.close();
@@ -104,23 +105,14 @@ public class BroadcastReplyReceiver extends Thread {
     }
 
     public void readMessage(byte[] bytes) {
-        if (bytes[MESSAGE_TYPE_POS] == MessageType.BROADCAST_REPLY_MESSAGE) {
-            final long hwMonitorSystemUniqueConnectionId = readLong(bytes,
-                    BroadcastReplyDataPositions.HW_SYSTEM_IDENTIFIER_POS);
+        if (Message.getType(bytes) == MessageType.BROADCAST_REPLY) {
+            BroadcastReplyMessage message = new BroadcastReplyMessage(bytes);
 
             // Ensures that the message came from a hardware monitor and not a random device on the network
-            if (hwMonitorSystemUniqueConnectionId == HW_MONITOR_SYSTEM_UNIQUE_CONNECTION_ID) {
-                final byte majorVersion = bytes[BroadcastReplyDataPositions.MAJOR_VERSION_POS];
-                final byte minorVersion = bytes[BroadcastReplyDataPositions.MINOR_VERSION_POS];
-                final byte patchVersion = bytes[BroadcastReplyDataPositions.PATCH_VERSION_POS];
-                final byte[] macAddress = readBytes(bytes, BroadcastReplyDataPositions.MAC_ADDRESS_POS,
-                        MAC_ADDRESS_NUM_BYTES);
-                final byte[] ip4Address = readBytes(bytes, BroadcastReplyDataPositions.IP4_ADDRESS_POS,
-                        IP4_ADDRESS_NUM_BYTES);
-                String hostName = readString(bytes, BroadcastReplyDataPositions.HOSTNAME_POS, NAME_STRING_NUM_BYTES);
-
-                receivedBroadcastReply.handle(new ConnectionInformation(majorVersion, minorVersion, patchVersion,
-                        macAddress, ip4Address, hostName));
+            if (message.getSystemIdentifier() == HW_MONITOR_SYSTEM_UNIQUE_CONNECTION_ID) {
+                receivedBroadcastReply.handle(new ConnectionInformation(message.getVersionMajor(),
+                        message.getVersionMinor(), message.getVersionPatch(), message.getMacAddress(),
+                        message.getIp4Address(), message.getHostName()));
             }
         }
     }

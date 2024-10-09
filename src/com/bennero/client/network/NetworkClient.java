@@ -23,10 +23,9 @@
 
 package com.bennero.client.network;
 
+import com.bennero.client.Version;
 import com.bennero.client.config.ProgramConfigManager;
-import com.bennero.client.message.*;
-import com.bennero.common.PageData;
-import com.bennero.common.Sensor;
+import com.bennero.client.core.ApplicationCore;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
 import com.bennero.common.messages.*;
@@ -38,12 +37,14 @@ import javafx.event.EventHandler;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.*;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.util.UUID;
 
 import static com.bennero.client.Version.*;
-import static com.bennero.client.network.ConnectionRequestReplyMessage.processConnectionRequestReplyMessageData;
-import static com.bennero.common.Constants.*;
-import static com.bennero.common.messages.MessageUtils.*;
+import static com.bennero.common.Constants.HEARTBEAT_TIMEOUT_MS;
+import static com.bennero.common.Constants.PORT;
 
 /**
  * NetworkClient is a thread that handles the connection to a hardware monitor. It is responsible for establishing
@@ -89,93 +90,102 @@ public class NetworkClient {
         this.connected = state;
     }
 
+    private ConnectedEvent handleConnectionResponse(ConnectionInformation connectionInformation, ConnectionRequestResponseMessage message) {
+        connected = message.isConnectionAccepted();
+        if (connected) {
+            Logger.logf(LogLevel.INFO, LOGGER_TAG, "Hardware Monitor '%s' accepted connection", connectionInformation.getHostname());
+            return new ConnectedEvent(connectionInformation, ConnectionStatus.CONNECTED);
+        }
+
+        // Send event for different connection refusal reasons
+        if (message.isVersionMismatch()) {
+            Logger.logf(LogLevel.INFO, LOGGER_TAG, "Hardware Monitor '%s' refused connection because of version mismatch (Us: v%d.%d.%d, Them: v%d.%d.%d)", connectionInformation.getHostname(), Version.VERSION_MAJOR, Version.VERSION_MINOR, Version.VERSION_PATCH, message.getVersionMajor(), message.getVersionMinor(), message.getVersionPatch());
+            ConnectedEvent event = new ConnectedEvent(connectionInformation, ConnectionStatus.VERSION_MISMATCH);
+            event.setServerVersion(message.getVersionMajor(), message.getVersionMinor(), message.getVersionPatch());
+            return event;
+        }
+
+        if (message.isCurrentlyInUse()) {
+            Logger.logf(LogLevel.INFO, LOGGER_TAG, "Hardware Monitor '%s' refused connection because it is currently in use by another editor '%s'", connectionInformation.getHostname(), message.getCurrentClientHostname());
+            ConnectedEvent event = new ConnectedEvent(connectionInformation, ConnectionStatus.IN_USE);
+            event.setCurrentlyConnectedHostname(message.getCurrentClientHostname());
+            return event;
+        }
+
+        Logger.logf(LogLevel.INFO, LOGGER_TAG, "Hardware Monitor '%s' refused connection", connectionInformation.getHostname());
+        return new ConnectedEvent(connectionInformation, ConnectionStatus.CONNECTION_REFUSED);
+    }
+
+    private void attemptConnection(ConnectionInformation connectionInformation,
+                                             EventHandler<ConnectedEvent> connectionEventHandler) throws IOException {
+        Logger.logf(LogLevel.INFO, LOGGER_TAG, "Attempting Connection to Hardware Monitor '%s'", programConfigManager.getLastConnectedHostname());
+
+        // This means that the IP4 and MAC address have just been discovered, so we can start with a direct connection attempt
+        socket = new Socket();
+        socket.connect(new InetSocketAddress(InetAddress.getByAddress(connectionInformation.getIp4Address()), PORT), 5000);
+        socketWriter = new PrintStream(socket.getOutputStream(), true);
+
+        heartbeatListener = new HeartbeatListener(HEARTBEAT_TIMEOUT_MS,
+                event -> Platform.runLater(() -> connectionEventHandler.handle(new ConnectedEvent(connectionInformation, ConnectionStatus.HEARTBEAT_TIMEOUT))),
+                event -> Platform.runLater(() -> connectionEventHandler.handle(new ConnectedEvent(connectionInformation, ConnectionStatus.UNEXPECTED_DISCONNECT))));
+        heartbeatListener.start();
+
+        if (!socket.isConnected()) {
+            Logger.logf(LogLevel.WARNING, LOGGER_TAG, "Failed to connect to '%s'", NetworkUtils.ip4AddressToString(connectionInformation.getIp4Address()));
+            Platform.runLater(() -> connectionEventHandler.handle(new ConnectedEvent(connectionInformation, ConnectionStatus.FAILED)));
+            return;
+        }
+
+        Logger.log(LogLevel.INFO, LOGGER_TAG, "Connected to " +
+                NetworkUtils.ip4AddressToString(connectionInformation.getIp4Address()));
+
+        // Update config to include latest network information
+        programConfigManager.setConnectionData(connectionInformation);
+
+        AddressInformation siteLocalAddress = NetworkUtils.getMyIpAddress();
+
+        // Need to handshake with hardware monitor - Do not want to force connect at this point as it may be good to
+        // know if/who is connected to device
+        ConnectionRequestMessage out = new ConnectionRequestMessage(ApplicationCore.s_getUUID(), true,
+                VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, false, siteLocalAddress.getIp4Address(),
+                siteLocalAddress.getHostname());
+        writeMessage(out);
+
+        byte[] bytes = new byte[Message.NUM_BYTES];
+        socket.getInputStream().read(bytes, 0, Message.NUM_BYTES);
+
+        if (Message.getType(bytes) == MessageType.CONNECTION_REQUEST_RESPONSE) {
+            Logger.log(LogLevel.INFO, LOGGER_TAG, "Received connection request response");
+
+            ConnectionRequestResponseMessage in = new ConnectionRequestResponseMessage(bytes);
+
+            switch (in.getStatus()) {
+                case Message.STATUS_OK:
+                    ConnectedEvent event = handleConnectionResponse(connectionInformation, in);
+                    Platform.runLater(() -> connectionEventHandler.handle(event));
+                    break;
+                case Message.STATUS_BAD_RECEIVE:
+                    // other end did not receive message properly
+                    Logger.logf(LogLevel.WARNING, LOGGER_TAG, "Communication error with '%s'", NetworkUtils.ip4AddressToString(connectionInformation.getIp4Address()));
+                    Platform.runLater(() -> connectionEventHandler.handle(new ConnectedEvent(connectionInformation, ConnectionStatus.FAILED)));
+                    break;
+                case Message.STATUS_FAILED_READ:
+                    // checksum bad
+                    Logger.logf(LogLevel.WARNING, LOGGER_TAG, "Bad data from '%s'", NetworkUtils.ip4AddressToString(connectionInformation.getIp4Address()));
+                    Platform.runLater(() -> connectionEventHandler.handle(new ConnectedEvent(connectionInformation, ConnectionStatus.FAILED)));
+                    break;
+            }
+        }
+    }
+
     public void connect(ConnectionInformation connectionInformation,
                         EventHandler<ConnectedEvent> connectionEventHandler) {
         connectionThread = new Thread(() ->
         {
             Platform.runLater(() -> connectionEventHandler.handle(new ConnectedEvent(connectionInformation,
                     ConnectionStatus.CONNECTING)));
-
             try {
-                Logger.log(LogLevel.INFO, LOGGER_TAG, "Attempting Connection: " +
-                        programConfigManager.getLastConnectedHostname() + " (" +
-                        NetworkUtils.ip4AddressToString(connectionInformation.getIp4Address()) + ")");
-
-                // This means that the IP4 and MAC address have just been discovered, so we can start with a direct
-                // connection attempt
-                socket = new Socket();
-                socket.connect(new InetSocketAddress(InetAddress.getByAddress(connectionInformation.getIp4Address()), PORT), 5000);
-                socketWriter = new PrintStream(socket.getOutputStream(), true);
-
-                heartbeatListener = new HeartbeatListener(HEARTBEAT_TIMEOUT_MS,
-                        event -> Platform.runLater(() -> connectionEventHandler.handle(new ConnectedEvent(connectionInformation, ConnectionStatus.HEARTBEAT_TIMEOUT))),
-                        event -> Platform.runLater(() -> connectionEventHandler.handle(new ConnectedEvent(connectionInformation, ConnectionStatus.UNEXPECTED_DISCONNECT))));
-                heartbeatListener.start();
-
-                if (socket.isConnected()) {
-                    Logger.log(LogLevel.INFO, LOGGER_TAG, "Connected to " +
-                            NetworkUtils.ip4AddressToString(connectionInformation.getIp4Address()));
-
-                    // Update config to include latest network information
-                    programConfigManager.setConnectionData(connectionInformation);
-
-                    // Need to handshake with
-                    sendHandshakeMessage();
-
-                    byte[] bytes = new byte[MESSAGE_NUM_BYTES];
-                    socket.getInputStream().read(bytes, 0, MESSAGE_NUM_BYTES);
-
-                    if (bytes[MESSAGE_TYPE_POS] == MessageType.CONNECTION_REQUEST_RESPONSE_MESSAGE) {
-                        Logger.log(LogLevel.INFO, LOGGER_TAG, "Received connection request response");
-                        ConnectionRequestReplyMessage message = processConnectionRequestReplyMessageData(bytes);
-
-                        if (message.isConnectionAccepted()) {
-                            Logger.log(LogLevel.INFO, LOGGER_TAG, "Hardware Monitor '" +
-                                    message.getCurrentClientHostname() + "' (v" + message.getMajorVersion() + "." +
-                                    message.getMinorVersion() + "." + message.getPatchVersion() +
-                                    ") accepted connection");
-
-                            Platform.runLater(() -> connectionEventHandler.handle(new ConnectedEvent(
-                                    connectionInformation, ConnectionStatus.CONNECTED)));
-                            connected = true;
-                        } else {
-                            connected = false;
-
-                            // Send event for different connection refusal reasons
-                            if (message.isVersionMismatch()) {
-                                Logger.log(LogLevel.INFO, LOGGER_TAG,
-                                        "Hardware Monitor refused connection because of version mismatch: v" +
-                                                message.getMajorVersion() + "." + message.getMinorVersion() + "." +
-                                                message.getPatchVersion());
-
-                                ConnectedEvent event = new ConnectedEvent(connectionInformation,
-                                        ConnectionStatus.VERSION_MISMATCH);
-                                event.setServerVersion(message.getMajorVersion(), message.getMinorVersion(),
-                                        message.getPatchVersion());
-                                Platform.runLater(() -> connectionEventHandler.handle(event));
-                            } else if (message.isCurrentlyInUse()) {
-                                Logger.log(LogLevel.INFO, LOGGER_TAG, "Hardware Monitor refused connection " +
-                                        "because it is currently in use by '" + message.getCurrentClientHostname() +
-                                        "'");
-
-                                ConnectedEvent event = new ConnectedEvent(connectionInformation,
-                                        ConnectionStatus.IN_USE);
-                                event.setCurrentlyConnectedHostname(message.getCurrentClientHostname());
-                                Platform.runLater(() -> connectionEventHandler.handle(event));
-                            } else {
-                                Logger.log(LogLevel.INFO, LOGGER_TAG,
-                                        "Hardware Monitor refused connection");
-
-                                Platform.runLater(() -> connectionEventHandler.handle(new ConnectedEvent(
-                                        connectionInformation, ConnectionStatus.CONNECTION_REFUSED)));
-                            }
-                        }
-                    }
-                } else {
-                    Logger.log(LogLevel.WARNING, LOGGER_TAG, "Failed to connect to " +
-                            NetworkUtils.ip4AddressToString(connectionInformation.getIp4Address()));
-                    Platform.runLater(() -> connectionEventHandler.handle(new ConnectedEvent(connectionInformation, ConnectionStatus.FAILED)));
-                }
+                attemptConnection(connectionInformation, connectionEventHandler);
             } catch (IOException e) {
                 e.printStackTrace();
                 Platform.runLater(() -> connectionEventHandler.handle(new ConnectedEvent(connectionInformation, ConnectionStatus.FAILED)));
@@ -187,7 +197,10 @@ public class NetworkClient {
     public void disconnect() {
         if (isConnected()) {
             heartbeatListener.stopThread();
-            sendDisconnectMessage();
+
+            DisconnectMessage out = new DisconnectMessage(ApplicationCore.s_getUUID(), true);
+            writeMessage(out);
+
             Logger.log(LogLevel.INFO, LOGGER_TAG, "Disconnected from hardware monitor");
             programConfigManager.clearConnectionData();
 
@@ -203,94 +216,16 @@ public class NetworkClient {
         }
     }
 
-    public void writeRemovePageMessage(byte pageId) {
-        if (socket != null && socket.isConnected()) {
-            byte[] message = RemovePageMessage.create(pageId);
-            sendMessage(message, 0, MESSAGE_NUM_BYTES);
-            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent Remove Page Message: [ID: " + pageId + "]");
-        } else {
+    public boolean writeMessage(Message message) {
+        if (socket == null || !socket.isConnected()) {
             Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to send Remove Page message because socket is not connected");
+            return false;
         }
-    }
 
-    public void writeRemoveSensorMessage(byte sensorId, byte pageId) {
-        if (socket != null && socket.isConnected()) {
-            byte[] message = RemoveSensorMessage.create(sensorId, pageId);
-            sendMessage(message, 0, MESSAGE_NUM_BYTES);
-            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent Remove Sensor Message: [ID: " + sensorId + "]");
-        } else {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to send Remove Sensor message because socket is not connected");
-        }
-    }
-
-    public void writePageMessage(PageData pageData) {
-        if (socket != null && socket.isConnected()) {
-            byte[] message = PageSetupMessage.create(pageData);
-            sendMessage(message, 0, MESSAGE_NUM_BYTES);
-            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent PageData Message: [ID: " + pageData.getUniqueId() + "], [TITLE: " + pageData.getTitle() + "]");
-        } else {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to send PageData message because socket is not connected");
-        }
-    }
-
-    public void writeSensorSetupMessage(Sensor sensor, byte pageId) {
-        if (socket != null && socket.isConnected()) {
-            byte[] message = SensorSetupMessage.create(sensor, pageId);
-            sendMessage(message, 0, MESSAGE_NUM_BYTES);
-            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent Sensor set-up Message: [ID: " + sensor.getUniqueId() + "], [TITLE: " + sensor.getTitle() + "]");
-        } else {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to send Sensor set-up Message because socket is not connected");
-        }
-    }
-
-    public void writeSensorTransformationMessage(Sensor sensor, byte pageId) {
-        if (socket != null && socket.isConnected()) {
-            byte[] message = SensorTransformationMessage.create(sensor, pageId);
-            sendMessage(message, 0, MESSAGE_NUM_BYTES);
-            Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Sent Sensor Transformation Message: [ID: " + sensor.getUniqueId() + "], [TITLE: " + sensor.getTitle() + "]");
-        } else {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to send Sensor Transformation Message because socket is not connected");
-        }
-    }
-
-    // Make it so we can write an array of sensor values in one message and if there is too many for one message, write
-    // the remaining on another
-    public void writeSensorValueMessage(int sensorId, float value) {
-        if (socket != null && socket.isConnected()) {
-            byte[] message = SensorValueMessage.create(sensorId, value);
-            sendMessage(message, 0, MESSAGE_NUM_BYTES);
-        } else {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to send Sensor value message because socket is not connected");
-        }
-    }
-
-    private void sendHandshakeMessage() throws SocketException, UnknownHostException {
-        final AddressInformation siteLocalAddress = NetworkUtils.getMyIpAddress();
-        byte[] message = new byte[MESSAGE_NUM_BYTES];
-
-        message[MESSAGE_TYPE_POS] = MessageType.CONNECTION_REQUEST_MESSAGE;
-        message[ConnectionRequestDataPositions.MAJOR_VERSION_POS] = VERSION_MAJOR;
-        message[ConnectionRequestDataPositions.MINOR_VERSION_POS] = VERSION_MINOR;
-        message[ConnectionRequestDataPositions.PATCH_VERSION_POS] = VERSION_PATCH;
-
-        // Do not want to force connect at this point as it may be good to know who is connected to device
-        message[ConnectionRequestDataPositions.FORCE_CONNECT] = 0x00;
-        writeBytesToMessage(message, ConnectionRequestDataPositions.IP4_ADDRESS_POS, siteLocalAddress.getIp4Address(), IP4_ADDRESS_NUM_BYTES);
-        writeStringToMessage(message, ConnectionRequestDataPositions.HOSTNAME_POS, siteLocalAddress.getHostname(), NAME_STRING_NUM_BYTES);
-
-        sendMessage(message, 0, MESSAGE_NUM_BYTES);
-        Logger.log(LogLevel.INFO, LOGGER_TAG, "Sent connection request message");
-    }
-
-    private void sendDisconnectMessage() {
-        if (socket != null && socket.isConnected()) {
-            byte[] message = new byte[MESSAGE_NUM_BYTES];
-
-            message[MESSAGE_TYPE_POS] = MessageType.DISCONNECT_MESSAGE;
-            sendMessage(message, 0, MESSAGE_NUM_BYTES);
-        } else {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to send disconnect message because socket is not connected");
-        }
+        byte[] bytes = message.write();
+        sendMessage(bytes, 0, Message.NUM_BYTES);
+        Logger.logf(LogLevel.DEBUG, LOGGER_TAG, "Sent message (type: %d)", message.getType());
+        return true;
     }
 
     private void sendMessage(byte[] message, int offset, int length) {
