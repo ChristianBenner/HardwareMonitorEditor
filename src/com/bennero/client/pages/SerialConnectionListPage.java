@@ -26,6 +26,8 @@ package com.bennero.client.pages;
 import com.bennero.client.core.ApplicationCore;
 import com.bennero.client.network.NetworkClient;
 import com.bennero.client.network.NetworkScanner;
+import com.bennero.client.serial.ConnectionInfo;
+import com.bennero.client.serial.ConnectionState;
 import com.bennero.client.serial.SerialClient;
 import com.bennero.client.serial.SerialScanner;
 import com.bennero.client.states.ConnectionListStateData;
@@ -37,6 +39,7 @@ import com.bennero.common.networking.ConnectionInformation;
 import com.bennero.common.networking.NetworkUtils;
 import com.fazecast.jSerialComm.SerialPort;
 import javafx.application.Platform;
+import javafx.event.Event;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
@@ -111,100 +114,31 @@ public class SerialConnectionListPage extends StackPane {
                 info.setContentText("Ensure that the correct device is selected");
                 info.showAndWait();
 
-                boolean connected = SerialClient.getInstance().connect(selectedPortInformation.serialPort);
-                if(connected) {
-                    Platform.runLater(() -> {
-                        ApplicationCore.getInstance().onConnected();
-                    });
-                } else {
+                ApplicationCore.getInstance().setApplicationState(new InformationStateData("Connecting...", "WIP", "", null));
 
-                }
-//
-//                    NetworkClient.getInstance().connect(selectedConnectionInformation, connectedEvent ->
-//                    {
-//                        switch (connectedEvent.getConnectionStatus()) {
-//                            case CONNECTED:
-//                                ApplicationCore.getInstance().onConnected();
-//                                break;
-//                            case CONNECTING:
-//                                // Display connecting text
-//                                ApplicationCore.s_setApplicationState(new LoadingStateData("Connecting...",
-//                                        connectedEvent.getConnectionInformation().getHostname() + " (" +
-//                                                ip4AddressToString(connectedEvent.getConnectionInformation().
-//                                                        getIp4Address()) + ")"));
-//                                break;
-//                            case FAILED:
-//                                Logger.log(LogLevel.ERROR, CLASS_NAME, "Failed to connect to device " +
-//                                        connectedEvent.getConnectionInformation().getHostname() + " (" +
-//                                        ip4AddressToString(connectedEvent.getConnectionInformation().getIp4Address()) +
-//                                        ") despite finding it on the network. It may be in use by another editor");
-//
-//                                // Message pop-up that no connections have been found
-//                                Alert alert = new Alert(Alert.AlertType.ERROR, "Failed to Connect", ButtonType.OK);
-//                                alert.setContentText("Failed to connect to the device " +
-//                                        connectedEvent.getConnectionInformation().getHostname() +
-//                                        ", it may be in use by another editor");
-//                                alert.showAndWait();
-//
-//                                // Re-display the connection list page so the user can select another hardware monitor
-//                                // to connect to
-//                                ApplicationCore.s_setApplicationState(new ConnectionListStateData(
-//                                        availableConnections));
-//                                break;
-//                            case VERSION_MISMATCH:
-//                                ApplicationCore.s_setApplicationState(new InformationStateData(
-//                                        "Connection Refused", "Could not connect to " + connectedEvent.
-//                                        getConnectionInformation().getHostname() + " because the client version (v" +
-//                                        VERSION_MAJOR + "" + VERSION_MINOR + "." + VERSION_PATCH +
-//                                        ") is incompatible with the server (v" +
-//                                        connectedEvent.getMajorServerVersion() + "." +
-//                                        connectedEvent.getMinorServerVersion() + "." +
-//                                        connectedEvent.getPatchServerVersion() + ")", "Device List",
-//                                        event -> ApplicationCore.s_setApplicationState(new
-//                                                ConnectionListStateData(availableConnections))));
-//                                break;
-//                            case IN_USE:
-//                                ApplicationCore.s_setApplicationState(new InformationStateData(
-//                                        "Connection Refused", "Could not connect to " + connectedEvent.
-//                                        getConnectionInformation().getHostname() +
-//                                        " because it is in use by another device (" + connectedEvent.
-//                                        getCurrentlyConnectedHostname() + ")", "Device List",
-//                                        event -> ApplicationCore.s_setApplicationState(new
-//                                                ConnectionListStateData(availableConnections))));
-//                                break;
-//                            case CONNECTION_REFUSED:
-//                                ApplicationCore.s_setApplicationState(new InformationStateData(
-//                                        "Connection Refused", "Could not connect to " + connectedEvent.
-//                                        getConnectionInformation().getHostname(), "Device List",
-//                                        event -> ApplicationCore.s_setApplicationState(
-//                                                new ConnectionListStateData(availableConnections))));
-//                                break;
-//                            case HEARTBEAT_TIMEOUT:
-//                                ApplicationCore.s_setApplicationState(new LoadingStateData(
-//                                        "Lost Communication", "No heartbeat message was received from " +
-//                                        connectedEvent.getConnectionInformation().getHostname() + " for " +
-//                                        HEARTBEAT_TIMEOUT_MS + "ms. Attempting to reconnect",
-//                                        "Device List",
-//                                        event -> ApplicationCore.s_setApplicationState(new ConnectionListStateData(
-//                                                availableConnections))));
-//
-//                                // Re-display the connection list page so the user can select another hardware monitor
-//                                // to connect to
-//                                ApplicationCore.s_setApplicationState(new ConnectionListStateData(
-//                                        availableConnections));
-//                                break;
-//                            case UNEXPECTED_DISCONNECT:
-//                                Logger.log(LogLevel.WARNING, CLASS_NAME, "Lost connection to the Hardware Monitor");
-//                                ApplicationCore.s_setApplicationState(new LoadingStateData(
-//                                        "Lost Communication",
-//                                        connectedEvent.getConnectionInformation().getHostname() +
-//                                                " Disconnected unexpectedly. Attempting to reconnect",
-//                                        "Device List",
-//                                        event -> ApplicationCore.s_setApplicationState(new ConnectionListStateData(
-//                                                availableConnections))));
-//                                break;
-//                        }
-//                    });
+                Thread establishConnectionThread = new Thread(() -> {
+                    ConnectionInfo connectionInfo = SerialClient.getInstance().connect(selectedPortInformation.serialPort);
+                    switch (connectionInfo.getConnectionState()) {
+                        case CONNECTED:
+                            Platform.runLater(() -> {
+                                ApplicationCore.getInstance().onConnected();
+                            });
+                            break;
+                        case PORT_FAILED_OPEN:
+                        case READ_TIMEOUT:
+                        case BAD_RESPONSE_WRONG_MESSAGE:
+                        case BAD_RESPONSE_INVALID_CHECKSUM:
+                        case REJECTED_CONNECTION:
+                        default:
+                            // todo: implement failed connection page
+                            Platform.runLater(() -> {
+                                ApplicationCore.getInstance().setApplicationState(new InformationStateData("Failed to connect", "WIP", "", null));
+                            });
+                            break;
+                    }
+                });
+
+                establishConnectionThread.start();
             }
         });
 
