@@ -1,0 +1,33 @@
+@startuml
+actor User
+participant Editor
+participant Monitor
+
+User -> Editor: Select Port
+
+alt Failed to Open Port
+    Editor -> Editor: Display failure page: Failed to open port
+else Port Opened
+    Editor -> Monitor: VersionParityMessage
+    Editor <-- Monitor: VersionPartiyResponseMessage
+    alt Read Timeout
+        Editor -> Editor: Display failure page: No response
+    else if Bad Num Bytes
+        Editor -> Editor: Display failure page: Bad response
+    else Read Bytes Ok
+        alt Wrong Message Type
+            Editor -> Editor: Display failure page: Bad response
+        else Invalid Checksum
+            Editor -> Editor: Display failure page: Bad response
+        else Valid Checksum
+            alt Not Accepted
+                Editor -> Editor: Display failure page: Refused connection
+            else Accepted
+                Editor -> Editor: Run write thread
+                Editor -> Editor: Run On Connected Handler
+            end
+        end
+    end
+end
+
+@enduml
