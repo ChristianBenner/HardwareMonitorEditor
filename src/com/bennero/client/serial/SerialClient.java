@@ -95,7 +95,7 @@ public class SerialClient {
         }
 
         byte messageType = Message.getType(readBuffer);
-        Logger.logf(LogLevel.DEBUG, LOGGER_TAG, "Received %s message", MessageType.asString(messageType));
+        Logger.logf(LogLevel.DEBUG, LOGGER_TAG, "Received message [Type: %s]", MessageType.asString(messageType));
 
         if(messageType != MessageType.VERSION_PARITY_RESPONSE) {
             Logger.log(LogLevel.ERROR, LOGGER_TAG, "Unexpected message type in response to version parity request: " + messageType);
@@ -111,7 +111,7 @@ public class SerialClient {
         connectedUUID = in.getSenderUuid();
         Logger.log(LogLevel.INFO, LOGGER_TAG, "Monitor connected: " + connectedUUID.toString());
 
-        serialPort.setComPortTimeouts(0, 0, 0);
+      //  serialPort.setComPortTimeouts(0, 0, 0);
 
         runWriteThread();
 
@@ -137,34 +137,36 @@ public class SerialClient {
     }
 
     private boolean checkReceived() {
-        byte[] in = new byte[Message.NUM_BYTES];
-        serialPort.readBytes(in, Message.NUM_BYTES);
+        byte[] bytes = new byte[Message.NUM_BYTES];
+        int numRead = serialPort.readBytes(bytes, Message.NUM_BYTES);
 
-        if (!Message.isValid(in)) {
+        if (numRead < Message.NUM_BYTES) {
+            Logger.logf(LogLevel.ERROR, LOGGER_TAG, "Time out on read [Port: %s] [Num Bytes Read: %d]", serialPort.getSystemPortName(), numRead);
+            return false;
+        }
+
+        if (!Message.isValid(bytes)) {
             Logger.log(LogLevel.ERROR, LOGGER_TAG, "Bad checksum for confirmation message");
             return false;
         }
 
-        byte receivedType = Message.getType(in);
-        Logger.logf(LogLevel.DEBUG, LOGGER_TAG, "Received message [Type: %s]", MessageType.asString(receivedType));
-
-        if (receivedType != MessageType.HEARTBEAT) {
-            Logger.logf(LogLevel.ERROR, LOGGER_TAG, "Expected message of type: %s, got %s", MessageType.asString(MessageType.HEARTBEAT), MessageType.asString(receivedType));
+        byte receivedType = Message.getType(bytes);
+        if (receivedType != MessageType.CONFIRMATION) {
+            Logger.logf(LogLevel.ERROR, LOGGER_TAG, "Expected message of type: %s, got %s", MessageType.asString(MessageType.CONFIRMATION), MessageType.asString(receivedType));
             return false;
         }
 
-        HeartbeatMessage heartbeatMessage = new HeartbeatMessage(in);
-        if (heartbeatMessage.getStatus() != Message.STATUS_OK) {
+        ConfirmationMessage in = new ConfirmationMessage(bytes);
+        if (in.getStatus() != Message.STATUS_OK) {
             Logger.logf(LogLevel.WARNING, LOGGER_TAG, "Monitor reported message not received correctly");
             return false;
         }
 
-        if (!connectedUUID.equals(heartbeatMessage.getSenderUuid())) {
+        if (!connectedUUID.equals(in.getSenderUuid())) {
             Logger.log(LogLevel.WARNING, LOGGER_TAG, "Received confirmation message from a different monitor instance");
             return false;
         }
 
-        Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Monitor confirmed message received");
         return true;
     }
 
@@ -195,24 +197,39 @@ public class SerialClient {
             // todo: implement a write and read block but with timeouts. If timeout expires report disconnect
             int attempt = 0;
             for(; attempt < MAX_ATTEMPTS; attempt++) {
-                serialPort.writeBytes(message, Message.NUM_BYTES);
-                Logger.logf(LogLevel.DEBUG, LOGGER_TAG, "Sent message [Type: %s] [Attempt: %d]", Message.getTypeString(message), attempt);
+                int numWrite = serialPort.writeBytes(message, Message.NUM_BYTES);
+                if (numWrite < Message.NUM_BYTES) {
+                    Logger.logf(LogLevel.ERROR, LOGGER_TAG, "Time out on write [Port: %s] [Num Bytes Wrote: %d]", serialPort.getSystemPortName(), numWrite);
+                    return false;
+                }
 
-                lastMessageSendMs = System.currentTimeMillis();
+                boolean received = checkReceived();
+                String logState = received ? "Successfully sent message" : "Failed to send message";
+                byte type = Message.getType(message);
+                String typeString = MessageType.asString(type);
+                if (attempt > 0) {
+                    Logger.logf(LogLevel.DEBUG, LOGGER_TAG, "%s [Type: %s] [Attempt: %d]", logState, typeString, attempt);
+                } else {
+                    //if (type != MessageType.SENSOR_UPDATE) {
+                        Logger.logf(LogLevel.DEBUG, LOGGER_TAG, "%s [Type: %s]", logState, typeString, attempt);
+                    //}
+                }
 
                 // todo: if we have not received a good message within heartbeat period, disconnect and report error
-                if(!checkReceived()) {
-                    // Message did not receive correctly, try to send again
-
-                    // If that was the first attempt try again immediately
-                    if(attempt == 0) {
-                        continue;
-                    }
-
-                    // Bad comm, retry send but wait before
-                    int sleepMs = (int)ATTEMPT_WAIT_MS * (int)Math.pow(5, attempt);
-                    Thread.sleep(sleepMs);
+                if (received) {
+                    lastMessageSendMs = System.currentTimeMillis();
+                    break;
                 }
+
+                // Message did not receive correctly, try to send again
+                // If that was the first attempt try again immediately
+                if(attempt == 0) {
+                    continue;
+                }
+
+                // Bad comm, retry send but wait before
+                int sleepMs = (int)ATTEMPT_WAIT_MS * (int)Math.pow(5, attempt);
+                Thread.sleep(sleepMs);
             }
 
             if (attempt == MAX_ATTEMPTS) {

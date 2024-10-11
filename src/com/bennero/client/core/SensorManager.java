@@ -26,13 +26,13 @@ package com.bennero.client.core;
 import com.bennero.client.Version;
 import com.bennero.client.bootstrapper.Native;
 import com.bennero.client.bootstrapper.SensorRequest;
-import com.bennero.client.network.NetworkClient;
 import com.bennero.common.Sensor;
 import com.bennero.common.SensorType;
 import com.bennero.common.Skin;
 import com.bennero.common.logging.LogLevel;
 import com.bennero.common.logging.Logger;
-import com.bennero.common.messages.SensorValueMessage;
+import com.bennero.common.messages.SensorUpdateInfo;
+import com.bennero.common.messages.SensorUpdateMessage;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 
@@ -145,7 +145,11 @@ public class SensorManager {
     }
 
     public void registerSensor(Sensor sensor, SensorData sensorData) {
-        sensor.setValueChangeListener((observableValue, aFloat, t1) -> DataClient.writeMessage(new SensorValueMessage(ApplicationCore.s_getUUID(), true, sensor.getUniqueId(), t1)));
+        sensor.setValueChangeListener((observableValue, aFloat, t1) -> {
+            SensorUpdateInfo[] updateInfos = new SensorUpdateInfo[1];
+            updateInfos[0] = new SensorUpdateInfo(sensor.getUniqueId(), t1);
+            DataClient.writeMessage(new SensorUpdateMessage(ApplicationCore.s_getUUID(), true, updateInfos));
+        });
         sensorData.addSensor(sensor);
         Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Registered Sensor: [ID: " + sensor.getUniqueId() + "], [SENSOR_DATA_ID: " + sensorData.getId() + "], [NAME: " + sensor.getTitle() + "]");
     }
