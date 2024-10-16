@@ -6,4 +6,5 @@ if not exist "%SOLUTION_FILE%" (
 )
 
 echo "Compiling bootstrapper %SOLUTION_FILE%"
-msbuild %SOLUTION_FILE% /p:Configuration=Release /p:Platform="x64"
+
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\msbuild.exe %SOLUTION_FILE% /p:Configuration=Release /p:Platform="x64" /verbosity:minimal

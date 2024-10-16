@@ -44,7 +44,7 @@
             <!-- The JRE deploy location -->
             <arg value="..\HardwareMonitorClientBootstrapper\deploy\jre"/>
             <!-- Optional jLink location argument -->
-            <arg value="C:\Program Files\Java\jdk-16.0.2\bin\jlink"/>
+            <arg value="C:\Users\chris\.jdks\openjdk-22.0.1\bin\jlink"/>
         </exec>
 
         <exec dir="${basedir}" executable="cmd">
@@ -56,7 +56,7 @@
         <exec dir="${basedir}" executable="cmd">
             <arg value="/c"/>
             <arg value="compileBootstrapper.bat"/>
-            <arg value="..\HardwareMonitorClientBootstrapper\HardwareMonitorClientBootstrapper.sln"/>
+            <arg value="..\HardwareMonitorClientBootstrapper\HardwareMonitorClientBootstrapper\HardwareMonitorClientBootstrapper.sln"/>
         </exec>
 
         <!-- Copy the editor to the release folder -->
