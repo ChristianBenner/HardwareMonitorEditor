@@ -24,33 +24,17 @@
 package com.bennero.client.pages;
 
 import com.bennero.client.core.ApplicationCore;
-import com.bennero.client.network.NetworkClient;
-import com.bennero.client.network.NetworkScanner;
 import com.bennero.client.serial.ConnectionInfo;
-import com.bennero.client.serial.ConnectionState;
 import com.bennero.client.serial.SerialClient;
 import com.bennero.client.serial.SerialScanner;
-import com.bennero.client.states.ConnectionListStateData;
 import com.bennero.client.states.InformationStateData;
-import com.bennero.client.states.LoadingStateData;
-import com.bennero.common.logging.LogLevel;
-import com.bennero.common.logging.Logger;
-import com.bennero.common.networking.ConnectionInformation;
-import com.bennero.common.networking.NetworkUtils;
 import com.fazecast.jSerialComm.SerialPort;
 import javafx.application.Platform;
-import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.bennero.client.Version.*;
-import static com.bennero.common.Constants.HEARTBEAT_TIMEOUT_MS;
-import static com.bennero.common.networking.NetworkUtils.ip4AddressToString;
 
 /**
  * Displays a list of connections that the user can select from in order to connect to a specific hardware monitor
@@ -114,27 +98,29 @@ public class SerialConnectionListPage extends StackPane {
                 info.setContentText("Ensure that the correct device is selected");
                 info.showAndWait();
 
-                ApplicationCore.getInstance().setApplicationState(new InformationStateData("Connecting...", "WIP", "", null));
+                ApplicationCore.getInstance().setApplicationState(new InformationStateData("Connecting...", selectedPortInformation.toString(), "Cancel", null));
 
                 Thread establishConnectionThread = new Thread(() -> {
-                    ConnectionInfo connectionInfo = SerialClient.getInstance().connect(selectedPortInformation.serialPort);
-                    switch (connectionInfo.getConnectionState()) {
-                        case CONNECTED:
-                            Platform.runLater(() -> {
-                                ApplicationCore.getInstance().onConnected();
-                            });
+                    // todo: keep retrying in the background, after a few minutes, if the editor is docked, send a windows notification
+
+                    final boolean[] retry = {true};
+                    EventHandler cancelRetryEvent = event -> {
+                        retry[0] = false;
+                        SerialScanner.handleScan();
+                    };
+
+                    while(retry[0]) {
+                        ConnectionInfo connectionInfo = SerialClient.getInstance().connect(selectedPortInformation.serialPort);
+                        boolean success = handleConnectionState(connectionInfo, cancelRetryEvent);
+                        if(success) {
                             break;
-                        case PORT_FAILED_OPEN:
-                        case READ_TIMEOUT:
-                        case BAD_RESPONSE_WRONG_MESSAGE:
-                        case BAD_RESPONSE_INVALID_CHECKSUM:
-                        case REJECTED_CONNECTION:
-                        default:
-                            // todo: implement failed connection page
-                            Platform.runLater(() -> {
-                                ApplicationCore.getInstance().setApplicationState(new InformationStateData("Failed to connect", "WIP", "", null));
-                            });
-                            break;
+                        }
+
+                        try {
+                            Thread.sleep(2500);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
                 });
 
@@ -149,6 +135,43 @@ public class SerialConnectionListPage extends StackPane {
         pageOverview.setBottom(footerPane);
 
         super.getChildren().add(pageOverview);
+    }
+
+    private void showFailedToConnect(String info, EventHandler buttonEvent) {
+        Platform.runLater(() -> {
+            ApplicationCore.getInstance().setApplicationState(new InformationStateData("Failed to connect", info + "\nRetrying...", "Cancel", buttonEvent));
+        });
+    }
+
+    private boolean handleConnectionState(ConnectionInfo connectionInfo, EventHandler buttonEvent) {
+        switch (connectionInfo.getConnectionState()) {
+            case CONNECTED:
+                Platform.runLater(() -> {
+                    ApplicationCore.getInstance().onConnected();
+                });
+                return true;
+            case PORT_FAILED_OPEN:
+                showFailedToConnect("Failed to open serial port", buttonEvent);
+                return false;
+            case WRITE_TIMEOUT:
+                showFailedToConnect("Timeout sending request", buttonEvent);
+                return false;
+            case READ_TIMEOUT:
+                showFailedToConnect("Timeout waiting for response", buttonEvent);
+                return false;
+            case BAD_RESPONSE_WRONG_MESSAGE:
+                showFailedToConnect("Received unexpected response", buttonEvent);
+                return false;
+            case BAD_RESPONSE_INVALID_CHECKSUM:
+                showFailedToConnect("Received corrupt response", buttonEvent);
+                return false;
+            case REJECTED_CONNECTION:
+                showFailedToConnect("Monitor rejected connection: " + connectionInfo.getRejectionReason(), buttonEvent);
+                return false;
+            default:
+                showFailedToConnect("Unknown error", buttonEvent);
+                return false;
+        }
     }
 
     public void setAvailableDevicesList(SerialPort[] serialDevices) {

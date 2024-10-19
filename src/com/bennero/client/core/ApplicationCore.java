@@ -88,6 +88,7 @@ public class ApplicationCore extends Application {
     private SensorManager sensorManager;
     private SaveManager saveManager;
     private UUID myUuid;
+    private boolean mockSensors;
 
     /**
      * Construct the application and initialise core components such as the programs configuration
@@ -100,10 +101,6 @@ public class ApplicationCore extends Application {
         sensorManager = SensorManager.getInstance();
         saveManager = SaveManager.getInstance();
         myUuid = UUID.randomUUID();
-
-        final LogLevel LOG_LEVEL_ON_BOOTSTRAPPER_LAUNCH = DEBUG_BOOTSTRAPPER ? LogLevel.DEBUG : LogLevel.INFO;
-        final LogLevel LOG_LEVEL = BOOTSTRAPPER_LAUNCH_REQUIRED ? LOG_LEVEL_ON_BOOTSTRAPPER_LAUNCH : LogLevel.DEBUG;
-        Logger.setLogLevel(LOG_LEVEL);
     }
 
     /**
@@ -166,6 +163,9 @@ public class ApplicationCore extends Application {
         stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("icon.png")));
         setApplicationState(new LoadingStateData("Launching Editor"));
 
+        // Add the sensors to the application and start the thread that updates them
+        sensorManager.addNativeSensors(mockSensors);
+
         // Check if the program has been launched before
         if (!programConfigManager.doesFileExist() || !programConfigManager.isLastLoadedFilePathAvailable() ||
                 !programConfigManager.isFileAreaPathAvailable()) {
@@ -214,8 +214,6 @@ public class ApplicationCore extends Application {
             }
         }
 
-        // Add the sensors to the application and start the thread that updates them
-        sensorManager.addNativeSensors();
         sensorManager.startSensorUpdateThread();
     }
 
@@ -257,6 +255,14 @@ public class ApplicationCore extends Application {
             if (parameter.startsWith(RES_PATH_PARAMETER)) {
                 String fileArea = parameter.substring(RES_PATH_PARAMETER.length());
                 Logger.log(LogLevel.INFO, CLASS_NAME, "Set resource path from parameter to: " + fileArea);
+            }
+
+            if (parameter.startsWith("--debug") || parameter.startsWith("-d")) {
+                Logger.setLogLevel(LogLevel.DEBUG);
+            }
+
+            if (parameter.startsWith("--mock-sensors") || parameter.startsWith("-m")) {
+                mockSensors = true;
             }
         }
     }

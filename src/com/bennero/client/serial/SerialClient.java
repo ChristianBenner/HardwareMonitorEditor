@@ -52,10 +52,33 @@ public class SerialClient {
     private Semaphore messageQueueLock = new Semaphore(1);
     private Queue<byte[]> messageQueue = new LinkedList<>();
 
+    private void printSerialPortInfo(SerialPort serialPort) {
+        System.out.println("PortInfo:" +
+                "\n\tDescriptivePortName:   " + serialPort.getDescriptivePortName() +
+                "\n\tSystemPortName:        " + serialPort.getSystemPortName() +
+                "\n\tPortDescription:       " + serialPort.getPortDescription() +
+                "\n\tManufacturer:          " + serialPort.getManufacturer() +
+                "\n\tPortLocation:          " + serialPort.getPortLocation() +
+                "\n\tSystemPortPath:        " + serialPort.getSystemPortPath() +
+                "\n\tBaudRate:              " + serialPort.getBaudRate() +
+                "\n\tCTS:                   " + serialPort.getCTS() +
+                "\n\tDCD:                   " + serialPort.getDCD() +
+                "\n\tDSR:                   " + serialPort.getDSR() +
+                "\n\tDTR:                   " + serialPort.getDTR() +
+                "\n\tDeviceReadBufferSize:  " + serialPort.getDeviceReadBufferSize() +
+                "\n\tDeviceWriteBufferSize: " + serialPort.getDeviceWriteBufferSize() +
+                "\n\tFlowControlSettings:   " + serialPort.getFlowControlSettings() +
+                "\n\tProductID:             " + serialPort.getProductID() +
+                "\n\tRI:                    " + serialPort.getRI() +
+                "\n\tRTS:                   " + serialPort.getRTS() +
+                "\n\tVendorID:              " + serialPort.getVendorID());
+    }
+
     public ConnectionInfo connect(SerialPort serialPort) {
         this.serialPort = serialPort;
 
         Logger.logf(LogLevel.INFO, LOGGER_TAG, "Attempting Serial Connection [Port: %s]", serialPort.getSystemPortName());
+        //printSerialPortInfo(serialPort);
 
         connected = serialPort.openPort();
         if(!connected) {
@@ -73,49 +96,63 @@ public class SerialClient {
         VersionParityMessage out = new VersionParityMessage(ApplicationCore.s_getUUID(), true,
                 Version.VERSION_MAJOR, Version.VERSION_MINOR, Version.VERSION_PATCH);
 
-        byte[] bytes = out.write();
-        int numWrite = serialPort.writeBytes(bytes, Message.NUM_BYTES);
-        if (numWrite < Message.NUM_BYTES) {
-            Logger.logf(LogLevel.ERROR, LOGGER_TAG, "Time out on write [Port: %s] [Num Bytes Wrote: %d]", serialPort.getSystemPortName(), numWrite);
-            return new ConnectionInfo(ConnectionState.WRITE_TIMEOUT);
-        } else {
-            Logger.logf(LogLevel.DEBUG, LOGGER_TAG, "Sent %s message", MessageType.asString(out.getType()));
+        final int MAX_RESEND_ATTEMPTS = 5;
+        for (int i = 0; i < MAX_RESEND_ATTEMPTS; i++) {
+            byte[] bytes = out.write();
+            int numWrite = serialPort.writeBytes(bytes, Message.NUM_BYTES);
+            if (numWrite < Message.NUM_BYTES) {
+                Logger.logf(LogLevel.WARNING, LOGGER_TAG, "Time out on write [Port: %s] [Num Bytes Wrote: %d]", serialPort.getSystemPortName(), numWrite);
+                return new ConnectionInfo(ConnectionState.WRITE_TIMEOUT);
+            } else {
+                Logger.logf(LogLevel.DEBUG, LOGGER_TAG, "Sent %s message", MessageType.asString(out.getType()));
+            }
+
+            byte[] readBuffer = new byte[Message.NUM_BYTES];
+            int numRead = serialPort.readBytes(readBuffer, Message.NUM_BYTES);
+            if (numRead < Message.NUM_BYTES) {
+                Logger.logf(LogLevel.WARNING, LOGGER_TAG, "Time out on read [Port: %s] [Num Bytes Read: %d]", serialPort.getSystemPortName(), numRead);
+                return new ConnectionInfo(ConnectionState.READ_TIMEOUT);
+            }
+
+            if (!Message.isValid(readBuffer)) {
+                Logger.logf(LogLevel.WARNING, LOGGER_TAG, "Corrupted message received: checksum mismatch");
+                return new ConnectionInfo(ConnectionState.BAD_RESPONSE_INVALID_CHECKSUM);
+            }
+
+            byte messageType = Message.getType(readBuffer);
+            Logger.logf(LogLevel.DEBUG, LOGGER_TAG, "Received message [Type: %s]", MessageType.asString(messageType));
+
+            if (messageType == MessageType.CONFIRMATION) {
+                ConfirmationMessage in = new ConfirmationMessage(readBuffer);
+                if(in.getStatus() == Message.STATUS_BAD_RECEIVE) {
+                    // Monitor checksum failed, try again
+                    continue;
+                } else {
+                    return new ConnectionInfo(ConnectionState.BAD_RESPONSE_WRONG_MESSAGE);
+                }
+            }
+
+            if(messageType != MessageType.VERSION_PARITY_RESPONSE) {
+                Logger.log(LogLevel.ERROR, LOGGER_TAG, "Unexpected message type in response to version parity request: " + messageType);
+                return new ConnectionInfo(ConnectionState.BAD_RESPONSE_WRONG_MESSAGE);
+            }
+
+            VersionParityResponseMessage in = new VersionParityResponseMessage(readBuffer);
+            if(!in.isAccepted()) {
+                Logger.log(LogLevel.INFO, LOGGER_TAG, "Hardware Monitor refused connection, reason: " + in.getRejectionReason());
+                return new ConnectionInfo(ConnectionState.REJECTED_CONNECTION, in.getRejectionReason());
+            }
+
+            connectedUUID = in.getSenderUuid();
+            Logger.log(LogLevel.INFO, LOGGER_TAG, "Monitor connected: " + connectedUUID.toString());
+
+            runWriteThread();
+
+            return new ConnectionInfo(ConnectionState.CONNECTED);
         }
 
-        byte[] readBuffer = new byte[Message.NUM_BYTES];
-        int numRead = serialPort.readBytes(readBuffer, Message.NUM_BYTES);
-        if (numRead < Message.NUM_BYTES) {
-            Logger.logf(LogLevel.ERROR, LOGGER_TAG, "Time out on read [Port: %s] [Num Bytes Read: %d]", serialPort.getSystemPortName(), numRead);
-            return new ConnectionInfo(ConnectionState.READ_TIMEOUT);
-        }
-
-        if (!Message.isValid(readBuffer)) {
-            Logger.logf(LogLevel.ERROR, LOGGER_TAG, "Corrupted message received: checksum mismatch");
-            return new ConnectionInfo(ConnectionState.BAD_RESPONSE_INVALID_CHECKSUM);
-        }
-
-        byte messageType = Message.getType(readBuffer);
-        Logger.logf(LogLevel.DEBUG, LOGGER_TAG, "Received message [Type: %s]", MessageType.asString(messageType));
-
-        if(messageType != MessageType.VERSION_PARITY_RESPONSE) {
-            Logger.log(LogLevel.ERROR, LOGGER_TAG, "Unexpected message type in response to version parity request: " + messageType);
-            return new ConnectionInfo(ConnectionState.BAD_RESPONSE_WRONG_MESSAGE);
-        }
-
-        VersionParityResponseMessage in = new VersionParityResponseMessage(readBuffer);
-        if(!in.isAccepted()) {
-            Logger.log(LogLevel.INFO, LOGGER_TAG, "Hardware Monitor refused connection, reason: " + in.getRejectionReason());
-            return new ConnectionInfo(ConnectionState.REJECTED_CONNECTION);
-        }
-
-        connectedUUID = in.getSenderUuid();
-        Logger.log(LogLevel.INFO, LOGGER_TAG, "Monitor connected: " + connectedUUID.toString());
-
-      //  serialPort.setComPortTimeouts(0, 0, 0);
-
-        runWriteThread();
-
-        return new ConnectionInfo(ConnectionState.CONNECTED);
+        // After several attempts, the monitor failed to receive our data correctly
+        return new ConnectionInfo(ConnectionState.POOR_COMMUNICATION);
     }
 
     // Write runs its own thread, picking up the queue of messages that need to be sent out
@@ -151,6 +188,18 @@ public class SerialClient {
         }
 
         byte receivedType = Message.getType(bytes);
+        if (receivedType == MessageType.VERSION_PARITY_RESPONSE) {
+            VersionParityResponseMessage in = new VersionParityResponseMessage(bytes);
+            if (!in.isAccepted()) {
+                // todo: 'try again' feels bad. maybe highlight a bigger comms issue here
+                return false;
+            }
+
+            // Read the next message because this one does not matter (if there is many version parity response
+            // messages in the serial buffer, it will read all of them until we get to a real message).
+            return checkReceived();
+        }
+
         if (receivedType != MessageType.CONFIRMATION) {
             Logger.logf(LogLevel.ERROR, LOGGER_TAG, "Expected message of type: %s, got %s", MessageType.asString(MessageType.CONFIRMATION), MessageType.asString(receivedType));
             return false;

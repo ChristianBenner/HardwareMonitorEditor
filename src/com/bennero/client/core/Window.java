@@ -56,10 +56,12 @@ public class Window {
     private StackPane basePane;
     private Node currentPage;
     private String titleSaveString;
+    private boolean allowShow;
 
     public Window(Stage stage) {
         this.stage = stage;
         titleSaveString = "";
+        allowShow = true;
     }
 
     /**
@@ -120,6 +122,10 @@ public class Window {
     }
 
     public void show() {
+        if (!allowShow) {
+            return;
+        }
+
         Platform.runLater(() ->
         {
             StateData currentState = ApplicationCore.s_getApplicationState();
@@ -134,6 +140,13 @@ public class Window {
                 Logger.log(LogLevel.ERROR, CLASS_NAME, "No current state data available, cannot show display");
             }
         });
+    }
+
+    public void setAllowShow(boolean state) {
+        allowShow = state;
+        if (!allowShow) {
+            destroyGui();
+        }
     }
 
     public ReadOnlyDoubleProperty getWidthProperty() {

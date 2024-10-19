@@ -60,8 +60,8 @@ public class SensorManager {
 
     private List<SensorData> sensorList;
 
-    private List<SensorRequest> debugSensors;
-    private boolean usingDebugSensors;
+    private List<SensorRequest> mockSensors;
+    private boolean usingMockSensors;
     private Random debugSensorRandom;
 
     private SensorManager() {
@@ -198,12 +198,17 @@ public class SensorManager {
         return foundSensorData;
     }
 
-    public void addNativeSensors() {
-        try {
-            Native.addSensors();
-        } catch (UnsatisfiedLinkError e) {
-            if (Version.BOOTSTRAPPER_LAUNCH_REQUIRED) {
-                Logger.log(LogLevel.ERROR, LOGGER_TAG, "No NativeAddSensors method. System not launched with the bootstrapper");
+    public void addNativeSensors(boolean mockSensors) {
+        if(mockSensors) {
+            usingMockSensors = true;
+
+            // add some example/debug sensors so that the programmer can use some fake sensors
+            addDebugSensors();
+        } else {
+            try {
+                Native.addSensors();
+            } catch (UnsatisfiedLinkError e) {
+                Logger.log(LogLevel.ERROR, LOGGER_TAG, "No NativeAddSensors method. System failed to communicate with the bootstrapper");
                 e.printStackTrace();
 
                 Alert alert = new Alert(Alert.AlertType.ERROR, "Failed to retrieve sensor data");
@@ -213,15 +218,18 @@ public class SensorManager {
                         "the native interface provided by the bootstrapper application. Do not attempt to run the JAR " +
                         "file without the bootstrapper. If you see this error for any other reason please contact " +
                         "Bennero support (ERROR CODE: " + EXIT_ERROR_CODE_NATIVE_GET_SENSOR_FAILED + ")");
+
+                Platform.runLater(() -> {
+                    ApplicationCore.getInstance().getWindow().setAllowShow(false);
+                });
                 alert.showAndWait();
 
+                try {
+                    ApplicationCore.getInstance().stop();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
                 System.exit(EXIT_ERROR_CODE_NATIVE_GET_SENSOR_FAILED);
-            } else {
-                usingDebugSensors = true;
-
-                // Bootstrapper has not been found but we are in debug mode so this is not an error, we should instead
-                // add some example/debug sensors so that the programmer can use some fake sensors
-                addDebugSensors();
             }
         }
     }
@@ -235,58 +243,63 @@ public class SensorManager {
 
                     Platform.runLater(() ->
                     {
-                        if (usingDebugSensors) {
+                        if (usingMockSensors) {
                             updateDebugSensors();
                         } else {
                             if (DataClient.isConnected()) {
-                                Native.updateSensors();
+                                try {
+                                    Native.updateSensors();
+                                } catch (Exception e) {
+                                    Logger.log(LogLevel.ERROR, LOGGER_TAG, "No NativeAddSensors method. System not launched with the bootstrapper");
+                                    e.printStackTrace();
+
+                                    Alert alert = new Alert(Alert.AlertType.ERROR, "Failed to update sensors");
+                                    alert.setTitle("Hardware Monitor Error");
+                                    alert.setHeaderText("Failed to update sensors");
+                                    alert.setContentText("There was an error updating the sensor data due to failed communication with " +
+                                            "the native interface provided by the bootstrapper application (ERROR CODE: " +
+                                            EXIT_ERROR_CODE_NATIVE_SENSOR_UPDATE_FAILED + ")");
+                                    Platform.runLater(() -> {
+                                        ApplicationCore.getInstance().getWindow().setAllowShow(false);
+                                    });
+                                    alert.showAndWait();
+
+                                    try {
+                                        ApplicationCore.getInstance().stop();
+                                    } catch (Exception ex) {
+                                        ex.printStackTrace();
+                                    }
+                                    System.exit(EXIT_ERROR_CODE_NATIVE_SENSOR_UPDATE_FAILED);
+                                }
                             }
                         }
                     });
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
-            } catch (Exception e) {
-                if (Version.BOOTSTRAPPER_LAUNCH_REQUIRED) {
-                    Logger.log(LogLevel.ERROR, LOGGER_TAG, "No NativeAddSensors method. System not launched with the bootstrapper");
-                    e.printStackTrace();
-
-                    Alert alert = new Alert(Alert.AlertType.ERROR, "Failed to update sensors");
-                    alert.setTitle("Hardware Monitor Error");
-                    alert.setHeaderText("Failed to update sensors");
-                    alert.setContentText("There was an error updating the sensor data due to failed communication with " +
-                            "the native interface provided by the bootstrapper application (ERROR CODE: " +
-                            EXIT_ERROR_CODE_NATIVE_SENSOR_UPDATE_FAILED + ")");
-                    alert.showAndWait();
-                    System.exit(EXIT_ERROR_CODE_NATIVE_SENSOR_UPDATE_FAILED);
-                } else {
-                    e.printStackTrace();
-                    Logger.log(LogLevel.ERROR, LOGGER_TAG, "Failed to update sensors. Native interface not working correctly");
-                }
             }
         });
 
         thread.start();
 
-        if (!Version.BOOTSTRAPPER_LAUNCH_REQUIRED) {
+        if (usingMockSensors) {
             Alert alert = new Alert(Alert.AlertType.WARNING, "No bootstrapper enabled");
             alert.setTitle("Hardware Monitor Warning");
             alert.setHeaderText("No bootstrapper enabled");
             alert.setContentText("The bootstrapper is disabled, meaning that the application will not poll for " +
-                    "hardware data and therefor not update any sensors with real data. This warning is for " +
-                    "developers only, if you are seeing this as a user, somebody built the software wrong! Set " +
-                    "BOOTSTRAPPER_LAUNCH_REQUIRED to false");
+                    "hardware data and therefore not update any sensors with real data. Remove the -m/--mock-sensors " +
+                    "program argument to run with real sensor data");
             alert.showAndWait();
         }
     }
 
     private void updateDebugSensors() {
-        if(debugSensors == null || debugSensorRandom == null) {
+        if(mockSensors == null || debugSensorRandom == null) {
             return;
         }
 
         // Update all sensors with random values between there min and max
-        for (SensorRequest sensorRequest : debugSensors) {
+        for (SensorRequest sensorRequest : mockSensors) {
             float max = sensorRequest.getMax();
             float randomVal = debugSensorRandom.nextFloat() * max;
             sensorRequest.setValue(randomVal);
@@ -294,45 +307,45 @@ public class SensorManager {
     }
 
     private void addDebugSensors() {
-        usingDebugSensors = true;
+        usingMockSensors = true;
         debugSensorRandom = new Random();
-        debugSensors = new ArrayList<>();
+        mockSensors = new ArrayList<>();
 
         // Add debug CPU sensors
         int id = 0;
         for (int cpuI = 0; cpuI < 6; cpuI++) {
-            debugSensors.add(new SensorRequest(id, "Core #" + id + " Temp", 100.0f, SensorType.TEMPERATURE,
+            mockSensors.add(new SensorRequest(id, "Core #" + id + " Temp", 100.0f, SensorType.TEMPERATURE,
                     "DEBUG_CPU", 25.0f));
             id++;
         }
 
-        debugSensors.add(new SensorRequest(id++, "Core Clock", 4000.0f, SensorType.CLOCK,
+        mockSensors.add(new SensorRequest(id++, "Core Clock", 4000.0f, SensorType.CLOCK,
                 "DEBUG_CPU", 25.0f));
-        debugSensors.add(new SensorRequest(id++, "Memory Clock", 1250.0f, SensorType.CLOCK,
+        mockSensors.add(new SensorRequest(id++, "Memory Clock", 1250.0f, SensorType.CLOCK,
                 "DEBUG_CPU", 1105.0f));
-        debugSensors.add(new SensorRequest(id++, "Core Utilisation", 100.0f, SensorType.LOAD,
+        mockSensors.add(new SensorRequest(id++, "Core Utilisation", 100.0f, SensorType.LOAD,
                 "DEBUG_CPU", 53.0f));
-        debugSensors.add(new SensorRequest(id++, "Power Draw", 90.0f, SensorType.POWER,
+        mockSensors.add(new SensorRequest(id++, "Power Draw", 90.0f, SensorType.POWER,
                 "DEBUG_CPU", 40.0f));
 
         // Add debug GPU sensors
         for (int gpuI = 0; gpuI < 6; gpuI++) {
-            debugSensors.add(new SensorRequest(id, "Temp", 100.0f, SensorType.TEMPERATURE,
+            mockSensors.add(new SensorRequest(id, "Temp", 100.0f, SensorType.TEMPERATURE,
                     "DEBUG_GPU", 25.0f));
             id++;
         }
 
-        debugSensors.add(new SensorRequest(id++, "Core Clock", 1800.0f, SensorType.CLOCK,
+        mockSensors.add(new SensorRequest(id++, "Core Clock", 1800.0f, SensorType.CLOCK,
                 "DEBUG_GPU", 25.0f));
-        debugSensors.add(new SensorRequest(id++, "Memory Clock", 1250.0f, SensorType.CLOCK,
+        mockSensors.add(new SensorRequest(id++, "Memory Clock", 1250.0f, SensorType.CLOCK,
                 "DEBUG_GPU", 20.0f));
-        debugSensors.add(new SensorRequest(id++, "Core Utilisation", 100.0f, SensorType.LOAD,
+        mockSensors.add(new SensorRequest(id++, "Core Utilisation", 100.0f, SensorType.LOAD,
                 "DEBUG_GPU", 15.0f));
-        debugSensors.add(new SensorRequest(id++, "Power Draw", 330.0f, SensorType.POWER,
+        mockSensors.add(new SensorRequest(id++, "Power Draw", 330.0f, SensorType.POWER,
                 "DEBUG_GPU", 120.0f));
 
         // Add debug RAM sensors
-        debugSensors.add(new SensorRequest(id++, "Capacity", 100.0f, SensorType.LOAD,
+        mockSensors.add(new SensorRequest(id++, "Capacity", 100.0f, SensorType.LOAD,
                 "DEBUG_MEMORY", 67.0f));
 
     }
