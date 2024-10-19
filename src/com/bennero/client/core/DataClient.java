@@ -8,12 +8,41 @@ import com.bennero.common.messages.FileTransferMessage;
 import com.bennero.common.messages.Message;
 
 public class DataClient {
+    // todo: write a dataclient base class. each needs:
+    // - isConnected
+    // - getConnectionName
+    // - writeMessage
+    // - writeFile
+
+
+    public static String getConnectionName() {
+        if (NetworkClient.getInstance().isConnected()) {
+            return NetworkClient.getInstance().getConnectionName();
+        }
+
+        if (SerialClient.getInstance().isConnected()) {
+            return SerialClient.getInstance().getConnectionName();
+        }
+
+        return "";
+    }
+
     public static boolean isConnected() {
         if(NetworkClient.getInstance().isConnected() || SerialClient.getInstance().isConnected()) {
             return true;
         }
 
         return false;
+    }
+
+    public static void disconnect() {
+        if (NetworkClient.getInstance().isConnected()) {
+            NetworkClient.getInstance().disconnect();
+        }
+
+        if (SerialClient.getInstance().isConnected()) {
+            SerialClient.getInstance().disconnect();
+        }
     }
 
     public static void writeMessage(Message message) {

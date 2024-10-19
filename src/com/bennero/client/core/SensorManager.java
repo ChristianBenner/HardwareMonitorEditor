@@ -243,10 +243,10 @@ public class SensorManager {
 
                     Platform.runLater(() ->
                     {
-                        if (usingMockSensors) {
-                            updateDebugSensors();
-                        } else {
-                            if (DataClient.isConnected()) {
+                        if (DataClient.isConnected()) {
+                            if (usingMockSensors) {
+                                updateDebugSensors();
+                            } else {
                                 try {
                                     Native.updateSensors();
                                 } catch (Exception e) {

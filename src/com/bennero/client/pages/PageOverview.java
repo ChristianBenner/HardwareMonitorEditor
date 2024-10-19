@@ -195,10 +195,10 @@ public class PageOverview extends StackPane {
         disconnectButton.setOnMouseExited(mouseEvent -> disconnectButton.setBackground(new Background(new BackgroundImage(disconnectIcon, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT))));
         disconnectButton.setOnAction(actionEvent ->
         {
-            final String HOSTNAME = ProgramConfigManager.getInstance().getConnectionInformation().getHostname();
+            String connectionName = DataClient.getConnectionName();
 
             Alert disconnectAlert = new Alert(Alert.AlertType.CONFIRMATION,
-                    "Are you sure you want to disconnect from " + HOSTNAME + "?",
+                    "Are you sure you want to disconnect from '" + connectionName + "'?",
                     ButtonType.YES, ButtonType.NO);
             disconnectAlert.setTitle("Disconnect");
             disconnectAlert.setHeaderText("Disconnect");
@@ -206,12 +206,10 @@ public class PageOverview extends StackPane {
             if (result.isPresent()) {
                 if (result.get() == ButtonType.YES) {
                     // Disconnect
-                    Logger.log(LogLevel.INFO, getClass().getName(),
-                            "Disconnecting from Hardware Monitor '" + HOSTNAME + "'");
+                    Logger.log(LogLevel.INFO, getClass().getName(), "Disconnecting from Hardware Monitor '" + connectionName + "'");
 
                     // Disconnect from current hardware monitor
-                    NetworkClient.getInstance().disconnect();
-                    NetworkScanner.handleScan();
+                    DataClient.disconnect();
                 }
             }
         });

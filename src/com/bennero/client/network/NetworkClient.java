@@ -34,12 +34,15 @@ import com.bennero.common.networking.ConnectionInformation;
 import com.bennero.common.networking.NetworkUtils;
 import javafx.application.Platform;
 import javafx.event.EventHandler;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.bennero.client.Version.*;
@@ -64,6 +67,7 @@ public class NetworkClient {
     private boolean connected;
     private HeartbeatListener heartbeatListener;
     private Thread connectionThread;
+    private ConnectionInformation connectionInformation;
 
     private NetworkClient() {
         this.programConfigManager = ProgramConfigManager.getInstance();
@@ -93,6 +97,7 @@ public class NetworkClient {
     private ConnectedEvent handleConnectionResponse(ConnectionInformation connectionInformation, ConnectionRequestResponseMessage message) {
         connected = message.isConnectionAccepted();
         if (connected) {
+            this.connectionInformation = connectionInformation;
             Logger.logf(LogLevel.INFO, LOGGER_TAG, "Hardware Monitor '%s' accepted connection", connectionInformation.getHostname());
             return new ConnectedEvent(connectionInformation, ConnectionStatus.CONNECTED);
         }
@@ -214,6 +219,16 @@ public class NetworkClient {
         } else {
             Logger.log(LogLevel.DEBUG, LOGGER_TAG, "Did not disconnect as not currently connected");
         }
+
+        NetworkScanner.handleScan();
+    }
+
+    public String getConnectionName() {
+        if (connectionInformation == null) {
+            return "";
+        }
+
+        return connectionInformation.getHostname();
     }
 
     public boolean writeMessage(Message message) {

@@ -32,9 +32,13 @@ public class SerialClient {
     private UUID connectedUUID;
     private long lastMessageSendMs;
 
+    private Thread writeThread;
+    boolean disconnecting;
+
     private SerialClient() {
         connected = false;
         connectedUUID = null;
+        disconnecting = false;
     }
 
     public static SerialClient getInstance() {
@@ -155,10 +159,77 @@ public class SerialClient {
         return new ConnectionInfo(ConnectionState.POOR_COMMUNICATION);
     }
 
+    private void clearMessageQueue() {
+        try {
+            messageQueueLock.acquire();
+            messageQueue.clear();
+            messageQueueLock.release();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void disconnect() {
+        if (connected && serialPort.isOpen() && writeThread != null && writeThread.isAlive()) {
+            // 1. Prevent more messages from being queued
+            disconnecting = true;
+
+            try {
+                messageQueueLock.acquire();
+                // 2. Remove all messages from the message queue
+                messageQueue.clear();
+
+                messageQueueLock.release();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            // 3. Wait for the write thread to exit (exits when the serial port is closed - on confirmation that the
+            // monitor has received the disconnect message)
+            try {
+                writeThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            // 4. Write message to serial port for disconnect
+            DisconnectMessage out = new DisconnectMessage(ApplicationCore.s_getUUID(), true);
+            try {
+                attemptSend(out.write(), MAX_ATTEMPTS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            // 5. Close serial port
+            serialPort.closePort();
+            connected = false;
+            disconnecting = false;
+
+            SerialScanner.handleScan();
+        }
+    }
+
+    public String getConnectionName() {
+        if (serialPort == null) {
+            return "";
+        }
+
+        if (!serialPort.isOpen()) {
+            return "";
+        }
+
+        return serialPort.getDescriptivePortName();
+    }
+
     // Write runs its own thread, picking up the queue of messages that need to be sent out
     private void runWriteThread() {
-        Thread t = new Thread(() -> {
-            while(serialPort.isOpen()) {
+        if (writeThread != null && writeThread.isAlive()) {
+            // The write thread is already running
+            return;
+        }
+
+        writeThread = new Thread(() -> {
+            while(serialPort.isOpen() && !disconnecting) {
                 try {
                     if(!write()) {
                         // Comms failure occurred
@@ -170,7 +241,7 @@ public class SerialClient {
                 }
             }
         });
-        t.start();
+        writeThread.start();
     }
 
     private boolean checkReceived() {
@@ -219,6 +290,47 @@ public class SerialClient {
         return true;
     }
 
+    private boolean attemptSend(byte[] message, int maxAttempts) throws InterruptedException {
+        for(int attempt = 0; attempt < maxAttempts; attempt++) {
+            int numWrite = serialPort.writeBytes(message, Message.NUM_BYTES);
+            if (numWrite < Message.NUM_BYTES) {
+                Logger.logf(LogLevel.ERROR, LOGGER_TAG, "Time out on write [Port: %s] [Num Bytes Wrote: %d]", serialPort.getSystemPortName(), numWrite);
+                return false;
+            }
+
+            boolean received = checkReceived();
+            String logState = received ? "Successfully sent message" : "Failed to send message";
+            byte type = Message.getType(message);
+            String typeString = MessageType.asString(type);
+            if (attempt > 0) {
+                Logger.logf(LogLevel.DEBUG, LOGGER_TAG, "%s [Type: %s] [Attempt: %d]", logState, typeString, attempt);
+            } else {
+                //if (type != MessageType.SENSOR_UPDATE) {
+                Logger.logf(LogLevel.DEBUG, LOGGER_TAG, "%s [Type: %s]", logState, typeString, attempt);
+                //}
+            }
+
+            // todo: if we have not received a good message within heartbeat period, disconnect and report error
+            if (received) {
+                lastMessageSendMs = System.currentTimeMillis();
+                return true;
+            }
+
+            // Message did not receive correctly, try to send again
+            // If that was the first attempt try again immediately
+            if(attempt == 0) {
+                continue;
+            }
+
+            // Bad comm, retry send but wait before
+            int sleepMs = (int)ATTEMPT_WAIT_MS * (int)Math.pow(5, attempt);
+            Thread.sleep(sleepMs);
+        }
+
+        // Exit due to com failure
+        return false;
+    }
+
     // true if successful, false if comms failure
     private boolean write() throws InterruptedException {
         // Try to obtain queue lock
@@ -244,47 +356,7 @@ public class SerialClient {
         // Send all the messages
         for(byte[] message : messages) {
             // todo: implement a write and read block but with timeouts. If timeout expires report disconnect
-            int attempt = 0;
-            for(; attempt < MAX_ATTEMPTS; attempt++) {
-                int numWrite = serialPort.writeBytes(message, Message.NUM_BYTES);
-                if (numWrite < Message.NUM_BYTES) {
-                    Logger.logf(LogLevel.ERROR, LOGGER_TAG, "Time out on write [Port: %s] [Num Bytes Wrote: %d]", serialPort.getSystemPortName(), numWrite);
-                    return false;
-                }
-
-                boolean received = checkReceived();
-                String logState = received ? "Successfully sent message" : "Failed to send message";
-                byte type = Message.getType(message);
-                String typeString = MessageType.asString(type);
-                if (attempt > 0) {
-                    Logger.logf(LogLevel.DEBUG, LOGGER_TAG, "%s [Type: %s] [Attempt: %d]", logState, typeString, attempt);
-                } else {
-                    //if (type != MessageType.SENSOR_UPDATE) {
-                        Logger.logf(LogLevel.DEBUG, LOGGER_TAG, "%s [Type: %s]", logState, typeString, attempt);
-                    //}
-                }
-
-                // todo: if we have not received a good message within heartbeat period, disconnect and report error
-                if (received) {
-                    lastMessageSendMs = System.currentTimeMillis();
-                    break;
-                }
-
-                // Message did not receive correctly, try to send again
-                // If that was the first attempt try again immediately
-                if(attempt == 0) {
-                    continue;
-                }
-
-                // Bad comm, retry send but wait before
-                int sleepMs = (int)ATTEMPT_WAIT_MS * (int)Math.pow(5, attempt);
-                Thread.sleep(sleepMs);
-            }
-
-            if (attempt == MAX_ATTEMPTS) {
-                // Exit due to com failure
-                return false;
-            }
+           attemptSend(message, MAX_ATTEMPTS);
         }
 
         return true;
@@ -303,7 +375,7 @@ public class SerialClient {
     }
 
     public boolean writeMessage(Message message) {
-        if (!connected || !serialPort.isOpen()) {
+        if (!connected || !serialPort.isOpen() || disconnecting) {
             Logger.logf(LogLevel.DEBUG, LOGGER_TAG, "Failed to send message (type: %s) because serial port is not connected", message.getTypeString());
         }
 
