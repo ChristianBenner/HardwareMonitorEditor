@@ -24,6 +24,7 @@
 package com.bennero.client.pages;
 
 import com.bennero.client.core.ApplicationCore;
+import com.bennero.client.core.SystemTrayManager;
 import com.bennero.client.serial.ConnectionInfo;
 import com.bennero.client.serial.SerialClient;
 import com.bennero.client.serial.SerialScanner;
@@ -33,8 +34,12 @@ import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+
+import java.awt.*;
 
 /**
  * Displays a list of connections that the user can select from in order to connect to a specific hardware monitor
@@ -46,6 +51,7 @@ import javafx.scene.layout.StackPane;
  */
 public class SerialConnectionListPage extends StackPane {
     private static final String CLASS_NAME = SerialConnectionListPage.class.getSimpleName();
+    private final int NOTIFY_SERIAL_FAILURE_MS = 3 * 60 * 1000;
 
     // SerialPortDisplay class is just used to control the information displayed on the list of available devices (via
     // a toString override)
@@ -101,7 +107,8 @@ public class SerialConnectionListPage extends StackPane {
                 ApplicationCore.getInstance().setApplicationState(new InformationStateData("Connecting...", selectedPortInformation.toString(), "Cancel", null));
 
                 Thread establishConnectionThread = new Thread(() -> {
-                    // todo: keep retrying in the background, after a few minutes, if the editor is docked, send a windows notification
+                    long connectionAttemptStartTime = System.currentTimeMillis();
+                    boolean notificationSent = false;
 
                     final boolean[] retry = {true};
                     EventHandler cancelRetryEvent = event -> {
@@ -114,6 +121,14 @@ public class SerialConnectionListPage extends StackPane {
                         boolean success = handleConnectionState(connectionInfo, cancelRetryEvent);
                         if(success) {
                             break;
+                        }
+
+                        // After some time of failing to connect, if the program is docked, send a notification to the user
+                        boolean notifyTimeReached = System.currentTimeMillis() - connectionAttemptStartTime >= NOTIFY_SERIAL_FAILURE_MS;
+                        if (!notificationSent && notifyTimeReached && SystemTrayManager.isSupported() &&
+                                !ApplicationCore.getInstance().getWindow().isShowing()) {
+                            SystemTrayManager.getInstance().displayMessage("Failed to connect to Hardware Monitor", TrayIcon.MessageType.WARNING);
+                            notificationSent = true;
                         }
 
                         try {

@@ -60,6 +60,15 @@ public class SystemTrayManager {
         return SystemTray.isSupported();
     }
 
+    public boolean displayMessage(String message, TrayIcon.MessageType messageType) {
+        if (trayIcon == null) {
+            return false;
+        }
+
+        trayIcon.displayMessage("Hardware Monitor", message, messageType);
+        return true;
+    }
+
     public void addToSystemTray() {
         // Make it so that the application process does not end on window close
         Platform.setImplicitExit(false);
