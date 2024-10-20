@@ -51,7 +51,6 @@ import java.awt.*;
  */
 public class SerialConnectionListPage extends StackPane {
     private static final String CLASS_NAME = SerialConnectionListPage.class.getSimpleName();
-    private final int NOTIFY_SERIAL_FAILURE_MS = 3 * 60 * 1000;
 
     // SerialPortDisplay class is just used to control the information displayed on the list of available devices (via
     // a toString override)
@@ -106,40 +105,7 @@ public class SerialConnectionListPage extends StackPane {
 
                 ApplicationCore.getInstance().setApplicationState(new InformationStateData("Connecting...", selectedPortInformation.toString(), "Cancel", null));
 
-                Thread establishConnectionThread = new Thread(() -> {
-                    long connectionAttemptStartTime = System.currentTimeMillis();
-                    boolean notificationSent = false;
-
-                    final boolean[] retry = {true};
-                    EventHandler cancelRetryEvent = event -> {
-                        retry[0] = false;
-                        SerialScanner.handleScan();
-                    };
-
-                    while(retry[0]) {
-                        ConnectionInfo connectionInfo = SerialClient.getInstance().connect(selectedPortInformation.serialPort);
-                        boolean success = handleConnectionState(connectionInfo, cancelRetryEvent);
-                        if(success) {
-                            break;
-                        }
-
-                        // After some time of failing to connect, if the program is docked, send a notification to the user
-                        boolean notifyTimeReached = System.currentTimeMillis() - connectionAttemptStartTime >= NOTIFY_SERIAL_FAILURE_MS;
-                        if (!notificationSent && notifyTimeReached && SystemTrayManager.isSupported() &&
-                                !ApplicationCore.getInstance().getWindow().isShowing()) {
-                            SystemTrayManager.getInstance().displayMessage("Failed to connect to Hardware Monitor", TrayIcon.MessageType.WARNING);
-                            notificationSent = true;
-                        }
-
-                        try {
-                            Thread.sleep(2500);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
-
-                establishConnectionThread.start();
+                SerialClient.getInstance().runConnectThread(selectedPortInformation.serialPort);
             }
         });
 
@@ -150,43 +116,6 @@ public class SerialConnectionListPage extends StackPane {
         pageOverview.setBottom(footerPane);
 
         super.getChildren().add(pageOverview);
-    }
-
-    private void showFailedToConnect(String info, EventHandler buttonEvent) {
-        Platform.runLater(() -> {
-            ApplicationCore.getInstance().setApplicationState(new InformationStateData("Failed to connect", info + "\nRetrying...", "Cancel", buttonEvent));
-        });
-    }
-
-    private boolean handleConnectionState(ConnectionInfo connectionInfo, EventHandler buttonEvent) {
-        switch (connectionInfo.getConnectionState()) {
-            case CONNECTED:
-                Platform.runLater(() -> {
-                    ApplicationCore.getInstance().onConnected();
-                });
-                return true;
-            case PORT_FAILED_OPEN:
-                showFailedToConnect("Failed to open serial port", buttonEvent);
-                return false;
-            case WRITE_TIMEOUT:
-                showFailedToConnect("Timeout sending request", buttonEvent);
-                return false;
-            case READ_TIMEOUT:
-                showFailedToConnect("Timeout waiting for response", buttonEvent);
-                return false;
-            case BAD_RESPONSE_WRONG_MESSAGE:
-                showFailedToConnect("Received unexpected response", buttonEvent);
-                return false;
-            case BAD_RESPONSE_INVALID_CHECKSUM:
-                showFailedToConnect("Received corrupt response", buttonEvent);
-                return false;
-            case REJECTED_CONNECTION:
-                showFailedToConnect("Monitor rejected connection: " + connectionInfo.getRejectionReason(), buttonEvent);
-                return false;
-            default:
-                showFailedToConnect("Unknown error", buttonEvent);
-                return false;
-        }
     }
 
     public void setAvailableDevicesList(SerialPort[] serialDevices) {
